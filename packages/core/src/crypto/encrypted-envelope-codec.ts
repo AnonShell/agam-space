@@ -14,7 +14,6 @@ export const EncryptedEnvelopeCodec = {
   // each entry is a TLV (Type-Length-Value) structure
   // type: 1 byte, length: 4 bytes, value: variable length
   serializeToTLV(env: EncryptedEnvelope): Uint8Array {
-
     validateOrThrow(EncryptedEnvelopeSchema, env);
 
     const entries = [
@@ -72,10 +71,10 @@ export const EncryptedEnvelopeCodec = {
     if (!result[0x02]) throw new Error(`Missing nonce field`);
     if (!result[0x03]) throw new Error(`Missing ciphertext field`);
 
-     return EncryptedEnvelopeSchema.parse({
-       v: result[0x01][0],
-       n: result[0x02],
-       c: result[0x03],
-     })
+    return EncryptedEnvelopeSchema.parse({
+      v: result[0x01][0],
+      n: result[0x02],
+      c: result[0x03],
+    });
   },
 };

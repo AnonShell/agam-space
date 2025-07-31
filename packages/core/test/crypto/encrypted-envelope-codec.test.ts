@@ -1,9 +1,7 @@
 import { EncryptedEnvelope, EncryptedEnvelopeCodec, randomBytes } from '../../src';
 import { getSodium } from '../../src';
 
-
 describe('EncryptedEnvelopeCodec', () => {
-
   beforeAll(async () => {
     await getSodium();
   });
@@ -21,7 +19,6 @@ describe('EncryptedEnvelopeCodec', () => {
   });
 
   it('should serialize to TLV and deserialize from TLV correctly', () => {
-
     for (let i = 0; i < 100; i++) {
       const mockEnvelope = getRandomEnvelope();
       const tlv = EncryptedEnvelopeCodec.serializeToTLV(mockEnvelope);
@@ -35,10 +32,14 @@ describe('EncryptedEnvelopeCodec', () => {
   it('should throw error in serialize for invalid values', () => {
     let mockEnvelope = getRandomEnvelope();
     mockEnvelope.v = -1;
-    expect(() => EncryptedEnvelopeCodec.serialize(mockEnvelope)).toThrow('Number must be greater than or equal to 1');
+    expect(() => EncryptedEnvelopeCodec.serialize(mockEnvelope)).toThrow(
+      'Number must be greater than or equal to 1'
+    );
     mockEnvelope = getRandomEnvelope();
     mockEnvelope.v = 256;
-    expect(() => EncryptedEnvelopeCodec.serialize(mockEnvelope)).toThrow('Number must be less than or equal to 255');
+    expect(() => EncryptedEnvelopeCodec.serialize(mockEnvelope)).toThrow(
+      'Number must be less than or equal to 255'
+    );
 
     mockEnvelope = getRandomEnvelope();
     mockEnvelope.n = new Uint8Array(0);
@@ -46,7 +47,9 @@ describe('EncryptedEnvelopeCodec', () => {
 
     mockEnvelope = getRandomEnvelope();
     mockEnvelope.c = new Uint8Array(0);
-    expect(() => EncryptedEnvelopeCodec.serialize(mockEnvelope)).toThrow('Ciphertext must not be empty');
+    expect(() => EncryptedEnvelopeCodec.serialize(mockEnvelope)).toThrow(
+      'Ciphertext must not be empty'
+    );
   });
 
   it('should throw error in deserialize for invalid TLV buffers', () => {
@@ -54,15 +57,19 @@ describe('EncryptedEnvelopeCodec', () => {
 
     // 1. Buffer too short to even contain type + length (needs 5 bytes min)
     expect(() => deserializeFromTLV(new Uint8Array([0x01, 0x00]))).toThrow(
-      /Missing version field|Invalid TLV length/,
+      /Missing version field|Invalid TLV length/
     );
 
     // 2. TLV entry with claimed length larger than actual data
     {
       const buf = new Uint8Array([
-        0x01,                  // type
-        0x00, 0x00, 0x00, 0x10, // length = 16
-        0x01, 0x02,              // only 2 bytes of value, missing 14
+        0x01, // type
+        0x00,
+        0x00,
+        0x00,
+        0x10, // length = 16
+        0x01,
+        0x02, // only 2 bytes of value, missing 14
       ]);
       expect(() => deserializeFromTLV(buf)).toThrow('Invalid TLV length for type 1');
     }
@@ -71,8 +78,18 @@ describe('EncryptedEnvelopeCodec', () => {
     {
       const v = new Uint8Array([0x01]); // version
       const tlv = new Uint8Array([
-        0x01, 0x00, 0x00, 0x00, 0x01, v[0],
-        0x01, 0x00, 0x00, 0x00, 0x01, v[0],
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x01,
+        v[0],
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x01,
+        v[0],
       ]);
       expect(() => deserializeFromTLV(tlv)).toThrow('Duplicate TLV field type: 1');
     }
@@ -82,8 +99,18 @@ describe('EncryptedEnvelopeCodec', () => {
       const n = new Uint8Array(24).fill(0xab);
       const c = new Uint8Array(5).fill(0xcd);
       const tlv = new Uint8Array([
-        0x02, 0x00, 0x00, 0x00, 0x18, ...n,
-        0x03, 0x00, 0x00, 0x00, 0x05, ...c,
+        0x02,
+        0x00,
+        0x00,
+        0x00,
+        0x18,
+        ...n,
+        0x03,
+        0x00,
+        0x00,
+        0x00,
+        0x05,
+        ...c,
       ]);
       expect(() => deserializeFromTLV(tlv)).toThrow('Missing version field');
     }
@@ -93,8 +120,18 @@ describe('EncryptedEnvelopeCodec', () => {
       const v = new Uint8Array([0x01]);
       const c = new Uint8Array(5).fill(0xcd);
       const tlv = new Uint8Array([
-        0x01, 0x00, 0x00, 0x00, 0x01, ...v,
-        0x03, 0x00, 0x00, 0x00, 0x05, ...c,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x01,
+        ...v,
+        0x03,
+        0x00,
+        0x00,
+        0x00,
+        0x05,
+        ...c,
       ]);
       expect(() => deserializeFromTLV(tlv)).toThrow('Missing nonce field');
     }
@@ -104,14 +141,22 @@ describe('EncryptedEnvelopeCodec', () => {
       const v = new Uint8Array([0x01]);
       const n = new Uint8Array(24).fill(0xab);
       const tlv = new Uint8Array([
-        0x01, 0x00, 0x00, 0x00, 0x01, ...v,
-        0x02, 0x00, 0x00, 0x00, 0x18, ...n,
+        0x01,
+        0x00,
+        0x00,
+        0x00,
+        0x01,
+        ...v,
+        0x02,
+        0x00,
+        0x00,
+        0x00,
+        0x18,
+        ...n,
       ]);
       expect(() => deserializeFromTLV(tlv)).toThrow('Missing ciphertext field');
     }
-
   });
-
 });
 
 function getRandomEnvelope(): EncryptedEnvelope {
@@ -121,4 +166,3 @@ function getRandomEnvelope(): EncryptedEnvelope {
     c: randomBytes(64),
   };
 }
-

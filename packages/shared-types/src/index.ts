@@ -1,12 +1,11 @@
 export * from './common.schema';
-export * from './crypto/crypto'
+export * from './crypto/crypto';
 
-export * from './user/user.schema'
+export * from './user/user.schema';
 export * from './user/user.types';
 
 export * from './folder.types';
 export * from './user-keys-setup.schema';
-
 
 export * from './auth/login.schema';
 export * from './server/server.schema';
