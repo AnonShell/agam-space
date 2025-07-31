@@ -1,6 +1,6 @@
 import { EncryptedEnvelope, EncryptedEnvelopeSchema } from './types';
 import { fromBase64, toBase64 } from '../utils/encoding';
-import { validateOrThrow } from '../utils/schema-helper.ts';
+import { validateOrThrow } from '../utils/schema-helper';
 
 export const EncryptedEnvelopeCodec = {
   serialize(env: EncryptedEnvelope): string {

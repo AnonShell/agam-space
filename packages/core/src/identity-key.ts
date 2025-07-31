@@ -1,5 +1,5 @@
 import sodium from 'libsodium-wrappers-sumo';
-import { getSodium } from './utils/sodium-loader.ts';
+import { getSodium } from './utils/sodium-loader';
 
 export interface IdentityKeyPair {
   publicKey: Uint8Array;

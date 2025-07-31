@@ -1,5 +1,5 @@
 
-export * from './crypto';
+export * from './crypto/index';
 
 //Utils
 export * from './utils/encoding';
