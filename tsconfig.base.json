@@ -14,18 +14,11 @@
     "incremental": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "baseUrl": ".",
-    "outDir": "dist",
-    "rootDir": "src",
+    "baseUrl": "./",
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "composite": true,
-    "paths": {
-      "@agam-space/*": ["packages/*/src", "services/*/src", "modules/*/src"],
-      "@agam-space/core": ["packages/core/src"],
-      "@agam-space/client": ["packages/client/src"]
-    }
+    "composite": true
   },
-  "exclude": ["**/dist", "**/node_modules"]
+  "exclude": ["**/dist", "**/node_modules", "apps/*/coverage", "**/test"]
 }
