@@ -1,11 +1,9 @@
 # Dependencies
 node_modules/
-**/node_modules/
 
 # Build outputs
 dist/
 build/
-coverage/
 *.js.map
 
 # Database
@@ -29,4 +27,5 @@ Thumbs.db
 # Misc
 .env*
 .next/
-.nuxt/ 
+.nuxt/
+.turbo/
