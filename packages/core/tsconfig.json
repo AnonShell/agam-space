@@ -3,6 +3,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "baseUrl": ".",
+    "composite": true,
+    "declaration": true,
     "paths": {
       "@agam-space/shared-types": ["../shared-types/src"]
     }

@@ -11,7 +11,7 @@ const connectionUrl = `postgresql://${dbConfig.username}:${encodeURIComponent(db
 
 export default {
   schema: './src/database/schema/*',
-  out: './src/database/migrations',
+  out: './migrations',
   driver: 'pg',
   dbCredentials: {
     connectionString: connectionUrl,
