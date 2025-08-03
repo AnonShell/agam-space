@@ -6,7 +6,7 @@ export function encodeBase58(data: Uint8Array): string {
 }
 
 export function decodeBase58(encoded: string): Uint8Array {
-  return bs58.decode(encoded);
+  return  bs58.decode(encoded);
 }
 
 export function toUtf8Bytes(str: string): Uint8Array {

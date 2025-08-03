@@ -43,6 +43,16 @@ export const directoryConfigSchema = z.object({
   cacheDir: z.string().optional(), // If not set, becomes ${dataDir}/cache
 });
 
+// file configuration
+export const fileConfigSchema = z.object({
+  maxFileSize: z.coerce.number().int().min(1).max(1_000_000_000).default(1_000_000_000), // 1GB default
+  chunkSize: z.coerce.number().int().min(1).max(32_000_000).default(8_000_000), // 8MB default
+  uploadConcurrency: z.coerce.number().int().min(1).max(10).default(2), // Max concurrent uploads
+  // maxFileMetadataSize: z.coerce.number().int().min(1).max(10_000).default(1000), // Max file metadata size in bytes
+
+  trashCleanupIntervalDays: z.coerce.number().int().min(1).max(30).default(7),
+});
+
 // Security configuration
 export const securityConfigSchema = z.object({
   allowNewSignup: z.boolean().default(true), // Allow new user registration
@@ -70,6 +80,7 @@ export const configSchema = z.object({
   docs: docsConfigSchema,
   database: databaseConfigSchema,
   directories: directoryConfigSchema,
+  files: fileConfigSchema,
   security: securityConfigSchema,
   sso: ssoConfigSchema,
 });
@@ -118,6 +129,12 @@ export const envMappings = {
   'directories.configDir': 'CONFIG_DIR',
   'directories.logDir': 'LOG_DIR',
   'directories.cacheDir': 'CACHE_DIR',
+
+  // File configuration
+  'file.maxFileSize': 'MAX_FILE_SIZE',
+  'file.chunkSize': 'CHUNK_SIZE',
+  'file.trashCleanupIntervalDays': 'TRASH_CLEANUP_INTERVAL_DAYS',
+  // 'file.maxFileMetadataSize': 'MAX_FILE_METADATA_SIZE', // Uncomment if needed
 
   // Security
   'security.allowNewSignup': 'ALLOW_NEW_SIGNUP',

@@ -1,32 +1,37 @@
 import { IdentityKeyManager } from './identity-key';
+import { blake3HashWithEncoding } from './utils/hasher';
+import { fromBase64, toBase64, toUtf8Bytes } from './utils/encoding';
 
-function generateChallengeString(userId: string, timestamp: number): string {
-  return `${userId}:${timestamp}`;
+function generateChallengeString(data: string, timestamp: number): string {
+  return `${data}:${timestamp}`;
 }
 
 export async function generateCmkChallenge(
-  identifier: string,
-  key: Uint8Array
+  payload: object,
+  key: Uint8Array,
 ): Promise<{
   timestamp: number;
   signature: string;
 }> {
   const timestamp = Date.now();
-  const challenge = Buffer.from(generateChallengeString(identifier, timestamp));
 
+  const payloadHash = blake3HashWithEncoding(JSON.stringify(payload), 'base64');
+
+  const challenge = toUtf8Bytes(generateChallengeString(payloadHash, timestamp));
   const signature = await IdentityKeyManager.sign(challenge, key);
+
   return {
     timestamp,
-    signature: Buffer.from(signature).toString('base64'),
+    signature: toBase64(signature),
   };
 }
 
 export async function verifyCmkChallenge(
-  identifier: string,
+  payload: object,
   signature: string,
   publicKey: string,
   timestamp: number,
-  maxAgeMs: number
+  maxAgeMs: number,
 ): Promise<void> {
   if (timestamp <= 0) {
     throw new Error('Invalid timestamp. Must be a positive integer.');
@@ -42,16 +47,19 @@ export async function verifyCmkChallenge(
   }
 
   try {
+
+    const payloadHash = blake3HashWithEncoding(JSON.stringify(payload), 'base64');
+
     const isValid = await IdentityKeyManager.verify(
-      Buffer.from(generateChallengeString(identifier, timestamp)),
-      Buffer.from(signature, 'base64'),
-      Buffer.from(publicKey, 'base64')
+      toUtf8Bytes(generateChallengeString(payloadHash, timestamp)),
+      fromBase64(signature),
+      fromBase64(publicKey),
     );
 
     if (!isValid) {
-      throw new Error('Invalid signature. Cannot verify key possession.');
+      throw new Error('Validation failed');
     }
-  } catch {
-    throw new Error(`Invalid signature. Cannot verify key possession`);
+  } catch (err) {
+    throw new Error(`Invalid signature. Cannot verify key possession: ${(err as Error).message}`);
   }
 }

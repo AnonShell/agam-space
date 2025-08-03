@@ -10,6 +10,7 @@ import {
   databaseConfigSchema,
   docsConfigSchema,
   envMappings,
+  fileConfigSchema,
   securityConfigSchema,
   serverConfigSchema,
 } from './config.schema';
@@ -108,7 +109,7 @@ class ConfigLoader {
       console.log(`✅ DATA_DIR (from env): ${resolvedDataDir}`);
     } else {
       // Priority 2: Try default Docker path
-      const dockerDataDir = '/app/data';
+      const dockerDataDir = '/data';
       try {
         // Check if we can access/create the Docker path
         if (existsSync(dockerDataDir) || this.canCreateDirectory(dockerDataDir)) {
@@ -117,14 +118,14 @@ class ConfigLoader {
         } else {
           throw new Error('Cannot access default Docker path');
         }
-      } catch {
+      } catch (err){
         // Priority 3: Fail with helpful message
-        console.error('❌ DATA_DIR resolution failed!');
-        console.error('   Neither DATA_DIR environment variable is set nor /app/data is available');
+        console.error(`❌ DATA_DIR resolution failed! - ${err instanceof Error ? err.message : err}`);
+        console.error(`   Neither DATA_DIR environment variable is set nor ${dockerDataDir} is available`);
         console.error('   Solutions:');
         console.error('   - Set DATA_DIR environment variable (e.g., DATA_DIR=./local/data)');
-        console.error('   - Mount a volume to /app/data in Docker');
-        console.error('   - Ensure /app/data directory exists and is writable');
+        console.error(`   - Mount a volume to ${dockerDataDir} in Docker`);
+        console.error(`   - Ensure ${dockerDataDir} directory exists and is writable`);
         process.exit(1);
       }
     }
@@ -155,7 +156,7 @@ class ConfigLoader {
     // DATA_DIR was already resolved and set in validateDataDir
     const dataDir = this.resolvePath(envConfig.directories.dataDir);
 
-    const resolvedDirs = {
+    return {
       dataDir,
       filesDir: envConfig?.directories?.filesDir
         ? this.resolvePath(envConfig.directories.filesDir)
@@ -170,8 +171,6 @@ class ConfigLoader {
         ? this.resolvePath(envConfig.directories.cacheDir)
         : join(dataDir, 'cache'),
     };
-
-    return resolvedDirs;
   }
 
   /**
@@ -210,8 +209,7 @@ class ConfigLoader {
     try {
       if (existsSync(configPath)) {
         const content = readFileSync(configPath, 'utf8');
-        const config = JSON.parse(content);
-        return config;
+        return JSON.parse(content);
       } else {
         console.log(`📝 Creating default config: ${configPath}`);
 
@@ -240,6 +238,7 @@ class ConfigLoader {
     const docsDefaults = docsConfigSchema.parse({});
     const databaseDefaults = databaseConfigSchema.parse({});
     const securityDefaults = securityConfigSchema.parse({});
+    const filsDefaults =  fileConfigSchema.parse({});
 
     return {
       server: serverDefaults,
@@ -247,6 +246,7 @@ class ConfigLoader {
       docs: docsDefaults,
       database: databaseDefaults,
       security: securityDefaults,
+      files: filsDefaults,
     };
   }
 

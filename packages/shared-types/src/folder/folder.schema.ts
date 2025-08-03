@@ -25,8 +25,16 @@ export const CreatedFolderSchema = FolderSchema.pick({
   fkWrapped: true,
 });
 
+export const UpdateFolderSchema = z.object({
+  parentId: CreatedFolderSchema.shape.parentId.optional(),
+  nameHash: CreatedFolderSchema.shape.nameHash.optional(),
+  metadataEncrypted: CreatedFolderSchema.shape.metadataEncrypted.optional(),
+  fkWrapped: CreatedFolderSchema.shape.fkWrapped.optional(),
+});
+
 export type Folder = z.infer<typeof FolderSchema>;
 export type CreatedFolder = z.infer<typeof CreatedFolderSchema>;
+export type UpdateFolder = z.infer<typeof UpdateFolderSchema>;
 
 export const FolderArraySchema = z.array(FolderSchema);
 export type FolderArray = z.infer<typeof FolderArraySchema>;

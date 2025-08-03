@@ -1,9 +1,12 @@
-import base from '../../jest.preset.js';
+const base = require('../../jest.preset.js');
 
 /** @type {import('jest').Config} */
-export default {
+const config = {
   ...base,
-  rootDir: '.',
   displayName: 'core',
+  rootDir: '.',
   testMatch: ['<rootDir>/test/**/*.test.ts'],
+  coverageDirectory: '<rootDir>/coverage',
 };
+
+module.exports = config;

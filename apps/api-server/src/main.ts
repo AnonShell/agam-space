@@ -51,9 +51,16 @@ async function bootstrap() {
   // Run database migrations using the provider's connection
   await runMigrations(app);
 
+  const corsOrigin = config.cors.origin;
+
+  const resolvedOrigin =
+    !corsOrigin || corsOrigin === '*' || corsOrigin === 'true'
+      ? true
+      : corsOrigin;
+
   // Enable CORS
   app.enableCors({
-    origin: config.cors.origin,
+    origin: resolvedOrigin,
     credentials: config.cors.credentials,
   });
 

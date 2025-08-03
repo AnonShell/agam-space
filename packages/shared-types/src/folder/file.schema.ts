@@ -26,6 +26,13 @@ export const CreateFileSchema = FileSchema.pick({
   chunkCount: true,
 });
 
+export const UpdateFileSchema = z.object({
+  nameHash: CreateFileSchema.shape.nameHash.optional(),
+  fkWrapped: CreateFileSchema.shape.fkWrapped.optional(),
+  parentFolderId: CreateFileSchema.shape.parentFolderId.optional(),
+  metadataEncrypted: CreateFileSchema.shape.metadataEncrypted.optional(),
+})
+
 export const RawFileMetadataSchema = z.object({
   name: z.string().min(1).max(100),
   size: z.number().int().nonnegative(),
@@ -51,4 +58,5 @@ export type File = z.infer<typeof FileSchema>;
 export const FileArraySchema = z.array(FileSchema);
 export type FileArray = z.infer<typeof FileArraySchema>;
 export type CreateFile = z.infer<typeof CreateFileSchema>;
+export type UpdateFile = z.infer<typeof UpdateFileSchema>;
 export type TrashFilesResponse = z.infer<typeof TrashFilesResponseSchema>;

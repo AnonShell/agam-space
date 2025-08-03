@@ -18,8 +18,8 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
-    "@agam-space/shared-types": "workspace:*",
     "@agam-space/core": "workspace:*",
+    "@agam-space/shared-types": "workspace:*",
     "@fastify/cookie": "7",
     "@fastify/static": "^6.0.0",
     "@napi-rs/blake-hash": "^1.3.0",
@@ -30,6 +30,7 @@
     "@nestjs/platform-express": "^10.3.0",
     "@nestjs/platform-fastify": "^10.3.0",
     "@nestjs/schedule": "^6.0.0",
+    "@nestjs/serve-static": "^5.0.3",
     "@nestjs/swagger": "^7.2.0",
     "@nestjs/throttler": "^5.1.0",
     "argon2": "^0.43.1",
