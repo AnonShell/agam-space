@@ -15,11 +15,14 @@ export const ServerConfigSchema = z.object({
     externalApiAccess: z.boolean().default(false),
   }),
   security: z.object({
-    allowNewSignup: z.boolean(),
     sessionTimeout: z.string(),
   }),
   sso: z.object({
     enabled: z.boolean().default(false),
+  }),
+  account: z.object({
+    allowNewSignup: z.boolean().default(true),
+    defaultUserStorageQuota: z.number().int().min(1)
   }),
 });
 

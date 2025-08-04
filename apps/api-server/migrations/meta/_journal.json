@@ -8,6 +8,34 @@
       "when": 1753276743122,
       "tag": "0000_brief_bucky",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1754309673668,
+      "tag": "0001_worthless_riptide",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1754322536139,
+      "tag": "0002_sudden_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1754322571821,
+      "tag": "0003_yummy_queen_noir",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1754339697483,
+      "tag": "0004_breezy_doctor_faustus",
+      "breakpoints": true
     }
   ]
 }

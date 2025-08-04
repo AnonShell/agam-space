@@ -9,6 +9,7 @@ import { patchNestJsSwagger } from 'nestjs-zod';
 
 import type { FastifyCookieOptions } from '@fastify/cookie';
 import fastifyCookie from '@fastify/cookie';
+import { AllExceptionsFilter } from '@/common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
@@ -28,6 +29,8 @@ async function bootstrap() {
     });
 
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, fastifyAdapter);
+
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Get config using our wrapper service
   const configService = app.get(AppConfigService);
@@ -111,4 +114,11 @@ async function bootstrap() {
 bootstrap().catch(error => {
   console.error('❌ Failed to start server:', error);
   throw error; // Let the process manager handle the error
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
 });

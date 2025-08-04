@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 
-import { User, UserRole } from '@agam-space/shared-types';
-import { AppConfigService } from '../../../config/config.service';
+import { User, UserRole, UserSchema } from '@agam-space/shared-types';
+import { AppConfigService } from '@/config/config.service';
 import { CreateUserData, UserService } from '../user.service';
 import { PasswordService } from './password.service';
 import { CreateSessionData, SessionService } from './session.service';
@@ -47,8 +47,7 @@ export class AuthService {
   ) {}
 
   async signup(request: SignupRequest): Promise<User> {
-    // Check if new signups are allowed
-    if (!this.configService.getSecurity().allowNewSignup) {
+    if (!this.configService.getConfig().account.allowNewSignup) {
       throw new BadRequestException('New user registration is currently disabled');
     }
 
@@ -73,7 +72,6 @@ export class AuthService {
     const user = await this.userService.createUser(userData);
 
     this.logger.log(`User signed up: ${user.username} (${user.id})`);
-
     return user;
   }
 
@@ -89,7 +87,7 @@ export class AuthService {
     }
 
     // Find user by username or email
-    const user = await this.userService.findUserForAuth(username);
+    const user = await this.userService.findUserEntityForAuth(username);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -124,7 +122,7 @@ export class AuthService {
     };
   }
 
-  async loginSso(
+  async loginSSO(
     userInfo: UserInfo,
     device: {
       deviceFingerprint?: string;
@@ -132,11 +130,21 @@ export class AuthService {
       ipAddress?: string;
     }
   ): Promise<LoginResponse> {
-    // Find user by username or email
-    const user = await this.userService.findUserForAuth(userInfo.preferred_username);
+    let user = await this.userService.findUserForAuth(userInfo.preferred_username);
     if (!user) {
-      //TODO do auto signup if enabled
-      throw new UnauthorizedException('Invalid credentials');
+
+      if (!this.configService.getConfig().account.allowNewSignup) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      const newUserData: CreateUserData = {
+        username: userInfo.preferred_username,
+        email: userInfo.email,
+        oidcSubject: userInfo.sub,
+      }
+
+      user = await this.userService.createUser(newUserData);
+      this.logger.log(`Auto created new user from sso : ${user.username} (${user.id})`);
     }
 
     // Create session - now returns both session and raw token
@@ -149,7 +157,7 @@ export class AuthService {
 
     this.logger.log(`User logged in: ${user.username} (${user.id})`);
     return {
-      user: this.userService.toUserDto(user),
+      user,
       session: {
         token: rawToken,
         expiresAt: session.expiresAt.toISOString(),

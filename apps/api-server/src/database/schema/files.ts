@@ -1,4 +1,4 @@
-import { integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { bigint, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 
 import { ulidColumn, ulidPrimaryKey } from '../utils/ulid';
 
@@ -14,12 +14,12 @@ export const files = pgTable('files', {
   id: ulidPrimaryKey(),
 
   // Foreign key to users table
-  ownerId: ulidColumn('owner_id')
+  userId: ulidColumn('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
 
   // Foreign key to folders table (null = root level)
-  parentFolderId: ulidColumn('parent_folder_id').references(() => folders.id, {
+  parentId: ulidColumn('parent_id').references(() => folders.id, {
     onDelete: 'cascade',
   }),
 
@@ -36,7 +36,7 @@ export const files = pgTable('files', {
   status: text('status').notNull().default('pending'),
 
   // File size in bytes
-  approxSize: integer('approx_size').notNull().default(0),
+  approxSize: bigint('approx_size', { mode: 'number' }).notNull().default(0),
 
   // Audit timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),

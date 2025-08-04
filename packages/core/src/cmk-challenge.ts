@@ -60,6 +60,6 @@ export async function verifyCmkChallenge(
       throw new Error('Validation failed');
     }
   } catch (err) {
-    throw new Error(`Invalid signature. Cannot verify key possession: ${(err as Error).message}`);
+    throw new Error(`Invalid signature. Cannot verify key possession`);
   }
 }

@@ -9,6 +9,10 @@ import * as schema from './schema';
 // Database injection token
 export const DATABASE_CONNECTION = 'DATABASE_CONNECTION';
 
+export type DrizzleClient = ReturnType<typeof drizzle>
+export type DrizzleTransaction = Parameters<Parameters<DrizzleClient['transaction']>[0]>[0]
+
+
 /**
  * PostgreSQL database provider using Drizzle ORM
  * Standard NestJS factory pattern for dependency injection

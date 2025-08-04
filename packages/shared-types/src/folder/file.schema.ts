@@ -3,8 +3,8 @@ import { BASE64_REGEX, datetimeSchema, UlidSchema } from '../common.schema';
 
 export const FileSchema = z.object({
   id: UlidSchema,
-  ownerId: UlidSchema,
-  parentFolderId: UlidSchema.nullish(),
+  userId: UlidSchema,
+  parentId: UlidSchema.nullish(),
   nameHash: z.string().min(1).max(100),
   fkWrapped: z.string().min(64).max(500).regex(BASE64_REGEX, 'Invalid base64 encoded wrapped key'),
   metadataEncrypted: z
@@ -18,18 +18,18 @@ export const FileSchema = z.object({
   updatedAt: datetimeSchema,
 });
 
-export const CreateFileSchema = FileSchema.pick({
-  parentFolderId: true,
-  nameHash: true,
-  fkWrapped: true,
-  metadataEncrypted: true,
-  chunkCount: true,
-});
+export const CreateFileSchema = z.object({
+  nameHash: FileSchema.shape.nameHash,
+  fkWrapped: FileSchema.shape.fkWrapped,
+  parentId: FileSchema.shape.parentId,
+  metadataEncrypted: FileSchema.shape.metadataEncrypted,
+  chunkCount: FileSchema.shape.chunkCount,
+}).required();
 
 export const UpdateFileSchema = z.object({
   nameHash: CreateFileSchema.shape.nameHash.optional(),
   fkWrapped: CreateFileSchema.shape.fkWrapped.optional(),
-  parentFolderId: CreateFileSchema.shape.parentFolderId.optional(),
+  parentId: CreateFileSchema.shape.parentId.optional(),
   metadataEncrypted: CreateFileSchema.shape.metadataEncrypted.optional(),
 })
 

@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 import {
+  accountConfigSchema,
   APP_CONSTANTS,
   type AppConfig,
   configSchema,
@@ -239,6 +240,7 @@ class ConfigLoader {
     const databaseDefaults = databaseConfigSchema.parse({});
     const securityDefaults = securityConfigSchema.parse({});
     const filsDefaults =  fileConfigSchema.parse({});
+    const accountDefaults = accountConfigSchema.parse({});
 
     return {
       server: serverDefaults,
@@ -247,6 +249,7 @@ class ConfigLoader {
       database: databaseDefaults,
       security: securityDefaults,
       files: filsDefaults,
+      account: accountDefaults,
     };
   }
 

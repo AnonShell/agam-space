@@ -1,5 +1,5 @@
 import { CacheModule } from '@nestjs/cache-manager';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { AuthController } from './controllers/auth.controller';
 import { AuthGuard } from './auth.guard';
@@ -9,6 +9,7 @@ import { SessionService } from './services/session.service';
 import { UserService } from './user.service';
 import { SsoModule } from '@/modules/sso/sso.module';
 import { MeController } from '@/modules/auth/controllers/me.controller';
+import { UserQuotaModule } from '@/modules/quota/quota.module';
 
 /**
  * Authentication module providing complete user authentication system
@@ -35,6 +36,7 @@ import { MeController } from '@/modules/auth/controllers/me.controller';
       max: 1000, // Maximum 1000 cached sessions
     }),
     SsoModule,
+    forwardRef(() => UserQuotaModule),
   ],
   controllers: [AuthController, MeController],
   providers: [

@@ -18,3 +18,6 @@ export * from './folder/file.schema';
 
 // trash types
 export * from './trash/trash.schema';
+
+// quota types
+export * from './quota/quota.schema';

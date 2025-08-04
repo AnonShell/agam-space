@@ -44,8 +44,11 @@ export class ServerConfigService implements OnModuleInit {
         externalApiAccess: false,
       },
       security: {
-        allowNewSignup: this.configService.getSecurity().allowNewSignup,
         sessionTimeout: this.configService.getSecurity().sessionTimeout,
+      },
+      account: {
+        allowNewSignup: this.configService.getConfig().account.allowNewSignup,
+        defaultUserStorageQuota: this.configService.getConfig().account.defaultUserStorageQuota,
       },
       sso: {
         enabled: this.isSsoEnabled,

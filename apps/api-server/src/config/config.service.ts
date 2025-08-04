@@ -24,6 +24,7 @@ export class AppConfigService {
       files: this.configService.get('files'),
       security: this.configService.get('security'),
       sso: this.configService.get('sso'),
+      account: this.configService.get('account'),
     } as AppConfig;
   }
 

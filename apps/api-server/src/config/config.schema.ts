@@ -55,11 +55,15 @@ export const fileConfigSchema = z.object({
 
 // Security configuration
 export const securityConfigSchema = z.object({
-  allowNewSignup: z.boolean().default(true), // Allow new user registration
   sessionTimeout: z.string().default('7d'), // Session timeout (e.g., '7d', '24h', '30m')
   sessionDurationDays: z.coerce.number().int().min(1).max(365).default(30), // Session duration in days
   maxSessionsPerUser: z.coerce.number().int().min(1).max(100).default(10), // Max concurrent sessions per user
   cleanupIntervalHours: z.coerce.number().int().min(1).max(168).default(24), // Session cleanup interval in hours
+});
+
+export const accountConfigSchema = z.object({
+  allowNewSignup: z.boolean().default(true),
+  defaultUserStorageQuota: z.coerce.number().int().min(1).default(10_000_000_000), // 10GB default quota
 });
 
 // SSO configuration schema
@@ -82,6 +86,7 @@ export const configSchema = z.object({
   directories: directoryConfigSchema,
   files: fileConfigSchema,
   security: securityConfigSchema,
+  account: accountConfigSchema,
   sso: ssoConfigSchema,
 });
 
@@ -137,9 +142,12 @@ export const envMappings = {
   // 'file.maxFileMetadataSize': 'MAX_FILE_METADATA_SIZE', // Uncomment if needed
 
   // Security
-  'security.allowNewSignup': 'ALLOW_NEW_SIGNUP',
   'security.sessionTimeout': 'SESSION_TIMEOUT',
   'security.jwtSecret': 'JWT_SECRET',
+
+  // Account configuration
+  'account.allowNewSignup': 'ALLOW_NEW_SIGNUP',
+  'account.defaultUserStorageQuota': 'DEFAULT_USER_STORAGE_QUOTA',
 
   // SSO (OIDC)
   'sso.issuer': 'SSO_ISSUER',

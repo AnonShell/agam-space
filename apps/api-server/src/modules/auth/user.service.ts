@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, or } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
@@ -8,6 +8,8 @@ import { type NewUser, type UserDB, users } from '../../database/schema';
 import { UserRole } from './auth.models';
 import { PasswordService } from './services/password.service';
 import { User, UserSchema } from '@agam-space/shared-types';
+import { QuotaService } from '@/modules/quota/quota.service';
+import { AppConfigService } from '@/config/config.service';
 
 export interface CreateUserData {
   username: string;
@@ -30,7 +32,10 @@ export class UserService {
 
   constructor(
     @Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
-    private readonly passwordService: PasswordService
+    private readonly passwordService: PasswordService,
+    @Inject(forwardRef(() => QuotaService))
+    private readonly quotaService: QuotaService,
+    private readonly configService: AppConfigService
   ) {}
 
   /**
@@ -68,15 +73,19 @@ export class UserService {
       emailVerified: !!(userData.email && userData.oidcProvider),
     };
 
-    const [createdUser] = await this.db.insert(users).values(newUser).returning();
-
-    return this.toUserDto(createdUser);
+    return await this.db.transaction(async (tx) => {
+      const [createdUser] = await this.db.insert(users).values(newUser).returning();
+      await this.quotaService.createUserQuota(createdUser.id, {
+        totalStorage: this.configService.getConfig().account.defaultUserStorageQuota,
+      }, tx);
+      return this.toUserDto(createdUser);
+    });
   }
 
   /**
    * Find user by username or email (for login)
    */
-  async findUserForAuth(usernameOrEmail: string): Promise<UserDB | null> {
+  async findUserEntityForAuth(usernameOrEmail: string): Promise<UserDB | null> {
     const [user] = await this.db
       .select()
       .from(users)
@@ -84,6 +93,11 @@ export class UserService {
       .limit(1);
 
     return user || null;
+  }
+
+  async findUserForAuth(usernameOrEmail: string): Promise<User | null> {
+    const user = await this.findUserEntityForAuth(usernameOrEmail);
+    return user ? this.toUserDto(user) : null;
   }
 
   toUserDto(user: UserDB): User {
