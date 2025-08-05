@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserKeys } from '../user-keys-setup.schema';
+import { UserKeysSchema } from '../user-keys-setup.schema';
 
 export const E2eeChallengeSchema = z.object({
   signature: z
@@ -15,15 +15,15 @@ export type E2eeChallenge = z.infer<typeof E2eeChallengeSchema>;
 
 export const ResetCmkPasswordRequestSchema = z.object({
   challengeData: E2eeChallengeSchema,
-  encCmkWithPassword: UserKeys.shape.encCmkWithPassword,
+  encCmkWithPassword: UserKeysSchema.shape.encCmkWithPassword,
 });
 
 export type ResetCmkPasswordRequest = z.infer<typeof ResetCmkPasswordRequestSchema>;
 
 export const ResetRecoveryKeyRequestSchema = z.object({
   challengeData: E2eeChallengeSchema,
-  encCmkWithRecovery: UserKeys.shape.encCmkWithRecovery,
-  encRecoveryWithCmk: UserKeys.shape.encRecoveryWithCmk,
+  encCmkWithRecovery: UserKeysSchema.shape.encCmkWithRecovery,
+  encRecoveryWithCmk: UserKeysSchema.shape.encRecoveryWithCmk,
 });
 
 export type ResetRecoveryKeyRequest = z.infer<typeof ResetRecoveryKeyRequestSchema>;

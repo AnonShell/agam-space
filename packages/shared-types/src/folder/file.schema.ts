@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BASE64_REGEX, datetimeSchema, UlidSchema } from '../common.schema';
+import { BASE64_REGEX, bigintSchema, datetimeSchema, UlidSchema } from '../common.schema';
 
 export const FileSchema = z.object({
   id: UlidSchema,
@@ -13,7 +13,7 @@ export const FileSchema = z.object({
     .max(1000)
     .regex(BASE64_REGEX, 'Invalid base64 encoded metadata'),
   chunkCount: z.number().int().nonnegative(),
-  approxSize: z.number().int().nonnegative(),
+  approxSize: bigintSchema,
   createdAt: datetimeSchema,
   updatedAt: datetimeSchema,
 });

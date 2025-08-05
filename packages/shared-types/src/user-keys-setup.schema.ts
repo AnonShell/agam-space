@@ -20,7 +20,7 @@ export const KdfMetadataSchema = z
   })
   .strict();
 
-export const UserKeys = z
+export const UserKeysSchema = z
   .object({
     userId: z.string().min(1).max(50),
     createdAt: datetimeSchema,
@@ -46,7 +46,7 @@ export const UserKeys = z
   })
   .strict();
 
-export const UserKeysSetupSchema = UserKeys.pick({
+export const UserKeysSetupSchema = UserKeysSchema.pick({
   kdfMetadata: true,
   encryptionVersion: true,
   encCmkWithPassword: true,
@@ -56,5 +56,5 @@ export const UserKeysSetupSchema = UserKeys.pick({
 }).strip();
 
 export type KdfMetadata = z.infer<typeof KdfMetadataSchema>;
-export type UserKeys = z.infer<typeof UserKeys>;
+export type UserKeys = z.infer<typeof UserKeysSchema>;
 export type UserKeysSetup = z.infer<typeof UserKeysSetupSchema>;

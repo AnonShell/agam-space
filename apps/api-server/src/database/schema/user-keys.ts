@@ -35,5 +35,5 @@ export const userKeys = pgTable('user_keys', {
 });
 
 // Type inference for TypeScript
-export type UserKeys = typeof userKeys.$inferSelect;
+export type UserKeysEntity = typeof userKeys.$inferSelect;
 export type NewUserKeys = typeof userKeys.$inferInsert;
