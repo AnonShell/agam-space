@@ -41,9 +41,9 @@ export const databaseProviders = [
           idle_timeout: dbConfig.connectionTimeout / 1000,
           connect_timeout: 10,
           ssl: dbConfig.ssl ? { rejectUnauthorized: false } : false,
-          debug: false, // Suppress debug output
-          // Suppress PostgreSQL notices (like "schema already exists")
-          onnotice: () => {}, // Ignore notices to reduce log noise
+          debug: false,
+          onnotice: () => {},
+
         });
 
         // Create Drizzle instance with schema
@@ -51,11 +51,7 @@ export const databaseProviders = [
 
         // Test connection
         await client`SELECT 1`;
-        if (isDev) {
-          logger.log('✅ PostgreSQL connected');
-        } else {
-          logger.log('✅ Database ready');
-        }
+        logger.log('✅ Database ready');
 
         return db;
       } catch (error) {

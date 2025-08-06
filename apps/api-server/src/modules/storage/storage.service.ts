@@ -25,7 +25,7 @@ export interface CreateFileDirectoryData {
 
 /**
  * Storage service for managing filesystem operations
- * Uses Unix-style naming: u-<userId>/f-<fileId>/
+ * Uses Unix-style naming: u-<userId>/f/{shard1}/{shard2}/<fileId>/chunk.<index>
  */
 @Injectable()
 export class StorageService {
@@ -47,27 +47,18 @@ export class StorageService {
     return userDirPath;
   }
 
-  /**
-   * Create file directory: <FILES_DIR>/u-<userId>/f-<fileId>/
-   */
   async ensureFileDirectory(userId: string, fileId: string): Promise<string> {
     const fileDirPath = this.getFileDirectoryPath(userId, fileId);
-    this.ensureDirExists(fileDirPath);
+    this.ensureDirExists(this.getFileDirectoryPath(userId, fileId));
     return fileDirPath;
   }
 
-  /**
-   * Delete file directory: <FILES_DIR>/u-<userId>/d-<folderId>/f-<fileId>/
-   */
   async deleteFileDirectory(userId: string, fileId: string): Promise<string> {
     const fileDirPath = this.getFileDirectoryPath(userId, fileId);
     this.deleteDirectory(fileDirPath);
     return fileDirPath;
   }
 
-  /**
-   * Check if user directory exists
-   */
   userDirectoryExists(userId: string): boolean {
     return existsSync(this.getUserDirectoryPath(userId));
   }
@@ -96,9 +87,6 @@ export class StorageService {
     }
   }
 
-  /**
-   * Check if file directory exists
-   */
   fileDirectoryExists(userId: string, fileId: string): boolean {
     return existsSync(this.getFileDirectoryPath(userId, fileId));
   }
@@ -111,14 +99,14 @@ export class StorageService {
   }
 
   /**
-   * Get file directory path: <FILES_DIR>/u-<userId>/f-<fileId>/
+   * Get file directory path: <FILES_DIR>/u-<userId>/f/{shard1}/{shard2}/<fileId>
    */
   getFileDirectoryPath(userId: string, fileId: string): string {
-    return path.join(this.filesDir, `u-${userId}`, `f-${fileId}`);
+    return path.join(this.filesDir, `u-${userId}`, this.getFileShardPath(fileId));
   }
 
   /**
-   * Get chunk file path: <FILES_DIR>/u-<userId>/f-<fileId>/chunk-<index>
+   * Get chunk file path: <FILES_DIR>/u-<userId>/f/{shared-path}/chunk-<index>
    */
   getChunkFilePath(userId: string, fileId: string, chunkIndex: number): string {
     return path.join(this.getFileDirectoryPath(userId, fileId), `chunk-${chunkIndex}`);
@@ -145,6 +133,25 @@ export class StorageService {
       throw new Error(`Chunk file not found: ${relativePath}`);
     }
     return createReadStream(absolutePath);
+  }
+
+  /**
+   * Get the 2-level sharded relative path for a file (`f/{shard1}/{shard2}/{fileId}`)
+   *
+   * - Used to evenly distribute files across directories and avoid large folder fanout.
+   * - `shard1`: first character of the random part.
+   * - `shard2`: next two characters after `shard1`.
+   *
+   * @param fileId - Full ULID-based file ID
+   * @returns relative path using 2-level sharding
+   */
+  getFileShardPath(fileId: string): string {
+
+    const randomPart = fileId.slice(-16)
+    const shard1 = randomPart[0]
+    const shard2 = randomPart.slice(1, 3)
+
+    return `f/${shard1}/${shard2}/${fileId}`
   }
 
   async saveFileChunkStream(

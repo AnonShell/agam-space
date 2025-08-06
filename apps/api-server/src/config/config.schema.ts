@@ -30,8 +30,8 @@ export const databaseConfigSchema = z.object({
   password: z.string().default('dev_password_123'),
   database: z.string().default('agam_space'),
   ssl: z.boolean().default(false),
-  maxConnections: z.number().default(10),
-  connectionTimeout: z.number().default(30_000), // 30 seconds
+  maxConnections: z.number().default(100),
+  connectionTimeout: z.number().default(300_000),
 });
 
 // Directory configuration - paths resolved in loader

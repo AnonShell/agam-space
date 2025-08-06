@@ -24,7 +24,7 @@ export const CreateFileSchema = z.object({
   parentId: FileSchema.shape.parentId,
   metadataEncrypted: FileSchema.shape.metadataEncrypted,
   chunkCount: FileSchema.shape.chunkCount,
-}).required();
+});
 
 export const UpdateFileSchema = z.object({
   nameHash: CreateFileSchema.shape.nameHash.optional(),

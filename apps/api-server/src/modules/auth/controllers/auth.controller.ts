@@ -132,6 +132,8 @@ export class AuthController {
   ): Promise<LogoutResponseDto> {
     const sessionId = request.sessionId;
 
+    clearAuthCookies(res);
+
     if (!sessionId) {
       return {
         success: false,
@@ -139,8 +141,6 @@ export class AuthController {
     }
 
     const success = await this.authService.logout(sessionId);
-    clearAuthCookies(res);
-
     this.logger.log(
       `Logout ${success ? 'successful' : 'failed'} for session: ${sessionId.slice(0, 8)}...`
     );
