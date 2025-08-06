@@ -10,14 +10,14 @@ CREATE TABLE IF NOT EXISTS "file_chunks" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "files" (
 	"id" text PRIMARY KEY NOT NULL,
-	"owner_id" text NOT NULL,
-	"parent_folder_id" text,
+	"user_id" text NOT NULL,
+	"parent_id" text,
 	"name_hash" text NOT NULL,
 	"chunk_count" integer NOT NULL,
 	"metadata_encrypted" text NOT NULL,
 	"fk_wrapped" text NOT NULL,
 	"status" text DEFAULT 'pending' NOT NULL,
-	"approx_size" integer DEFAULT 0 NOT NULL,
+	"approx_size" bigint DEFAULT 0 NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
@@ -76,6 +76,15 @@ CREATE TABLE IF NOT EXISTS "users" (
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "user_quota" (
+	"user_id" text PRIMARY KEY NOT NULL,
+	"total_storage_quota" bigint DEFAULT 0 NOT NULL,
+	"used_storage" bigint DEFAULT 0 NOT NULL,
+	"refreshed_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "user_keys_history" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
@@ -100,13 +109,13 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "files" ADD CONSTRAINT "files_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "files" ADD CONSTRAINT "files_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "files" ADD CONSTRAINT "files_parent_folder_id_folders_id_fk" FOREIGN KEY ("parent_folder_id") REFERENCES "folders"("id") ON DELETE cascade ON UPDATE no action;
+ ALTER TABLE "files" ADD CONSTRAINT "files_parent_id_folders_id_fk" FOREIGN KEY ("parent_id") REFERENCES "folders"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -131,6 +140,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "user_sessions" ADD CONSTRAINT "user_sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "user_quota" ADD CONSTRAINT "user_quota_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
