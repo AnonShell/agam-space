@@ -327,11 +327,11 @@ export class FoldersService {
       )
       SELECT *
       FROM folder_path
-      ORDER BY depth DESC
-      LIMIT ${depthCount ?? 100};
+      ORDER BY depth ASC
+      LIMIT ${depthCount ?? 10};
     `);
 
-    return result.reverse().map(folder => {
+    return result.map(folder => {
       return FolderSchema.parse({
         id: folder[folders.id.name],
         nameHash: folder[folders.nameHash.name],
