@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { AbstractScheduledJob } from '@/common/base.jobs';
-import { QuotaSyncService } from '@/modules/quota/quota-sync.service';
+import { FilesService } from '@/modules/files/files.service';
 
 @Injectable()
-export class QuotaSyncJob extends AbstractScheduledJob {
+export class PendingFilesCleanupJob extends AbstractScheduledJob {
   protected readonly intervalMinutes = 5;
   protected readonly enabled = true;
-  protected readonly jobName = 'quota-sync-job';
+  protected readonly jobName = 'pending-files-cleanup-job';
 
   constructor(
     schedulerRegistry: SchedulerRegistry,
-    private readonly quotaSyncService: QuotaSyncService,
+    private readonly filesService: FilesService,
   ) {
     super(schedulerRegistry);
   }
 
   protected async run(): Promise<void> {
-    await this.quotaSyncService.syncAllUserQuotas();
+    await this.filesService.cleanupFilesInStatus('pending', 1000, 5 * 60);
   }
 }

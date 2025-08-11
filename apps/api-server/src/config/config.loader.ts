@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -10,11 +10,11 @@ import {
   corsConfigSchema,
   databaseConfigSchema,
   docsConfigSchema,
-  envMappings,
   fileConfigSchema,
   securityConfigSchema,
   serverConfigSchema,
 } from './config.schema';
+import { loadFromEnvironment } from '@/config/env.loader';
 
 interface ConfigOptions {
   configFile?: string;
@@ -25,7 +25,8 @@ class ConfigLoader {
   private static instance: ConfigLoader;
   private config: AppConfig | null = null;
 
-  private constructor() {}
+  private constructor() {
+  }
 
   static getInstance(): ConfigLoader {
     if (!ConfigLoader.instance) {
@@ -45,28 +46,27 @@ class ConfigLoader {
 
     console.log('🚀 Bootstrapping Agam Space...');
 
-    // Step 1: Load ENV (or CLI args) and validate DATA_DIR
-    const envConfig = this.loadFromEnvironment();
-    this.validateDataDir(envConfig);
+    // Step 1: Load ENV
+    const envConfig = loadFromEnvironment();
 
-    // Step 2: Resolve final directory paths
+    // Step 2: Load config.json from CONFIG_DIR
+    const fileConfig = this.loadOrCreateConfigFile(options.configFile ?? this.getConfigFilePath());
+
+    // Step 3: Validate DATA_DIR early
+    this.validateDataDir(this.mergeConfigs(envConfig, fileConfig, {}));
+
+    // Step 4: Resolve final directory paths
     const resolvedDirs = this.resolveDirectoryPaths(envConfig);
 
-    // Step 3: Ensure all paths exist
+    // Step 5: Ensure all paths exist
     const dirsCreated = this.createRequiredDirectories(resolvedDirs);
 
-    // Step 4: Load config.json from CONFIG_DIR
-    const configFile = options.configFile || join(resolvedDirs.configDir, 'config.json');
-    const fileConfig = this.loadOrCreateConfigFile(configFile);
-
-    // Step 5: Merge final config (ENV > config.json > defaults)
+    // Step 6: Final merge + validation
     const mergedConfig = this.mergeConfigs(envConfig, fileConfig, resolvedDirs);
 
-    // Step 6: Validate final config
     try {
       const validatedConfig = configSchema.parse(mergedConfig);
 
-      // Step 7: Log configuration summary
       this.logConfigSummary(validatedConfig, dirsCreated);
 
       this.config = validatedConfig;
@@ -78,23 +78,6 @@ class ConfigLoader {
       }
       throw new Error(`Invalid configuration: ${error}`);
     }
-  }
-
-  /**
-   * Step 1: Load environment variables and validate DATA_DIR
-   */
-  private loadFromEnvironment(): any {
-    const envConfig: any = {};
-
-    // Process each mapping
-    for (const [configPath, envVar] of Object.entries(envMappings)) {
-      const envValue = process.env[envVar];
-      if (envValue !== undefined) {
-        this.setNestedValue(envConfig, configPath, this.parseEnvValue(envValue));
-      }
-    }
-
-    return envConfig;
   }
 
   /**
@@ -119,7 +102,7 @@ class ConfigLoader {
         } else {
           throw new Error('Cannot access default Docker path');
         }
-      } catch (err){
+      } catch (err) {
         // Priority 3: Fail with helpful message
         console.error(`❌ DATA_DIR resolution failed! - ${err instanceof Error ? err.message : err}`);
         console.error(`   Neither DATA_DIR environment variable is set nor ${dockerDataDir} is available`);
@@ -136,6 +119,11 @@ class ConfigLoader {
       envConfig.directories = {};
     }
     envConfig.directories.dataDir = resolvedDataDir;
+  }
+
+  private getConfigFilePath(): string {
+    const configDir = process.env.CONFIG_DIR || '/config';
+    return join(configDir, 'config.json');
   }
 
   /**
@@ -189,7 +177,7 @@ class ConfigLoader {
       } catch (error) {
         console.error(
           `❌ Failed to create ${name} directory ${path}:`,
-          error instanceof Error ? error.message : error
+          error instanceof Error ? error.message : error,
         );
         throw error;
       }
@@ -212,18 +200,13 @@ class ConfigLoader {
         const content = readFileSync(configPath, 'utf8');
         return JSON.parse(content);
       } else {
-        console.log(`📝 Creating default config: ${configPath}`);
-
-        // Use Zod schema defaults by parsing individual sections
-        const defaultConfig = this.getDefaultConfigFromSchema();
-        writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2), 'utf8');
-        console.log(`✅ Default config created`);
-        return defaultConfig;
+        console.warn(`⚠️ No config.json found at ${configPath}. Proceeding with environment variables and schema defaults.`);
+        return {};
       }
     } catch (error) {
       console.error(
-        `❌ Failed to handle config file ${configPath}:`,
-        error instanceof Error ? error.message : error
+        `❌ Failed to fetch config file ${configPath}:`,
+        error instanceof Error ? error.message : error,
       );
       throw error;
     }
@@ -234,13 +217,13 @@ class ConfigLoader {
    */
   private getDefaultConfigFromSchema(): any {
     // Parse each schema section with empty object to get Zod defaults
-    const serverDefaults = serverConfigSchema.parse({});
-    const corsDefaults = corsConfigSchema.parse({});
-    const docsDefaults = docsConfigSchema.parse({});
-    const databaseDefaults = databaseConfigSchema.parse({});
-    const securityDefaults = securityConfigSchema.parse({});
-    const filsDefaults =  fileConfigSchema.parse({});
-    const accountDefaults = accountConfigSchema.parse({});
+    const serverDefaults = serverConfigSchema.partial().parse({});
+    const corsDefaults = corsConfigSchema.partial().parse({});
+    const docsDefaults = docsConfigSchema.partial().parse({});
+    const databaseDefaults = databaseConfigSchema.partial().parse({});
+    const securityDefaults = securityConfigSchema.partial().parse({});
+    const filsDefaults = fileConfigSchema.partial().parse({});
+    const accountDefaults = accountConfigSchema.partial().parse({});
 
     return {
       server: serverDefaults,
@@ -273,45 +256,6 @@ class ConfigLoader {
     this.deepMerge(baseConfig, envConfig);
 
     return baseConfig;
-  }
-
-  /**
-   * Parse environment variable value to appropriate type
-   */
-  private parseEnvValue(value: string): any {
-    // Boolean values
-    if (value.toLowerCase() === 'true') return true;
-    if (value.toLowerCase() === 'false') return false;
-
-    // Numeric values
-    if (/^\d+$/.test(value)) return Number.parseInt(value, 10);
-    if (/^\d+\.\d+$/.test(value)) return Number.parseFloat(value);
-
-    // Array values (comma-separated)
-    if (value.includes(',')) {
-      return value.split(',').map(v => v.trim());
-    }
-
-    // String values
-    return value;
-  }
-
-  /**
-   * Set nested value in object using dot notation
-   */
-  private setNestedValue(obj: any, path: string, value: any): void {
-    const keys = path.split('.');
-    let current = obj;
-
-    for (let i = 0; i < keys.length - 1; i++) {
-      const key = keys[i];
-      if (!(key in current) || typeof current[key] !== 'object') {
-        current[key] = {};
-      }
-      current = current[key];
-    }
-
-    current[keys.at(-1)] = value;
   }
 
   /**
@@ -354,7 +298,7 @@ class ConfigLoader {
     console.log(`   API Prefix: /${config.server.apiPrefix}`);
     console.log(`   Data Directory: ${config.directories.dataDir}`);
     console.log(
-      `   Database: ${config.database.host}:${config.database.port}/${config.database.database}`
+      `   Database: ${config.database.host}:${config.database.port}/${config.database.database}`,
     );
     if (config.docs.enabled) {
       console.log(`   API Docs: /${config.docs.path}`);
@@ -390,19 +334,7 @@ class ConfigLoader {
       return { valid: false, errors };
     }
   }
-
-  /**
-   * Generate example configuration file
-   */
-  generateExampleConfig(): string {
-    return JSON.stringify(this.getDefaultConfigFromSchema(), null, 2);
-  }
 }
 
 // Export singleton instance
 export const configLoader = ConfigLoader.getInstance();
-
-// Legacy function for NestJS compatibility
-export const loadConfig = () => {
-  return configLoader.loadConfig();
-};

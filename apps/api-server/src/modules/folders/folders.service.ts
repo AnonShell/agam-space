@@ -106,7 +106,7 @@ export class FoldersService {
     this.logger.log(`📁 Patching folder ${folderId} for user ${userId}`, updates);
 
     const existingFolder = await this.getFolder(userId, folderId);
-    if (!existingFolder) {
+    if (!existingFolder || existingFolder.status !== 'active') {
       throw new NotFoundException('Folder not found');
     }
 
@@ -126,19 +126,19 @@ export class FoldersService {
       allowedUpdates.fkWrapped = updates.fkWrapped;
     }
 
-    if (updates.nameHash) {
-      const folderWithName = await this.hasFolderWithName(
-        userId,
-        updates.nameHash,
-        allowedUpdates.parentId || existingFolder.parentId
+    const folderWithName = await this.hasFolderWithName(
+      userId,
+      updates.nameHash || existingFolder.nameHash,
+      updates.parentId || existingFolder.parentId
+    );
+    if (folderWithName) {
+      throw new ConflictException(
+        'A folder with this name already exists at this level'
       );
-      if (folderWithName) {
-        throw new ConflictException(
-          'A folder with this name already exists at this level, cannot update'
-        );
-      }
-      allowedUpdates.nameHash = updates.nameHash;
+    }
 
+    if (updates.nameHash) {
+      allowedUpdates.nameHash = updates.nameHash;
       if(!updates.metadataEncrypted) {
         throw new BadRequestException('metadataEncrypted is required when updating nameHash');
       }

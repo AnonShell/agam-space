@@ -10,6 +10,7 @@ import { patchNestJsSwagger } from 'nestjs-zod';
 import type { FastifyCookieOptions } from '@fastify/cookie';
 import fastifyCookie from '@fastify/cookie';
 import { AllExceptionsFilter } from '@/common/filters/all-exceptions.filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
@@ -32,24 +33,18 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Get config using our wrapper service
   const configService = app.get(AppConfigService);
   const config = configService.getConfig();
   const { APP_CONSTANTS } = await import('./config/config.schema');
 
   await app.register(fastifyCookie as any, {} as FastifyCookieOptions);
 
-  // Security middleware - Helmet for security headers
-  // app.use(helmet({
-  //   contentSecurityPolicy: {
-  //     directives: {
-  //       defaultSrc: ["'self'"],
-  //       styleSrc: ["'self'", "'unsafe-inline'"], // For Swagger UI
-  //       scriptSrc: ["'self'"],
-  //       imgSrc: ["'self'", "data:", "https:"],
-  //     },
-  //   },
-  // }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // Run database migrations using the provider's connection
   await runMigrations(app);

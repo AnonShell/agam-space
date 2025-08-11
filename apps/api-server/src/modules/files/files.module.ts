@@ -11,6 +11,7 @@ import { FileChunkService } from '@/modules/files/file-chunk.service';
 import { FileChunksController } from '@/modules/files/file-chunks.controller';
 import { FoldersModule } from '@/modules/folders/folders.module';
 import { UserQuotaModule } from '@/modules/quota/quota.module';
+import { PendingFilesCleanupJob } from '@/modules/files/jobs/pending-files-cleanup.job';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { UserQuotaModule } from '@/modules/quota/quota.module';
     forwardRef(() => UserQuotaModule)
   ],
   controllers: [FilesController, FileChunksController],
-  providers: [FilesService, FileChunkService],
+  providers: [FilesService, FileChunkService, PendingFilesCleanupJob],
   exports: [FilesService, FileChunkService],
 })
 export class FilesModule {}

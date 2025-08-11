@@ -24,14 +24,14 @@ export const docsConfigSchema = z.object({
 
 // Database configuration - PostgreSQL only
 export const databaseConfigSchema = z.object({
-  host: z.string().default('localhost'),
+  host: z.string(),
   port: portSchema.default(5432),
-  username: z.string().default('agam_space'),
-  password: z.string().default('dev_password_123'),
+  username: z.string(),
+  password: z.string(),
   database: z.string().default('agam_space'),
   ssl: z.boolean().default(false),
   maxConnections: z.number().default(100),
-  connectionTimeout: z.number().default(300_000),
+  connectionTimeout: z.number().default(30_000),
 });
 
 // Directory configuration - paths resolved in loader
@@ -46,7 +46,7 @@ export const directoryConfigSchema = z.object({
 // file configuration
 export const fileConfigSchema = z.object({
   maxFileSize: z.coerce.number().int().min(1).max(1_000_000_000).default(1_000_000_000), // 1GB default
-  chunkSize: z.coerce.number().int().min(1).max(32_000_000).default(8_000_000), // 8MB default
+  chunkSize: z.coerce.number().int().min(1).max(32 * 1024 * 1024).default(8 * 1024 * 1024), // 8MB default chunk size
   uploadConcurrency: z.coerce.number().int().min(1).max(10).default(2), // Max concurrent uploads
   // maxFileMetadataSize: z.coerce.number().int().min(1).max(10_000).default(1000), // Max file metadata size in bytes
 

@@ -23,6 +23,14 @@ export interface CreateFileDirectoryData {
   fileId: string;
 }
 
+
+interface SafeChunkPipelineOptions {
+  input: NodeJS.ReadableStream;
+  outputPath: string;
+  maxChunkSize: number; // in bytes
+  highWaterMark?: number; // default: 16KB
+}
+
 /**
  * Storage service for managing filesystem operations
  * Uses Unix-style naming: u-<userId>/f/{shard1}/{shard2}/<fileId>/chunk.<index>
@@ -147,11 +155,11 @@ export class StorageService {
    */
   getFileShardPath(fileId: string): string {
 
-    const randomPart = fileId.slice(-16)
-    const shard1 = randomPart[0]
-    const shard2 = randomPart.slice(1, 3)
+    const randomPart = fileId.slice(-16);
+    const shard1 = randomPart[0];
+    const shard2 = randomPart.slice(1, 3);
 
-    return `f/${shard1}/${shard2}/${fileId}`
+    return `f/${shard1}/${shard2}/${fileId}`;
   }
 
   async saveFileChunkStream(
@@ -159,7 +167,7 @@ export class StorageService {
     chunkIndex: number,
     stream: Readable,
     checksum: string | undefined = undefined,
-    neededChunkSize: number | undefined = undefined
+    neededChunkSize: number | undefined = undefined,
   ): Promise<{ size: number; chunkFilePath: string }> {
     const chunkFilePath = path.join(fileDirPath, `chunk-${chunkIndex}`);
     const tempPath = chunkFilePath + '.part';
@@ -177,10 +185,16 @@ export class StorageService {
         transform(chunk, _, cb) {
           hasher.update(chunk);
           size += chunk.length;
+
+          if (neededChunkSize && size > neededChunkSize * 1.01) {
+            cb(new Error(`Chunk too large: received ${size} bytes`));
+            return;
+          }
+
           cb(null, chunk);
         },
       }),
-      createWriteStream(tempPath)
+      createWriteStream(tempPath),
     );
 
     const actualChecksum = hasher.digest('hex');
@@ -191,13 +205,12 @@ export class StorageService {
     }
 
     // chunk size validation with 10% tolerance
-    if (neededChunkSize && size > neededChunkSize * 0.9) {
+    if (neededChunkSize && size > neededChunkSize * 1.01) {
       rmSync(tempPath);
       throw new Error(`Chunk size mismatch: expected ${neededChunkSize}, got ${size}`);
     }
 
     await fsPromises.rename(tempPath, chunkFilePath);
-
     return {
       size,
       chunkFilePath: path.relative(this.filesDir, chunkFilePath),

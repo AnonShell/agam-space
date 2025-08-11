@@ -5,7 +5,6 @@ import {
   Head,
   HttpCode,
   HttpStatus,
-  Logger,
   NotFoundException,
   Param,
   Put,
@@ -20,6 +19,8 @@ import { FileChunkService } from './file-chunk.service';
 import { AuthRequired, CurrentUser } from '../auth/auth.decorator';
 import { FilesService } from './files.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
+import { logMem } from '@/modules/auth/utils/debugging';
+import { cleanupRequestStream } from '@/common/helpers/stream.utils';
 
 
 @ApiTags('File Chunks')
@@ -39,8 +40,9 @@ export class FileChunksController {
     @Param('fileId') fileId: string,
     @Param('chunkIndex') chunkIndex: number,
     @CurrentUser() user: AuthenticatedUser,
-    @Req() req: FastifyRequest
+    @Req() req: FastifyRequest,
   ) {
+
     const checksum = req.headers['x-checksum'] as string | undefined;
 
     const fileDirPath = await this.filesService.ensureFileDirectory(user.id, fileId);
@@ -50,10 +52,10 @@ export class FileChunksController {
       fileId,
       chunkIndex,
       checksum,
-      req.raw
+      req.raw,
     );
 
-    return { message: 'Chunk uploaded successfully' };
+    cleanupRequestStream(req.raw);
   }
 
   @Get('/:chunkIndex')
@@ -63,7 +65,7 @@ export class FileChunksController {
     @Param('fileId') fileId: string,
     @Param('chunkIndex') chunkIndex: number,
     @CurrentUser() user: AuthenticatedUser,
-    @Res() response: FastifyReply
+    @Res() response: FastifyReply,
   ): Promise<any> {
     const userId = user.id;
     // TODO: check if the chunk belongs to the user
@@ -72,7 +74,7 @@ export class FileChunksController {
     if (!file) {
       throw new BadRequestException('File not found');
     }
-    if(['pending', 'deleted', 'trashed'].includes(file.status)) {
+    if (['pending', 'deleted', 'trashed'].includes(file.status)) {
       throw new NotFoundException('File is not available for download');
     }
 

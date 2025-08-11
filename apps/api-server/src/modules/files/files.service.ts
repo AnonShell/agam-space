@@ -1,5 +1,5 @@
 import { ConflictException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { and, eq, inArray, isNull, not, or } from 'drizzle-orm';
+import { and, eq, inArray, isNull, not, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
 import { DATABASE_CONNECTION, type FileEntity, files, NewFile } from '@/database';
@@ -182,7 +182,7 @@ export class FilesService {
           eq(files.userId, userId),
           isValidFolderAndNotRoot(parentFolderId) ? eq(files.parentId, parentFolderId) : isNull(files.parentId),
           eq(files.nameHash, nameHash),
-          not(inArray(files.status, ['deleted', 'trashed'])),
+          not(inArray(files.status, ['pending','deleted', 'trashed'])),
         ),
       )
       .limit(1);
@@ -206,10 +206,11 @@ export class FilesService {
     if (data.parentId) {
       // Check if the new parent folder exists
       const parentFolder = await this.foldersService.getFolder(userId, data.parentId);
-      if (!parentFolder) {
+      if (!parentFolder || parentFolder.status !== 'active') {
         throw new NotFoundException('Target folder not found');
       }
 
+      //TODO validate wrapped key by decoding and checking structure
       if (!data.fkWrapped) {
         throw new ConflictException('Cannot move file without providing a wrapped file key');
       }
@@ -218,16 +219,17 @@ export class FilesService {
       updates.fkWrapped = data.fkWrapped;
     }
 
+    // Check for duplicate name at same level
+    const hasExisting = await this.hasFileWithNameHash(
+      userId,
+      data.parentId || file.parentId,
+      data.nameHash || file.nameHash,
+    );
+    if (hasExisting) {
+      throw new ConflictException('A file with this name already exists at this level');
+    }
+
     if (data.nameHash) {
-      // Check for duplicate name at same level
-      const hasExisting = await this.hasFileWithNameHash(
-        userId,
-        updates.parentId || file.parentId,
-        data.nameHash,
-      );
-      if (hasExisting) {
-        throw new ConflictException('A file with this name already exists at this level');
-      }
       updates.nameHash = data.nameHash;
 
       if (!data.metadataEncrypted) {
@@ -349,7 +351,7 @@ export class FilesService {
       throw new NotFoundException('File not found');
     }
 
-    if (file.status !== 'deleted') {
+    if (!['deleted', 'pending'].includes(file.status)) {
       throw new ConflictException(`File is status ${file.status} cannot be cleaned up`);
     }
 
@@ -453,6 +455,7 @@ export class FilesService {
       return 0;
     }
 
+
     for (const file of filesToCleanup) {
       try {
         await this.cleanupFile(file.userId, file);
@@ -464,6 +467,44 @@ export class FilesService {
     this.logger.log('Cleanup completed');
     return filesToCleanup.length;
   }
+
+  async cleanupFilesInStatus(status: string,
+                             batchSize: number = 1000,
+                             olderThanSecs?: number): Promise<number> {
+    this.logger.log(`Cleaning up files in ${status} status`);
+
+    const conditions = [eq(files.status, status)];
+
+    if (olderThanSecs && olderThanSecs > 0) {
+      conditions.push(
+        sql`${files.updatedAt} < now() - make_interval(secs => ${olderThanSecs})`
+
+      );
+    }
+
+    const filesToCleanup = await this.db
+      .select()
+      .from(files)
+      .where(and(...conditions))
+      .limit(batchSize);
+
+    if (filesToCleanup.length === 0) {
+      this.logger.log('No files to clean up');
+      return 0;
+    }
+
+    for (const file of filesToCleanup) {
+      try {
+        await this.cleanupFile(file.userId, file);
+      } catch (error) {
+        this.logger.error(`Failed to clean up file ${file.id}:`, error);
+      }
+    }
+
+    this.logger.log('Cleanup completed');
+    return filesToCleanup.length;
+  }
+
 
   async markFilesAsDeleted(fileIds: string[]) {
     if (fileIds.length === 0) {

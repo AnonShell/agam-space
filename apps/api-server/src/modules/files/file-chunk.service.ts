@@ -4,7 +4,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, Logger } fr
 import { and, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
-import { FileChunk, fileChunks, NewFileChunk } from '../../database/schema';
+import { FileChunk, fileChunks, NewFileChunk } from '@/database';
 
 import { DATABASE_CONNECTION } from '@/database';
 import { StorageService } from '@/modules/storage/storage.service';
@@ -16,7 +16,8 @@ export class FileChunkService {
   private readonly logger = new Logger(FileChunkService.name);
   constructor(
     @Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
-    private readonly storageService: StorageService
+    private readonly storageService: StorageService,
+    private readonly configService: AppConfigService
   ) {}
 
   async saveFileChunkStream(
@@ -26,7 +27,12 @@ export class FileChunkService {
     checksum: string,
     stream: Readable
   ): Promise<FileChunk> {
-    if (await this.chunkExists(fileId, chunkIndex)) {
+
+    const exitingEntity = await this.findChunk(fileId, chunkIndex);
+    if (exitingEntity) {
+      if (exitingEntity.checksum === checksum) {
+        return exitingEntity;
+      }
       throw new ConflictException(
         `Chunk with index ${chunkIndex} for file ${fileId} already exists`
       );
@@ -36,14 +42,13 @@ export class FileChunkService {
       throw new BadRequestException('Checksum is required');
     }
 
-    //TODO check chunk size against config limits
-
     // TODO: handle errors from storage service and mark chunk as failed
     const { size, chunkFilePath } = await this.storageService.saveFileChunkStream(
       fileDirPath,
       chunkIndex,
       stream,
-      checksum
+      checksum,
+      this.configService.getConfig().files.chunkSize
     );
 
     const newChunk: NewFileChunk = {
