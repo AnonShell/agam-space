@@ -215,14 +215,19 @@ export class AuthService {
   /**
    * Logout from current session
    */
-  async logout(sessionId: string): Promise<boolean> {
-    if (!sessionId) {
+  async logout(sessionToken: string): Promise<boolean> {
+    if (!sessionToken) {
       return false;
     }
 
-    const success = await this.sessionService.deleteSession(sessionId);
+    const session = await this.sessionService.findActiveSession(sessionToken);
+    if (!session) {
+      return false;
+    }
+
+    const success = await this.sessionService.deleteSession(session.id);
     if (success) {
-      this.logger.log(`Session logged out: ${sessionId.slice(0, 8)}...`);
+      this.logger.log(`Session logged out: ${session.id.slice(0, 8)}...`);
     }
 
     return success;

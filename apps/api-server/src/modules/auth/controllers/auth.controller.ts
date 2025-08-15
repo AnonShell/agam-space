@@ -27,6 +27,7 @@ import { AuthService } from '../services/auth.service';
 import { SsoService } from '@/modules/sso/sso.service';
 import { createHash } from 'crypto';
 import { clearAuthCookies, setAuthCookies } from '@/modules/auth/utils/cookies';
+import { AgamCookies } from '@/modules/auth/auth.models';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -110,9 +111,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  @AuthRequired()
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
   @ApiOperation({
     summary: 'User logout',
     description: 'Logout from current session and invalidate token',
@@ -130,22 +129,16 @@ export class AuthController {
     @Req() request: FastifyRequest,
     @Res() res: FastifyReply
   ): Promise<LogoutResponseDto> {
-    const sessionId = request.sessionId;
 
-    clearAuthCookies(res);
+    const sessionToken = request.cookies?.[AgamCookies.ACCESS_TOKEN];
 
-    if (!sessionId) {
-      return {
-        success: false,
-      };
-    }
-
-    const success = await this.authService.logout(sessionId);
+    const success = await this.authService.logout(sessionToken);
     this.logger.log(
-      `Logout ${success ? 'successful' : 'failed'} for session: ${sessionId.slice(0, 8)}...`
+      `Logout ${success ? 'successful' : 'failed'} for session: ${sessionToken.slice(0, 3)}...`
     );
 
-    res.send({
+    clearAuthCookies(res);
+    return res.send({
       success,
     });
   }

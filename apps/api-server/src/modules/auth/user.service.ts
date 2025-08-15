@@ -211,4 +211,28 @@ export class UserService {
 
     return this.passwordService.verifyPassword(password, user.passwordHash);
   }
+
+  async overridePassword(
+    userId: string,
+    newPassword: string
+  ): Promise<void> {
+    if (!newPassword || newPassword.length < 8) {
+      throw new BadRequestException('New password must be at least 8 characters long');
+    }
+
+    const user = await this.findUserEntityForAuth(userId);
+    if (!user) {
+      throw new BadRequestException(`User with ID ${userId} not found`);
+    }
+
+    const passwordHash = await this.passwordService.hashPassword(newPassword);
+
+    await this.db
+      .update(users)
+      .set({
+        passwordHash,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
 }

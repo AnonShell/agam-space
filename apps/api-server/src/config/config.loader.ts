@@ -52,20 +52,22 @@ class ConfigLoader {
     // Step 2: Load config.json from CONFIG_DIR
     const fileConfig = this.loadOrCreateConfigFile(options.configFile ?? this.getConfigFilePath());
 
+    const merged = this.mergeConfigs(envConfig, fileConfig, {});
+
     // Step 3: Validate DATA_DIR early
-    this.validateDataDir(this.mergeConfigs(envConfig, fileConfig, {}));
+    this.validateDataDir(merged);
 
     // Step 4: Resolve final directory paths
-    const resolvedDirs = this.resolveDirectoryPaths(envConfig);
+    const resolvedDirs = this.resolveDirectoryPaths(merged);
 
     // Step 5: Ensure all paths exist
     const dirsCreated = this.createRequiredDirectories(resolvedDirs);
 
     // Step 6: Final merge + validation
-    const mergedConfig = this.mergeConfigs(envConfig, fileConfig, resolvedDirs);
+    const finalConfig = this.mergeConfigs(envConfig, fileConfig, resolvedDirs);
 
     try {
-      const validatedConfig = configSchema.parse(mergedConfig);
+      const validatedConfig = configSchema.parse(finalConfig);
 
       this.logConfigSummary(validatedConfig, dirsCreated);
 

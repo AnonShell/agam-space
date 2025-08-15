@@ -5,6 +5,7 @@ import { AppConfigService } from '../../config/config.service';
 import { DatabaseService } from '../../database/database.service';
 import { ServerConfigService } from '@/modules/server-info/service/server-config.service';
 import { ServerConfigDto } from '@/modules/server-info/types';
+import { APP_CONSTANTS } from '@/config/config.schema';
 
 @ApiTags('server')
 @Controller('/server')
@@ -19,23 +20,12 @@ export class ServerInfoController {
   @ApiOperation({ summary: 'Health check endpoint' })
   @ApiResponse({ status: 200, description: 'Server is healthy' })
   async getHealth() {
-    const server = this.configService.getServer();
     const dbHealthy = await this.databaseService.healthCheck();
 
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      service: 'Agam Space',
-      version: process.env.APP_VERSION || '1.0.0',
-      environment: server?.nodeEnv || 'production',
-      server: {
-        host: this.configService.getHost(),
-        port: this.configService.getPort(),
-        apiPrefix: this.configService.getApiPrefix(),
-      },
-      database: {
-        healthy: dbHealthy,
-      },
+      database: dbHealthy ? 'ok' : 'unhealthy',
       uptime: process.uptime(),
     };
   }
@@ -49,5 +39,21 @@ export class ServerInfoController {
   })
   getConfig(): ServerConfigDto {
     return this.serverConfigService.getConfig();
+  }
+
+  @Get('/info')
+  @ApiOperation({ summary: 'Get server information' })
+  @ApiResponse({
+    status: 200,
+    description: 'Server Information retrieved successfully',
+  })
+  getServerInfo() {
+
+    const server = this.configService.getServer();
+    return {
+      version: APP_CONSTANTS.version,
+      timestamp: new Date().toISOString(),
+      environment: server.nodeEnv || 'production',
+    };
   }
 }
