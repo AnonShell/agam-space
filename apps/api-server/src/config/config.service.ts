@@ -101,4 +101,24 @@ export class AppConfigService {
   getHost(): string {
     return this.getServer()?.host || '0.0.0.0';
   }
+
+  /**
+   * Get domain value (for self-hosted, WebAuthn, etc.)
+   */
+  getDomain(): string {
+    // Prefer explicit config, fallback to localhost
+    return this.configService.get('domain.domain') || 'localhost';
+  }
+
+  /**
+   * Get WebAuthn config (origin and rpId)
+   */
+  getWebauthnConfig(): { origin: string; rpId: string } {
+    const domain = this.getDomain();
+    // Origin: full URL (protocol + domain + port)
+    const origin = this.configService.get('webauthn.origin') || domain;
+    // RP ID: domain only, no protocol/port
+    const rpId = this.configService.get('webauthn.rpId') || domain.replace(/^https?:\/\//, '').replace(/:\d+$/, '');
+    return { origin, rpId };
+  }
 }

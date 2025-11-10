@@ -77,8 +77,20 @@ export const ssoConfigSchema = z
   })
   .optional();
 
+// Domain configuration
+export const domainConfigSchema = z.object({
+  domain: z.string().min(1).default('localhost'),
+}).optional();
+
+// WebAuthn configuration
+export const webauthnConfigSchema = z.object({
+  origin: z.string().url(),
+  rpId: z.string().default('localhost'),
+}).optional();
+
 // Main configuration schema - only user-configurable settings
 export const configSchema = z.object({
+  domain: domainConfigSchema.default({ domain: 'localhost' }),
   server: serverConfigSchema,
   cors: corsConfigSchema,
   docs: docsConfigSchema,
@@ -88,6 +100,7 @@ export const configSchema = z.object({
   security: securityConfigSchema,
   account: accountConfigSchema,
   sso: ssoConfigSchema,
+  webauthn: webauthnConfigSchema,
 });
 
 export type AppConfig = z.infer<typeof configSchema>;
@@ -155,4 +168,11 @@ export const envMappings = {
   'sso.clientSecret': 'SSO_CLIENT_SECRET',
   'sso.redirectUri': 'SSO_REDIRECT_URI',
   'sso.autoCreateUser': 'SSO_AUTO_CREATE_USER',
+
+  // Domain
+  'domain.domain': 'DOMAIN',
+
+  // WebAuthn
+  'webauthn.origin': 'WEBAUTHN_ORIGIN',
+  'webauthn.rpId': 'WEBAUTHN_RPID',
 } as const;

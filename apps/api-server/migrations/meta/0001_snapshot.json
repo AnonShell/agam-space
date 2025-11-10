@@ -1,6 +1,6 @@
 {
-  "id": "95aea2a6-4470-464a-9c16-0fa67d317a05",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "351b3c94-50dd-4159-a263-14142db217af",
+  "prevId": "95aea2a6-4470-464a-9c16-0fa67d317a05",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -303,8 +303,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "public_key": {
-          "name": "public_key",
+        "webauthn_public_key": {
+          "name": "webauthn_public_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "device_public_key": {
+          "name": "device_public_key",
           "type": "text",
           "primaryKey": false,
           "notNull": true

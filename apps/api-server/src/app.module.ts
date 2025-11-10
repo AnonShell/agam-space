@@ -7,7 +7,7 @@ import { FilesModule } from './modules/files/files.module';
 import { FoldersModule } from './modules/folders/folders.module';
 import { E2eeKeysModule } from '@/modules/user-key/e2ee-keys.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { APP_PIPE } from '@nestjs/core';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { ServerInfoModule } from '@/modules/server-info/server-info.module';
 import { TrashModule } from './modules/trash/trash.module';
@@ -15,7 +15,7 @@ import { SsoModule } from '@/modules/sso/sso.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'node:path';
 import { UserQuotaModule } from '@/modules/quota/quota.module';
-import { RolesGuard } from '@/modules/auth/decorators/roles.guard';
+import { TrustedDevicesModule } from '@/modules/trusted-devices/trusted-devices.module';
 
 @Module({
   imports: [
@@ -50,6 +50,7 @@ import { RolesGuard } from '@/modules/auth/decorators/roles.guard';
     FoldersModule,
     TrashModule,
     UserQuotaModule,
+    TrustedDevicesModule,
   ],
   providers: [
     // Global rate limiting guard
