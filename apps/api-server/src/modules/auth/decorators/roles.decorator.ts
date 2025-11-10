@@ -5,7 +5,6 @@ import { RolesGuard } from '@/modules/auth/decorators/roles.guard';
 export const Roles = (...roles: UserRole[]) => SetMetadata('roles', roles);
 
 export const RequireAdmin = () => RequireRoles(UserRole.ADMIN);
-export const RequireOwner = () => RequireRoles(UserRole.OWNER);
 
 export function RequireRoles(...roles: UserRole[]) {
   return applyDecorators(

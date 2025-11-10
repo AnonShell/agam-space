@@ -7,7 +7,7 @@ import { type NewUser, type UserDB, users } from '../../database/schema';
 
 import { UserRole } from './auth.models';
 import { PasswordService } from './services/password.service';
-import { User, UserSchema } from '@agam-space/shared-types';
+import { User, UserSchema, UserStatus, UserStatusSchema } from '@agam-space/shared-types';
 import { QuotaService } from '@/modules/quota/quota.service';
 import { AppConfigService } from '@/config/config.service';
 
@@ -37,6 +37,11 @@ export class UserService {
     private readonly quotaService: QuotaService,
     private readonly configService: AppConfigService
   ) {}
+
+  async listUsers(): Promise<User[]> {
+    const usersList = await this.db.select().from(users);
+    return usersList.map((user) => this.toUserDto(user));
+  }
 
   /**
    * Create a new user (signup)
@@ -69,7 +74,7 @@ export class UserService {
       role,
       oidcProvider: userData.oidcProvider || null,
       oidcSubject: userData.oidcSubject || null,
-      isActive: true,
+      status: UserStatus.ACTIVE,
       emailVerified: !!(userData.email && userData.oidcProvider),
     };
 

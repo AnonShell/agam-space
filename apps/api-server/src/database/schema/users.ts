@@ -20,8 +20,7 @@ export const users = pgTable(
     // User roles and permissions
     role: text('role').notNull().default('user'), // 'user', 'admin', 'owner'
 
-    // Account status
-    isActive: boolean('is_active').notNull().default(true), // 'true', 'false' for easy env var mapping
+    status: text('status').notNull().default('active'), // 'active', 'disabled', 'deleted'
     emailVerified: boolean('email_verified').notNull().default(false), // true if email is verified, false otherwise
 
     // Timestamps

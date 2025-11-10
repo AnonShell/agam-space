@@ -10,6 +10,8 @@ import { UserService } from './user.service';
 import { SsoModule } from '@/modules/sso/sso.module';
 import { MeController } from '@/modules/auth/controllers/me.controller';
 import { UserQuotaModule } from '@/modules/quota/quota.module';
+import { UserController } from '@/modules/auth/controllers/user.controller';
+import { AdminUserController } from '@/modules/auth/controllers/user.admin.controller';
 
 /**
  * Authentication module providing complete user authentication system
@@ -38,7 +40,7 @@ import { UserQuotaModule } from '@/modules/quota/quota.module';
     SsoModule,
     forwardRef(() => UserQuotaModule),
   ],
-  controllers: [AuthController, MeController],
+  controllers: [AuthController, MeController, UserController, AdminUserController],
   providers: [
     // Core services
     AuthService,

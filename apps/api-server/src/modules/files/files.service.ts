@@ -532,4 +532,12 @@ export class FilesService {
     return this.hasFileWithNameHash(userId, parentId, nameHash);
   }
 
+  async computeFolderSize(folderId: string) : Promise<number> {
+    const result = await this.db
+      .select({ totalSize: sql`COALESCE(SUM(${files.approxSize}), 0)` })
+      .from(files)
+      .where(eq(files.parentId, folderId));
+
+    return result[0]?.totalSize as number || 0;
+  }
 }
