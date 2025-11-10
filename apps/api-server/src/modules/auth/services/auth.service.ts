@@ -1,11 +1,10 @@
 import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 
-import { User, UserRole, UserSchema } from '@agam-space/shared-types';
+import { LoginResponse, User, UserRole, UserStatus } from '@agam-space/shared-types';
 import { AppConfigService } from '@/config/config.service';
 import { CreateUserData, UserService } from '../user.service';
 import { PasswordService } from './password.service';
 import { CreateSessionData, SessionService } from './session.service';
-import { LoginResponse } from '@agam-space/shared-types';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import type { UserSession } from '@/database';
 import { UserInfo } from '@/modules/sso/openid/openid.types';
@@ -194,7 +193,7 @@ export class AuthService {
 
     // Get user data
     const user = await this.userService.findUserById(session.userId);
-    if (!user || !user.isActive) {
+    if (!user ||  user.status !== UserStatus.ACTIVE) {
       // Session exists but user doesn't - clean up session
       await this.sessionService.deleteSession(sessionToken);
       return null;

@@ -2,7 +2,7 @@ import { Controller, Get, Param } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthRequired, CurrentUser } from '../auth/auth.decorator';
-import { FolderContentsDto } from './dto/folder-content.dto';
+import { FolderContentsDto, isRootFolder } from './dto/folder-content.dto';
 import { FolderContentService } from './folder-content.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { SwaggerApiStandardErrors } from '@/common/decorators/api-swagger-errors';
@@ -28,6 +28,6 @@ export class FolderContentController {
     @Param('folderId') folderId: string,
     @CurrentUser() user: AuthenticatedUser
   ): Promise<FolderContentsDto> {
-    return this.contentService.getContents(user.id, folderId === 'root' ? null : folderId);
+    return this.contentService.getContents(user.id, isRootFolder(folderId) ? null : folderId);
   }
 }

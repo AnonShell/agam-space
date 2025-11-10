@@ -24,12 +24,8 @@ export class FolderContentService {
   async getContents(userId: string, parentId?: string): Promise<FolderContentsDto> {
     if (parentId) {
       const folder = await this.foldersService.getFolder(userId, parentId);
-      if (!folder) {
-        throw new Error('Parent folder not found');
-      }
-
-      if (folder.status !== 'active') {
-        return { folders: [], files: [] };
+      if (!folder || folder.status !== 'active') {
+        throw new Error('folder not found');
       }
     }
 

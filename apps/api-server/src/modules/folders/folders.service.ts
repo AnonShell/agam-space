@@ -1,4 +1,12 @@
-import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { aliasedTable, and, eq, inArray, isNull, not, notExists, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
@@ -7,12 +15,16 @@ import { FolderEntity, folders, NewFolderEntity } from '../../database/schema';
 
 import { CreateFolderDto, FolderDto, UpdateFolderDto } from './dto/folder-content.dto';
 import { Folder, FolderSchema } from '@agam-space/shared-types';
+import { FilesService } from '@/modules/files/files.service';
 
 @Injectable()
 export class FoldersService {
   private readonly logger = new Logger(FoldersService.name);
 
-  constructor(@Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
+              @Inject(forwardRef(() => FilesService))
+              private readonly filesService: FilesService
+  ) {}
 
   async getFoldersUnderParent(
     userId: string,
@@ -344,6 +356,19 @@ export class FoldersService {
         updatedAt: folder[folders.updatedAt.name],
       });
     });
+  }
+
+  async computeFolderSize(userId: string, folderId: string) {
+    await this.getFolder(userId, folderId);
+    const size = await this.filesService.computeFolderSize(folderId);
+
+    //saving
+    await this.db
+      .update(folders)
+      .set({ size: size })
+      .where(and(eq(folders.id, folderId)));
+
+    return size;
   }
 }
 

@@ -127,4 +127,21 @@ export class FoldersController {
 
     return this.foldersService.getFolderAncestors(user.id, folderId, depth);
   }
+
+  // compute folder size
+  @Get('/:folderId/compute-size')
+  @ApiOperation({ summary: 'Compute folder size' })
+  @ApiResponse({
+    status: 200,
+    description: 'Folder size computation initiated successfully',
+  })
+  async computeFolderSize(
+    @Param('folderId') folderId: string,
+    @CurrentUser() user: AuthenticatedUser
+  ): Promise<{
+    totalSize: number;
+  }> {
+    const totalSize = await this.foldersService.computeFolderSize(user.id, folderId);
+    return { totalSize };
+  }
 }

@@ -39,3 +39,13 @@ export function fromBase64(base64: string): Uint8Array {
   const binary = atob(base64);
   return new Uint8Array([...binary].map(char => char.charCodeAt(0)));
 }
+
+export function fromBase64Url(base64url: string): Uint8Array {
+  // Convert base64url to base64
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(base64url.length / 4) * 4, '=');
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(base64, 'base64'));
+  }
+  const binary = atob(base64);
+  return new Uint8Array([...binary].map(char => char.charCodeAt(0)));
+}
