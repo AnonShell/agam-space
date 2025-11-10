@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
-import { BASE64_REGEX, datetimeSchema, UlidSchema } from '../common.schema';
+import { BASE64_REGEX, bigintSchema, datetimeSchema, UlidSchema } from '../common.schema';
 import { FileArraySchema } from './file.schema';
 
 export const FolderSchema = z.object({
   id: UlidSchema,
   parentId: z.string().min(1).max(50).nullish(),
   nameHash: z.string().min(1).max(100),
+  size: bigintSchema.optional(),
   metadataEncrypted: z
     .string()
     .min(1)

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { bigint, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
 import { ulidColumn, ulidPrimaryKey } from '../utils/ulid';
 
@@ -28,6 +28,8 @@ export const folders = pgTable('folders', {
   metadataEncrypted: text('metadata_encrypted').notNull(),
 
   nameHash: text('name_hash').notNull(),
+
+  size: bigint('size', { mode: 'number' }).default(0),
 
   // Wrapped folder key (encrypted with parent folder key or CMK for root)
   fkWrapped: text('fk_wrapped').notNull(),
