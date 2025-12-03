@@ -1,6 +1,6 @@
 {
-  "id": "351b3c94-50dd-4159-a263-14142db217af",
-  "prevId": "95aea2a6-4470-464a-9c16-0fa67d317a05",
+  "id": "b68b2206-346a-49c7-9c9e-eff3890658ca",
+  "prevId": "61ec8856-075f-4b59-b6ea-458aaca31d87",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -317,6 +317,12 @@
         },
         "unlock_key": {
           "name": "unlock_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "encrypted_cmk": {
+          "name": "encrypted_cmk",
           "type": "text",
           "primaryKey": false,
           "notNull": true

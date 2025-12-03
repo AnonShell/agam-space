@@ -1,21 +1,6 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Logger,
-  Post,
-  Query,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FastifyRequest } from 'fastify';
-import { FastifyReply } from 'fastify';
-
-import { AuthRequired } from '../auth.decorator';
+import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Query, Req, Res } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import {
   LoginResponseDto,
   LoginWithPasswordDto,

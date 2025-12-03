@@ -3,7 +3,6 @@ import { trustedDevices } from '@/database/schema/trusted-devices';
 import {
   DeviceInfo,
   DeviceInfoSchema,
-  RegisterDeviceRequest,
   TrustedDevice,
   TrustedDeviceSchema,
 } from '@agam-space/shared-types';
@@ -20,29 +19,6 @@ export class TrustedDevicesService {
     return ulid();
   }
 
-  // async createDevice(userId: string, newDevice: RegisterDeviceRequest): Promise<DeviceInfo> {
-  //   // This method is now legacy and should not perform WebAuthn verification.
-  //   // Use createDeviceFromWebAuthn for WebAuthn device registration.
-  //   const values: any = {
-  //     id: ulid(),
-  //     userId: userId,
-  //     credentialId: newDevice.credentialId,
-  //     devicePublicKey: newDevice.devicePublicKey,
-  //     unlockKey: newDevice.unlockKey,
-  //     deviceName: newDevice.deviceName,
-  //     counter: 0,
-  //   };
-  //   // Only set webauthnPublicKey if present
-  //   if ('webauthnPublicKey' in newDevice && newDevice.webauthnPublicKey) {
-  //     values.webauthnPublicKey = newDevice.webauthnPublicKey;
-  //   }
-  //   const [device] = await this.db
-  //     .insert(trustedDevices)
-  //     .values(values)
-  //     .returning();
-  //   return DeviceInfoSchema.parse(device);
-  // }
-
   async createDeviceFromWebAuthn(
     userId: string,
     device: {
@@ -50,6 +26,7 @@ export class TrustedDevicesService {
       webauthnPublicKey: string;
       devicePublicKey: string;
       unlockKey: string;
+      encryptedCMK: string;
       deviceName: string;
       counter: number;
     }
@@ -63,6 +40,7 @@ export class TrustedDevicesService {
         webauthnPublicKey: device.webauthnPublicKey,
         devicePublicKey: device.devicePublicKey,
         unlockKey: device.unlockKey,
+        encryptedCMK: device.encryptedCMK,
         deviceName: device.deviceName,
         counter: device.counter,
       })
@@ -82,7 +60,15 @@ export class TrustedDevicesService {
 
   async getUserDevices(userId: string): Promise<DeviceInfo[]> {
     const devices = await this.db
-      .select()
+      .select({
+        id: trustedDevices.id,
+        deviceName: trustedDevices.deviceName,
+        createdAt: trustedDevices.createdAt,
+        lastUsedAt: trustedDevices.lastUsedAt,
+        credentialId: trustedDevices.credentialId,
+        encryptedCMK: trustedDevices.encryptedCMK, // <-- Ensure encryptedCMK is returned
+        devicePublicKey: trustedDevices.devicePublicKey, // <-- Ensure devicePublicKey is returned
+      })
       .from(trustedDevices)
       .where(eq(trustedDevices.userId, userId))
       .orderBy(desc(trustedDevices.createdAt));

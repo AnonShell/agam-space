@@ -91,3 +91,4 @@ apps/cli
 # Ignore stray TypeScript declaration files
 **/*.d.ts
 **/*.d.ts.map
+/.cursor

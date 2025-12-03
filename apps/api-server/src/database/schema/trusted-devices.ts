@@ -31,6 +31,8 @@ export const trustedDevices = pgTable(
 
     unlockKey: text('unlock_key').notNull(),
 
+    encryptedCMK: text('encrypted_cmk').notNull(),
+
     deviceName: text('device_name').notNull(),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),

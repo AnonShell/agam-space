@@ -5,15 +5,22 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1762723604311,
-      "tag": "0000_many_vertigo",
+      "when": 1762811005194,
+      "tag": "0000_equal_next_avengers",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "5",
-      "when": 1762767640876,
-      "tag": "0001_boring_stardust",
+      "when": 1762811005195,
+      "tag": "0001_add_size_column",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1764758251106,
+      "tag": "0002_brief_jack_murdock",
       "breakpoints": true
     }
   ]

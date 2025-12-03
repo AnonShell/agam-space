@@ -163,6 +163,7 @@ export class WebAuthnService {
       webauthnPublicKey: Buffer.from(publicKey).toString('base64url'),
       devicePublicKey: registerDevice.devicePublicKey,
       unlockKey: registerDevice.unlockKey,
+      encryptedCMK: registerDevice.encryptedCMK,
       deviceName: registerDevice.deviceName,
       counter,
     });
