@@ -31,7 +31,7 @@ export const UpdateFileSchema = z.object({
   fkWrapped: CreateFileSchema.shape.fkWrapped.optional(),
   parentId: CreateFileSchema.shape.parentId.optional(),
   metadataEncrypted: CreateFileSchema.shape.metadataEncrypted.optional(),
-})
+});
 
 export const RawFileMetadataSchema = z.object({
   name: z.string().min(1).max(100),

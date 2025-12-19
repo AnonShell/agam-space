@@ -3,7 +3,7 @@ import { UserRole, UserStatus } from './user.types';
 import { datetimeSchema } from '../common.schema';
 
 export const UserRoleSchema = z.nativeEnum(UserRole);
-export const UserStatusSchema = z.nativeEnum(UserStatus)
+export const UserStatusSchema = z.nativeEnum(UserStatus);
 
 export const UserSchema = z.object({
   id: z.string().min(20).max(50),

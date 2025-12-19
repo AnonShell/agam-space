@@ -58,7 +58,6 @@ export const TrashFoldersResponseSchema = z.object({
 
 export type TrashFoldersResponse = z.infer<typeof TrashFoldersResponseSchema>;
 
-
 export const isFolderIdRoot = (id: string | null | undefined): boolean => {
   return !id || id.toLowerCase().trim() === 'root';
-}
+};

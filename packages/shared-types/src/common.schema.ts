@@ -14,11 +14,11 @@ export const datetimeSchema = z
 
 export const bigintSchema = z
   .union([z.string(), z.number().nonnegative()])
-  .transform((val) => {
+  .transform(val => {
     const num = typeof val === 'string' ? Number(val) : val;
     if (!Number.isFinite(num)) throw new Error('Invalid number');
     return num;
   })
-  .refine((val) => Number.isInteger(val) && val >= 0, {
+  .refine(val => Number.isInteger(val) && val >= 0, {
     message: 'Value must be a non-negative integer',
   });

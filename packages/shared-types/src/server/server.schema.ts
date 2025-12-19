@@ -22,7 +22,7 @@ export const ServerConfigSchema = z.object({
   }),
   account: z.object({
     allowNewSignup: z.boolean().default(true),
-    defaultUserStorageQuota: z.number().int().min(1)
+    defaultUserStorageQuota: z.number().int().min(1),
   }),
 });
 

@@ -11,7 +11,7 @@ export const USER_ROLE_RANK: Record<UserRole, number> = {
 };
 
 export enum UserStatus {
-  ACTIVE = "active",
-  DISABLED = "disabled",
-  DELETED = "deleted",
+  ACTIVE = 'active',
+  DISABLED = 'disabled',
+  DELETED = 'deleted',
 }
