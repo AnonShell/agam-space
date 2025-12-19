@@ -1,0 +1,71 @@
+import './globals.css';
+import type { AppProps } from 'next/app';
+import { Geist, Geist_Mono } from 'next/font/google';
+import { Toaster } from '@/components/ui/sonner';
+import { AppShell } from '@/components/layout/app-shell';
+import { UploadTray } from '@/components/upload/upload-tray';
+import { DownloadTray } from '@/components/download/download-tray';
+import { useRouter } from 'next/router';
+import { useAccessBootstrap } from '@/hooks/useAccessBootstrap';
+import { useEffect, useState } from 'react';
+import { useAppBootstrap } from '@/lib/init/use-bootstrap-app';
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
+
+const PUBLIC_ROUTES = ['/login', '/signup'];
+const SIDEBAR_ROUTES = ['/explorer', '/trash'];
+const ROUTES_REQUIRING_UNLOCK = ['/explorer', '/trash'];
+
+function matchPrefix(pathname: string, patterns: string[]) {
+  return patterns.some((p) => pathname.startsWith(p));
+}
+
+export default function App({ Component, pageProps }: AppProps) {
+  const { pathname } = useRouter();
+
+  // Initialize app bootstrap
+  const appBootstrapped = useAppBootstrap();
+
+  const isPublic = PUBLIC_ROUTES.includes(pathname);
+  const showAppShell = !isPublic;
+  const showSidebar = matchPrefix(pathname, SIDEBAR_ROUTES);
+  const needsUnlock = matchPrefix(pathname, ROUTES_REQUIRING_UNLOCK);
+
+  const status = useAccessBootstrap(
+    isPublic ? 'public' : needsUnlock ? 'unlocked' : 'loggedIn',
+    appBootstrapped
+  );
+
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (status === 'ready') setReady(true);
+  }, [status]);
+
+  if (showAppShell && (!appBootstrapped || status !== 'ready')) {
+    return null;
+  }
+
+  return (
+    <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {showAppShell && ready ? (
+        <AppShell showSidebar={showSidebar}>
+          <Component {...pageProps} />
+          <UploadTray />
+          <DownloadTray />
+        </AppShell>
+      ) : (
+        <Component {...pageProps} />
+      )}
+      <Toaster richColors position="bottom-right" />
+    </div>
+  );
+}
