@@ -58,7 +58,11 @@ export const DeviceKeyManager = {
   /**
    * Decrypt data (e.g., CMK) with device private key (X25519)
    */
-  async decryptWithDevicePrivateKey(ciphertext: Uint8Array, publicKey: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array> {
+  async decryptWithDevicePrivateKey(
+    ciphertext: Uint8Array,
+    publicKey: Uint8Array,
+    privateKey: Uint8Array
+  ): Promise<Uint8Array> {
     return (await getSodium()).crypto_box_seal_open(ciphertext, publicKey, privateKey);
   },
 };

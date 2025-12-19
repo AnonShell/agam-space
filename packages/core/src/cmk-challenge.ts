@@ -8,7 +8,7 @@ function generateChallengeString(data: string, timestamp: number): string {
 
 export async function generateCmkChallenge(
   payload: object,
-  key: Uint8Array,
+  key: Uint8Array
 ): Promise<{
   timestamp: number;
   signature: string;
@@ -31,7 +31,7 @@ export async function verifyCmkChallenge(
   signature: string,
   publicKey: string,
   timestamp: number,
-  maxAgeMs: number,
+  maxAgeMs: number
 ): Promise<void> {
   if (timestamp <= 0) {
     throw new Error('Invalid timestamp. Must be a positive integer.');
@@ -47,13 +47,12 @@ export async function verifyCmkChallenge(
   }
 
   try {
-
     const payloadHash = blake3HashWithEncoding(JSON.stringify(payload), 'base64');
 
     const isValid = await IdentityKeyManager.verify(
       toUtf8Bytes(generateChallengeString(payloadHash, timestamp)),
       fromBase64(signature),
-      fromBase64(publicKey),
+      fromBase64(publicKey)
     );
 
     if (!isValid) {

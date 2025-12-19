@@ -6,7 +6,7 @@ export function encodeBase58(data: Uint8Array): string {
 }
 
 export function decodeBase58(encoded: string): Uint8Array {
-  return  bs58.decode(encoded);
+  return bs58.decode(encoded);
 }
 
 export function toUtf8Bytes(str: string): Uint8Array {
@@ -42,7 +42,10 @@ export function fromBase64(base64: string): Uint8Array {
 
 export function fromBase64Url(base64url: string): Uint8Array {
   // Convert base64url to base64
-  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(base64url.length / 4) * 4, '=');
+  const base64 = base64url
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(base64url.length / 4) * 4, '=');
   if (typeof Buffer !== 'undefined') {
     return new Uint8Array(Buffer.from(base64, 'base64'));
   }
