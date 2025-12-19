@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useIsLoggedIn } from '@/store/auth';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
-import { resetAllState, SessionService } from '@/services/session.service';
+import { resetAllState } from '@/services/session.service';
 import { useBootstrapStore } from '@/store/bootstrap.store';
 import { ClientRegistry } from '@agam-space/client';
 
