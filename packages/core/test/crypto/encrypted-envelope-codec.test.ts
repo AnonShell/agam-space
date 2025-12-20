@@ -104,13 +104,13 @@ describe('EncryptedEnvelopeCodec', () => {
         0x00,
         0x00,
         0x18,
-        ...n,
+        ...Array.from(n),
         0x03,
         0x00,
         0x00,
         0x00,
         0x05,
-        ...c,
+        ...Array.from(c),
       ]);
       expect(() => deserializeFromTLV(tlv)).toThrow('Missing version field');
     }
@@ -125,13 +125,13 @@ describe('EncryptedEnvelopeCodec', () => {
         0x00,
         0x00,
         0x01,
-        ...v,
+        ...Array.from(v),
         0x03,
         0x00,
         0x00,
         0x00,
         0x05,
-        ...c,
+        ...Array.from(c),
       ]);
       expect(() => deserializeFromTLV(tlv)).toThrow('Missing nonce field');
     }
@@ -146,13 +146,13 @@ describe('EncryptedEnvelopeCodec', () => {
         0x00,
         0x00,
         0x01,
-        ...v,
+        ...Array.from(v),
         0x02,
         0x00,
         0x00,
         0x00,
         0x18,
-        ...n,
+        ...Array.from(n),
       ]);
       expect(() => deserializeFromTLV(tlv)).toThrow('Missing ciphertext field');
     }
