@@ -118,7 +118,9 @@ export class AppConfigService {
     // Origin: full URL (protocol + domain + port)
     const origin = this.configService.get('webauthn.origin') || domain;
     // RP ID: domain only, no protocol/port
-    const rpId = this.configService.get('webauthn.rpId') || domain.replace(/^https?:\/\//, '').replace(/:\d+$/, '');
+    const rpId =
+      this.configService.get('webauthn.rpId') ||
+      domain.replace(/^https?:\/\//, '').replace(/:\d+$/, '');
     return { origin, rpId };
   }
 }

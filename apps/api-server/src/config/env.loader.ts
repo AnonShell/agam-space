@@ -35,7 +35,6 @@ function setNestedValue(obj: any, path: string, value: any): void {
   current[keys.at(-1)] = value;
 }
 
-
 /**
  * Parse environment variable value to appropriate type
  */

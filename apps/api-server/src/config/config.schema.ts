@@ -46,7 +46,12 @@ export const directoryConfigSchema = z.object({
 // file configuration
 export const fileConfigSchema = z.object({
   maxFileSize: z.coerce.number().int().min(1).max(1_000_000_000).default(1_000_000_000), // 1GB default
-  chunkSize: z.coerce.number().int().min(1).max(32 * 1024 * 1024).default(8 * 1024 * 1024), // 8MB default chunk size
+  chunkSize: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(32 * 1024 * 1024)
+    .default(8 * 1024 * 1024), // 8MB default chunk size
   uploadConcurrency: z.coerce.number().int().min(1).max(10).default(2), // Max concurrent uploads
   // maxFileMetadataSize: z.coerce.number().int().min(1).max(10_000).default(1000), // Max file metadata size in bytes
 
@@ -78,15 +83,19 @@ export const ssoConfigSchema = z
   .optional();
 
 // Domain configuration
-export const domainConfigSchema = z.object({
-  domain: z.string().min(1).default('localhost'),
-}).optional();
+export const domainConfigSchema = z
+  .object({
+    domain: z.string().min(1).default('localhost'),
+  })
+  .optional();
 
 // WebAuthn configuration
-export const webauthnConfigSchema = z.object({
-  origin: z.string().url(),
-  rpId: z.string().default('localhost'),
-}).optional();
+export const webauthnConfigSchema = z
+  .object({
+    origin: z.string().url(),
+    rpId: z.string().default('localhost'),
+  })
+  .optional();
 
 // Main configuration schema - only user-configurable settings
 export const configSchema = z.object({

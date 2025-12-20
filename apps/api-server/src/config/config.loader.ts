@@ -25,8 +25,7 @@ class ConfigLoader {
   private static instance: ConfigLoader;
   private config: AppConfig | null = null;
 
-  private constructor() {
-  }
+  private constructor() {}
 
   static getInstance(): ConfigLoader {
     if (!ConfigLoader.instance) {
@@ -106,8 +105,12 @@ class ConfigLoader {
         }
       } catch (err) {
         // Priority 3: Fail with helpful message
-        console.error(`❌ DATA_DIR resolution failed! - ${err instanceof Error ? err.message : err}`);
-        console.error(`   Neither DATA_DIR environment variable is set nor ${dockerDataDir} is available`);
+        console.error(
+          `❌ DATA_DIR resolution failed! - ${err instanceof Error ? err.message : err}`
+        );
+        console.error(
+          `   Neither DATA_DIR environment variable is set nor ${dockerDataDir} is available`
+        );
         console.error('   Solutions:');
         console.error('   - Set DATA_DIR environment variable (e.g., DATA_DIR=./local/data)');
         console.error(`   - Mount a volume to ${dockerDataDir} in Docker`);
@@ -179,7 +182,7 @@ class ConfigLoader {
       } catch (error) {
         console.error(
           `❌ Failed to create ${name} directory ${path}:`,
-          error instanceof Error ? error.message : error,
+          error instanceof Error ? error.message : error
         );
         throw error;
       }
@@ -202,13 +205,15 @@ class ConfigLoader {
         const content = readFileSync(configPath, 'utf8');
         return JSON.parse(content);
       } else {
-        console.warn(`⚠️ No config.json found at ${configPath}. Proceeding with environment variables and schema defaults.`);
+        console.warn(
+          `⚠️ No config.json found at ${configPath}. Proceeding with environment variables and schema defaults.`
+        );
         return {};
       }
     } catch (error) {
       console.error(
         `❌ Failed to fetch config file ${configPath}:`,
-        error instanceof Error ? error.message : error,
+        error instanceof Error ? error.message : error
       );
       throw error;
     }
@@ -300,7 +305,7 @@ class ConfigLoader {
     console.log(`   API Prefix: /${config.server.apiPrefix}`);
     console.log(`   Data Directory: ${config.directories.dataDir}`);
     console.log(
-      `   Database: ${config.database.host}:${config.database.port}/${config.database.database}`,
+      `   Database: ${config.database.host}:${config.database.port}/${config.database.database}`
     );
     if (config.docs.enabled) {
       console.log(`   API Docs: /${config.docs.path}`);
