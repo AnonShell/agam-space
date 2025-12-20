@@ -18,7 +18,6 @@ export function initializeClient() {
   if (initialized) return;
   initialized = true;
 
-
   if (!ClientRegistry.hasApiClient()) {
     ClientRegistry.setApiClient(new ApiClient());
   }
