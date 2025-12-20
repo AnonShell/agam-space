@@ -1,6 +1,7 @@
 import { LRUCache } from 'lru-cache';
 
-export class MemoryKeyStore<K extends object, V extends object> {
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export class MemoryKeyStore<K extends {}, V extends {}> {
   private cache: LRUCache<K, V>;
 
   constructor(
