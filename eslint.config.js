@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import * as tseslint from 'typescript-eslint';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
@@ -65,4 +66,6 @@ export default [
       },
     },
   },
+  // Disable ESLint formatting rules that conflict with Prettier
+  eslintConfigPrettier,
 ];
