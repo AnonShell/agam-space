@@ -4,6 +4,7 @@ node_modules/
 # Build outputs
 dist/
 build/
+out/
 *.js.map
 
 # Database
@@ -29,3 +30,9 @@ Thumbs.db
 .next/
 .nuxt/
 .turbo/
+coverage/
+*.tsbuildinfo
+.docusaurus/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock

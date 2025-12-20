@@ -43,7 +43,9 @@ export const SessionService = {
   async logout() {
     try {
       await logoutApi();
-    } catch {}
+    } catch {
+      // Ignore logout API errors - still reset local state
+    }
 
     resetAllState();
   },

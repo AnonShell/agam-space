@@ -7,21 +7,20 @@ import { useExplorerRefreshStore } from '@/store/explorer-refresh-store';
 import { formatBytes } from '@/utils/file';
 
 export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: () => void }) {
-  const uploads = useUploadStore((s) => s.uploads);
-  const updateUpload = useUploadStore((s) => s.updateUpload);
-  const removeUpload = useUploadStore((s) => s.removeUpload);
+  const uploads = useUploadStore(s => s.uploads);
+  const updateUpload = useUploadStore(s => s.updateUpload);
+  const removeUpload = useUploadStore(s => s.removeUpload);
 
   const dismissalTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const allFinished = uploads.length > 0 && uploads.every(
-    (u) => u.status === 'complete' || u.status === 'error'
-  );
+  const allFinished =
+    uploads.length > 0 && uploads.every(u => u.status === 'complete' || u.status === 'error');
 
   const { triggerRefreshForFolder } = useExplorerRefreshStore.getState();
 
   // Define visibility variables first, before useEffect hooks that depend on them
-  const inProgress = uploads.filter((u) => ( u.status === 'uploading' || u.status === 'encrypting'));
-  const errors = uploads.filter((u) => u.status === 'error');
+  const inProgress = uploads.filter(u => u.status === 'uploading' || u.status === 'encrypting');
+  const errors = uploads.filter(u => u.status === 'error');
 
   // Smart visibility: limit items shown to prevent screen overflow
   const hasInProgress = inProgress.length > 0;
@@ -30,7 +29,7 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
 
   const visibleInProgress = inProgress.slice(0, MAX_IN_PROGRESS_VISIBLE); // Show first N in progress
   const recentCompleted = uploads
-    .filter((u) => u.status === 'complete' && !u.dismissed)
+    .filter(u => u.status === 'complete' && !u.dismissed)
     .slice(-MAX_COMPLETED_VISIBLE); // Show last N completed
 
   const visible = [...visibleInProgress, ...errors, ...recentCompleted];
@@ -48,11 +47,15 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
     // If all uploads are finished, start a single timer to dismiss everything
     else if (allFinished) {
       if (!dismissalTimerRef.current) {
-        console.log('✅ All uploads finished! Starting 3s dismissal timer. Showing', recentCompleted.length, 'completed items');
+        console.log(
+          '✅ All uploads finished! Starting 3s dismissal timer. Showing',
+          recentCompleted.length,
+          'completed items'
+        );
         dismissalTimerRef.current = setTimeout(() => {
           console.log('⏰ Dismissal timer fired - removing all completed uploads from tray');
           // Dismiss all completed/error uploads at once
-          uploads.forEach((u) => {
+          uploads.forEach(u => {
             if ((u.status === 'complete' || u.status === 'error') && !u.dismissed) {
               updateUpload(u.id, { dismissed: true });
             }
@@ -68,7 +71,6 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
         dismissalTimerRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allFinished, uploads, updateUpload, hasInProgress]);
 
   // Trigger onAllUploadsComplete callback when all uploads finish
@@ -91,9 +93,7 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
     });
 
     Object.entries(uploadsByFolder).forEach(([folderId, folderUploads]) => {
-      const allDone = folderUploads.every(
-        u => u.status === 'complete' || u.status === 'error'
-      );
+      const allDone = folderUploads.every(u => u.status === 'complete' || u.status === 'error');
 
       if (allDone && !refreshedFolders.current.has(folderId)) {
         refreshedFolders.current.add(folderId);
@@ -121,51 +121,62 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
         recentCompleted: recentCompleted.length,
         visible: visible.length,
         allFinished,
-        hasInProgress
+        hasInProgress,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploads.length, inProgress.length, visibleInProgress.length, recentCompleted.length, visible.length, allFinished, hasInProgress]);
+  }, [
+    uploads.length,
+    inProgress.length,
+    visibleInProgress.length,
+    recentCompleted.length,
+    visible.length,
+    allFinished,
+    hasInProgress,
+  ]);
 
   if (visible.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-full max-w-md rounded-xl bg-card text-card-foreground shadow-lg border border-border p-4 space-y-3">
-      <h4 className="text-sm font-semibold flex justify-between items-center">
+    <div className='fixed bottom-4 right-4 z-50 w-full max-w-md rounded-xl bg-card text-card-foreground shadow-lg border border-border p-4 space-y-3'>
+      <h4 className='text-sm font-semibold flex justify-between items-center'>
         <span>Uploads</span>
         {inProgress.length > 0 && (
-          <span className="text-xs font-normal text-muted-foreground">
+          <span className='text-xs font-normal text-muted-foreground'>
             {inProgress.length} in progress
           </span>
         )}
       </h4>
-      {visible.map((item) => (
-        <div key={item.id} className={`text-xs rounded border px-3 py-2 ${
-          item.status === 'error'
-            ? 'bg-red-50 border-red-300 text-red-700 dark:bg-red-950 dark:border-red-800'
-            : ''
-        }`}
+      {visible.map(item => (
+        <div
+          key={item.id}
+          className={`text-xs rounded border px-3 py-2 ${
+            item.status === 'error'
+              ? 'bg-red-50 border-red-300 text-red-700 dark:bg-red-950 dark:border-red-800'
+              : ''
+          }`}
         >
-          <div className="flex justify-between items-center mb-1">
-            <span className="truncate max-w-[65%]">{item.fileName}</span>
-            <div className="flex items-center gap-1 text-muted-foreground text-[11px]">
-            <span>
-              {item.status === 'complete'
-                ? 'Uploaded'
-                : item.status === 'error' ? '' : `${formatBytes(item.uploadedBytes)} / ${formatBytes(item.totalBytes)}`}
-            </span>
+          <div className='flex justify-between items-center mb-1'>
+            <span className='truncate max-w-[65%]'>{item.fileName}</span>
+            <div className='flex items-center gap-1 text-muted-foreground text-[11px]'>
+              <span>
+                {item.status === 'complete'
+                  ? 'Uploaded'
+                  : item.status === 'error'
+                    ? ''
+                    : `${formatBytes(item.uploadedBytes)} / ${formatBytes(item.totalBytes)}`}
+              </span>
               {(item.status === 'complete' || item.status === 'error') && (
                 <button
                   onClick={() => removeUpload(item.id)}
-                  className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded"
-                  title="Remove"
+                  className='p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded'
+                  title='Remove'
                 >
-                  <X className="w-3.5 h-3.5 text-zinc-500" />
+                  <X className='w-3.5 h-3.5 text-zinc-500' />
                 </button>
               )}
             </div>
           </div>
-          <div className="h-2 w-full bg-zinc-200 dark:bg-zinc-700 rounded overflow-hidden">
+          <div className='h-2 w-full bg-zinc-200 dark:bg-zinc-700 rounded overflow-hidden'>
             <div
               className={`h-full transition-all ${
                 item.status === 'complete'
@@ -177,9 +188,7 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
               style={{ width: `${item.progress}%` }}
             />
           </div>
-          {item.status === 'error' && (
-            <div className="text-red-500 mt-1">{item.error}</div>
-          )}
+          {item.status === 'error' && <div className='text-red-500 mt-1'>{item.error}</div>}
         </div>
       ))}
     </div>

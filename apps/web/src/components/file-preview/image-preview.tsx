@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { FileEntry } from '@agam-space/client';
 
 type Props = {
-  fileEntry: FileEntry
-  data: Uint8Array
-}
+  fileEntry: FileEntry;
+  data: Uint8Array;
+};
 
 export function ImagePreview({ fileEntry, data }: Props) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -23,13 +23,12 @@ export function ImagePreview({ fileEntry, data }: Props) {
   if (!blobUrl) return null;
 
   return (
-    <div className="w-full h-full flex items-center justify-center overflow-auto">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div className='w-full h-full flex items-center justify-center overflow-auto'>
       <img
         src={blobUrl}
         alt={fileEntry.name}
-        loading="lazy"
-        className="max-h-[80vh] max-w-full rounded shadow object-contain"
+        loading='lazy'
+        className='max-h-[80vh] max-w-full rounded shadow object-contain'
       />
     </div>
   );

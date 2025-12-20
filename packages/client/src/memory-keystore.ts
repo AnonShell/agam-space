@@ -1,6 +1,6 @@
 import { LRUCache } from 'lru-cache';
 
-export class MemoryKeyStore<K extends {}, V extends {}> {
+export class MemoryKeyStore<K extends object, V extends object> {
   private cache: LRUCache<K, V>;
 
   constructor(

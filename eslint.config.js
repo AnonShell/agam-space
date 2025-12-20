@@ -22,6 +22,8 @@ export default [
       '**/*.config.ts',
       '**/jest.config.js',
       '**/jest.preset.js',
+      'docs/.docusaurus/**',
+      'docs/build/**',
     ],
   },
   js.configs.recommended,
@@ -48,8 +50,14 @@ export default [
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-empty-object-type': 'warn',
       'no-console': 'off',
       'prefer-const': 'warn',
+      'no-empty': 'warn',
+      'no-shadow-restricted-names': 'error',
+      // Disable rules that require plugins not configured
+      'react-hooks/exhaustive-deps': 'off',
+      '@next/next/no-img-element': 'off',
     },
   },
   {
