@@ -11,7 +11,7 @@ export class PendingFilesCleanupJob extends AbstractScheduledJob {
 
   constructor(
     schedulerRegistry: SchedulerRegistry,
-    private readonly filesService: FilesService,
+    private readonly filesService: FilesService
   ) {
     super(schedulerRegistry);
   }

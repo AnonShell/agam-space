@@ -9,9 +9,8 @@ import * as schema from './schema';
 // Database injection token
 export const DATABASE_CONNECTION = 'DATABASE_CONNECTION';
 
-export type DrizzleClient = ReturnType<typeof drizzle>
-export type DrizzleTransaction = Parameters<Parameters<DrizzleClient['transaction']>[0]>[0]
-
+export type DrizzleClient = ReturnType<typeof drizzle>;
+export type DrizzleTransaction = Parameters<Parameters<DrizzleClient['transaction']>[0]>[0];
 
 /**
  * PostgreSQL database provider using Drizzle ORM
@@ -43,7 +42,6 @@ export const databaseProviders = [
           ssl: dbConfig.ssl ? { rejectUnauthorized: false } : false,
           debug: false,
           onnotice: () => {},
-
         });
 
         // Create Drizzle instance with schema

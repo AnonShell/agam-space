@@ -7,8 +7,5 @@ export const Roles = (...roles: UserRole[]) => SetMetadata('roles', roles);
 export const RequireAdmin = () => RequireRoles(UserRole.ADMIN);
 
 export function RequireRoles(...roles: UserRole[]) {
-  return applyDecorators(
-    Roles(...roles),
-    UseGuards(RolesGuard),
-  );
+  return applyDecorators(Roles(...roles), UseGuards(RolesGuard));
 }

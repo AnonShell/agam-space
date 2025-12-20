@@ -22,7 +22,9 @@ export class PasswordService {
         outputLen: 32,
       });
     } catch (error) {
-      throw new Error(`Password hashing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Password hashing failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -36,7 +38,7 @@ export class PasswordService {
     } catch (error) {
       this.logger.error(
         'Password verification failed',
-        error instanceof Error ? error.stack : error,
+        error instanceof Error ? error.stack : error
       );
       return false;
     }

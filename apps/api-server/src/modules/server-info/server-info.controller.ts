@@ -48,7 +48,6 @@ export class ServerInfoController {
     description: 'Server Information retrieved successfully',
   })
   getServerInfo() {
-
     const server = this.configService.getServer();
     return {
       version: APP_CONSTANTS.version,

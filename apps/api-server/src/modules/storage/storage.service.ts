@@ -1,4 +1,11 @@
-import { createReadStream, createWriteStream, existsSync, mkdirSync, promises as fsPromises, rmSync } from 'node:fs';
+import {
+  createReadStream,
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  promises as fsPromises,
+  rmSync,
+} from 'node:fs';
 import path from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -22,7 +29,6 @@ export interface CreateFileDirectoryData {
   folderId: string;
   fileId: string;
 }
-
 
 interface SafeChunkPipelineOptions {
   input: NodeJS.ReadableStream;
@@ -154,7 +160,6 @@ export class StorageService {
    * @returns relative path using 2-level sharding
    */
   getFileShardPath(fileId: string): string {
-
     const randomPart = fileId.slice(-16);
     const shard1 = randomPart[0];
     const shard2 = randomPart.slice(1, 3);
@@ -167,7 +172,7 @@ export class StorageService {
     chunkIndex: number,
     stream: Readable,
     checksum: string | undefined = undefined,
-    neededChunkSize: number | undefined = undefined,
+    neededChunkSize: number | undefined = undefined
   ): Promise<{ size: number; chunkFilePath: string }> {
     const chunkFilePath = path.join(fileDirPath, `chunk-${chunkIndex}`);
     const tempPath = chunkFilePath + '.part';
@@ -194,7 +199,7 @@ export class StorageService {
           cb(null, chunk);
         },
       }),
-      createWriteStream(tempPath),
+      createWriteStream(tempPath)
     );
 
     const actualChecksum = hasher.digest('hex');

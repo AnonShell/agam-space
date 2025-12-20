@@ -32,7 +32,7 @@ export class UserQuotaController {
     description: 'Current user quota details',
     type: UserQuotaDto,
   })
-  async getUserQuota(@Param('userId') userId: string,): Promise<UserQuotaDto> {
+  async getUserQuota(@Param('userId') userId: string): Promise<UserQuotaDto> {
     return this.getOrCreateUserQuota(userId);
   }
 
@@ -43,6 +43,4 @@ export class UserQuotaController {
     }
     return quota;
   }
-
-
 }

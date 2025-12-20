@@ -219,7 +219,8 @@ export class SessionService {
 
     await this.cacheManager.del(cacheKey);
 
-    const result = await this.db.delete(userSessions)
+    const result = await this.db
+      .delete(userSessions)
       .where(eq(userSessions.id, sessionId))
       .returning({ id: userSessions.id });
 

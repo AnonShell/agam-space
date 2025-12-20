@@ -12,7 +12,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 export class QuotaService {
   constructor(
     @Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
-    private readonly configService: AppConfigService,
+    private readonly configService: AppConfigService
   ) {}
 
   async userQuotaExists(userId: string): Promise<boolean> {

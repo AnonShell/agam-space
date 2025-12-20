@@ -21,9 +21,10 @@ import { FilesService } from '@/modules/files/files.service';
 export class FoldersService {
   private readonly logger = new Logger(FoldersService.name);
 
-  constructor(@Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
-              @Inject(forwardRef(() => FilesService))
-              private readonly filesService: FilesService
+  constructor(
+    @Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
+    @Inject(forwardRef(() => FilesService))
+    private readonly filesService: FilesService
   ) {}
 
   async getFoldersUnderParent(
@@ -144,14 +145,12 @@ export class FoldersService {
       updates.parentId || existingFolder.parentId
     );
     if (folderWithName) {
-      throw new ConflictException(
-        'A folder with this name already exists at this level'
-      );
+      throw new ConflictException('A folder with this name already exists at this level');
     }
 
     if (updates.nameHash) {
       allowedUpdates.nameHash = updates.nameHash;
-      if(!updates.metadataEncrypted) {
+      if (!updates.metadataEncrypted) {
         throw new BadRequestException('metadataEncrypted is required when updating nameHash');
       }
     }

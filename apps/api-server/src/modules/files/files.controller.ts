@@ -12,10 +12,22 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { AuthRequired, CurrentUser } from '../auth/auth.decorator';
-import { CheckFileExistsDto, CreateFileDto, TrashFilesResponseDto, UpdateFileDto } from './dto/files.dto';
+import {
+  CheckFileExistsDto,
+  CreateFileDto,
+  TrashFilesResponseDto,
+  UpdateFileDto,
+} from './dto/files.dto';
 import { FilesService } from './files.service';
 import { FileUploadStatusDto } from '@/modules/files/dto/upload.dto';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
@@ -169,15 +181,19 @@ export class FilesController {
   })
   async checkFileNameHashExists(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() query: CheckFileExistsDto,
+    @Query() query: CheckFileExistsDto
   ): Promise<{
     exists: boolean;
     id: string | null;
   }> {
-    const exitingId = await this.filesService.checkFileNameHashExists(user.id, query.parentId, query.nameHash);
+    const exitingId = await this.filesService.checkFileNameHashExists(
+      user.id,
+      query.parentId,
+      query.nameHash
+    );
     return {
       exists: !!exitingId,
       id: exitingId || null,
-    }
+    };
   }
 }

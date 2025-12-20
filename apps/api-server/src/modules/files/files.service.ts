@@ -1,4 +1,11 @@
-import { ConflictException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { and, eq, inArray, isNull, not, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
@@ -26,14 +33,13 @@ export class FilesService {
     private readonly appConfigService: AppConfigService,
 
     @Inject(forwardRef(() => QuotaService))
-    private readonly quotaService: QuotaService,
-  ) {
-  }
+    private readonly quotaService: QuotaService
+  ) {}
 
   async getFilesUnderParent(
     userId: string,
     parentFolderId?: string,
-    includeTrashed: boolean = false,
+    includeTrashed: boolean = false
   ): Promise<FileEntity[]> {
     const baseConditions = [
       eq(files.userId, userId),
@@ -97,7 +103,7 @@ export class FilesService {
 
     if (chunks.length !== file.chunkCount) {
       throw new ConflictException(
-        `Not all chunks have been uploaded, got ${chunks.length}/${file.chunkCount}`,
+        `Not all chunks have been uploaded, got ${chunks.length}/${file.chunkCount}`
       );
     }
 
@@ -105,20 +111,21 @@ export class FilesService {
       // mark file as deleted
       await this.markFilesAsDeleted([file.id]);
       throw new ConflictException(
-        `File size exceeds maximum limit of ${this.appConfigService.getConfig().files.maxFileSize} bytes`,
+        `File size exceeds maximum limit of ${this.appConfigService.getConfig().files.maxFileSize} bytes`
       );
     }
 
-    const updatedFileEntity = await this.db.transaction(async (tx) => {
-
+    const updatedFileEntity = await this.db.transaction(async tx => {
       const updatedQuota = await this.quotaService.incrementUsedStorage(userId, approxSize, tx);
       if (updatedQuota === null) {
         throw new ConflictException('User storage quota exceeded');
       }
 
-      const updatedFile = await this.updateFileProps(fileId,
+      const updatedFile = await this.updateFileProps(
+        fileId,
         { status: 'complete', approxSize },
-        tx);
+        tx
+      );
 
       if (!updatedFile) {
         throw new Error('Failed to update file status');
@@ -155,7 +162,7 @@ export class FilesService {
   private async updateFileProps(
     fileId: string,
     props: Partial<FileEntity>,
-    tx?: DrizzleTransaction,
+    tx?: DrizzleTransaction
   ): Promise<FileEntity | null> {
     const [updatedFile] = await (tx ?? this.db)
       .update(files)
@@ -172,7 +179,7 @@ export class FilesService {
   async hasFileWithNameHash(
     userId: string,
     parentFolderId: string | null,
-    nameHash: string,
+    nameHash: string
   ): Promise<string | null> {
     const result = await this.db
       .select({ id: files.id })
@@ -180,10 +187,12 @@ export class FilesService {
       .where(
         and(
           eq(files.userId, userId),
-          isValidFolderAndNotRoot(parentFolderId) ? eq(files.parentId, parentFolderId) : isNull(files.parentId),
+          isValidFolderAndNotRoot(parentFolderId)
+            ? eq(files.parentId, parentFolderId)
+            : isNull(files.parentId),
           eq(files.nameHash, nameHash),
-          not(inArray(files.status, ['pending','deleted', 'trashed'])),
-        ),
+          not(inArray(files.status, ['pending', 'deleted', 'trashed']))
+        )
       )
       .limit(1);
 
@@ -223,7 +232,7 @@ export class FilesService {
     const hasExisting = await this.hasFileWithNameHash(
       userId,
       data.parentId || file.parentId,
-      data.nameHash || file.nameHash,
+      data.nameHash || file.nameHash
     );
     if (hasExisting) {
       throw new ConflictException('A file with this name already exists at this level');
@@ -268,8 +277,8 @@ export class FilesService {
         and(
           eq(files.userId, userId),
           inArray(files.id, fileIds),
-          not(inArray(files.status, ['trashed', 'deleted'])),
-        ),
+          not(inArray(files.status, ['trashed', 'deleted']))
+        )
       )
       .returning({ id: files.id });
 
@@ -355,8 +364,7 @@ export class FilesService {
       throw new ConflictException(`File is status ${file.status} cannot be cleaned up`);
     }
 
-    return this.db.transaction(async (tx) => {
-
+    return this.db.transaction(async tx => {
       await this.fileChunkService.deleteFileChunks(file.userId, file.id);
 
       await this.quotaService.decrementUsedStorage(file.userId, file.approxSize, tx);
@@ -421,8 +429,8 @@ export class FilesService {
         and(
           eq(files.status, 'deleted'),
           // trashed should have updatedAt older than 30 days
-          or(eq(files.status, 'trashed')),
-        ),
+          or(eq(files.status, 'trashed'))
+        )
       );
 
     if (filesToCleanup.length === 0) {
@@ -455,7 +463,6 @@ export class FilesService {
       return 0;
     }
 
-
     for (const file of filesToCleanup) {
       try {
         await this.cleanupFile(file.userId, file);
@@ -468,18 +475,17 @@ export class FilesService {
     return filesToCleanup.length;
   }
 
-  async cleanupFilesInStatus(status: string,
-                             batchSize: number = 1000,
-                             olderThanSecs?: number): Promise<number> {
+  async cleanupFilesInStatus(
+    status: string,
+    batchSize: number = 1000,
+    olderThanSecs?: number
+  ): Promise<number> {
     this.logger.log(`Cleaning up files in ${status} status`);
 
     const conditions = [eq(files.status, status)];
 
     if (olderThanSecs && olderThanSecs > 0) {
-      conditions.push(
-        sql`${files.updatedAt} < now() - make_interval(secs => ${olderThanSecs})`
-
-      );
+      conditions.push(sql`${files.updatedAt} < now() - make_interval(secs => ${olderThanSecs})`);
     }
 
     const filesToCleanup = await this.db
@@ -505,7 +511,6 @@ export class FilesService {
     return filesToCleanup.length;
   }
 
-
   async markFilesAsDeleted(fileIds: string[]) {
     if (fileIds.length === 0) {
       return [];
@@ -528,16 +533,20 @@ export class FilesService {
     return result.map(file => file.id);
   }
 
-  checkFileNameHashExists(userId: string, parentId: string, nameHash: string): Promise<string | null> {
+  checkFileNameHashExists(
+    userId: string,
+    parentId: string,
+    nameHash: string
+  ): Promise<string | null> {
     return this.hasFileWithNameHash(userId, parentId, nameHash);
   }
 
-  async computeFolderSize(folderId: string) : Promise<number> {
+  async computeFolderSize(folderId: string): Promise<number> {
     const result = await this.db
       .select({ totalSize: sql`COALESCE(SUM(${files.approxSize}), 0)` })
       .from(files)
       .where(eq(files.parentId, folderId));
 
-    return result[0]?.totalSize as number || 0;
+    return (result[0]?.totalSize as number) || 0;
   }
 }

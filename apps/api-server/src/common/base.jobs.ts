@@ -9,8 +9,7 @@ export abstract class AbstractScheduledJob implements OnModuleInit {
 
   private isRunning = false;
 
-  protected constructor(protected readonly schedulerRegistry: SchedulerRegistry) {
-  }
+  protected constructor(protected readonly schedulerRegistry: SchedulerRegistry) {}
 
   onModuleInit() {
     if (!this.enabled) {
@@ -21,7 +20,7 @@ export abstract class AbstractScheduledJob implements OnModuleInit {
     this.logger.log(`Scheduling ${this.jobName} every ${this.intervalMinutes} minutes.`);
     this.schedulerRegistry.addInterval(
       this.jobName,
-      setInterval(() => this._runSafely(), this.intervalMinutes * 60 * 1000),
+      setInterval(() => this._runSafely(), this.intervalMinutes * 60 * 1000)
     );
   }
 

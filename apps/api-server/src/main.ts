@@ -43,7 +43,7 @@ async function bootstrap() {
     helmet({
       contentSecurityPolicy: false,
       crossOriginEmbedderPolicy: false,
-    }),
+    })
   );
 
   // Run database migrations using the provider's connection
@@ -52,9 +52,7 @@ async function bootstrap() {
   const corsOrigin = config.cors.origin;
 
   const resolvedOrigin =
-    !corsOrigin || corsOrigin === '*' || corsOrigin === 'true'
-      ? true
-      : corsOrigin;
+    !corsOrigin || corsOrigin === '*' || corsOrigin === 'true' ? true : corsOrigin;
 
   // Enable CORS
   app.enableCors({
@@ -111,9 +109,9 @@ bootstrap().catch(error => {
   throw error; // Let the process manager handle the error
 });
 
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', err => {
   console.error('Uncaught Exception:', err);
 });
-process.on('unhandledRejection', (reason) => {
+process.on('unhandledRejection', reason => {
   console.error('Unhandled Rejection:', reason);
 });

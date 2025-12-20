@@ -19,7 +19,7 @@ import { PendingFilesCleanupJob } from '@/modules/files/jobs/pending-files-clean
     StorageModule,
     AuthModule,
     FoldersModule,
-    forwardRef(() => UserQuotaModule)
+    forwardRef(() => UserQuotaModule),
   ],
   controllers: [FilesController, FileChunksController],
   providers: [FilesService, FileChunkService, PendingFilesCleanupJob],

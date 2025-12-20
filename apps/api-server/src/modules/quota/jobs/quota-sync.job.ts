@@ -11,7 +11,7 @@ export class QuotaSyncJob extends AbstractScheduledJob {
 
   constructor(
     schedulerRegistry: SchedulerRegistry,
-    private readonly quotaSyncService: QuotaSyncService,
+    private readonly quotaSyncService: QuotaSyncService
   ) {
     super(schedulerRegistry);
   }

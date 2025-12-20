@@ -27,7 +27,6 @@ export class FileChunkService {
     checksum: string,
     stream: Readable
   ): Promise<FileChunk> {
-
     const exitingEntity = await this.findChunk(fileId, chunkIndex);
     if (exitingEntity) {
       if (exitingEntity.checksum === checksum) {
@@ -119,9 +118,7 @@ export class FileChunkService {
     };
   }
 
-  async deleteFileChunks(userId: string,
-                         fileId: string,
-                         tx?: DrizzleTransaction): Promise<void> {
+  async deleteFileChunks(userId: string, fileId: string, tx?: DrizzleTransaction): Promise<void> {
     this.logger.log(`Deleting chunks for file: ${fileId}`);
 
     // Delete from storage

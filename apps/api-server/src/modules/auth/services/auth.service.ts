@@ -131,7 +131,6 @@ export class AuthService {
   ): Promise<LoginResponse> {
     let user = await this.userService.findUserForAuth(userInfo.preferred_username);
     if (!user) {
-
       if (!this.configService.getConfig().account.allowNewSignup) {
         throw new UnauthorizedException('Invalid credentials');
       }
@@ -140,7 +139,7 @@ export class AuthService {
         username: userInfo.preferred_username,
         email: userInfo.email,
         oidcSubject: userInfo.sub,
-      }
+      };
 
       user = await this.userService.createUser(newUserData);
       this.logger.log(`Auto created new user from sso : ${user.username} (${user.id})`);
@@ -193,7 +192,7 @@ export class AuthService {
 
     // Get user data
     const user = await this.userService.findUserById(session.userId);
-    if (!user ||  user.status !== UserStatus.ACTIVE) {
+    if (!user || user.status !== UserStatus.ACTIVE) {
       // Session exists but user doesn't - clean up session
       await this.sessionService.deleteSession(sessionToken);
       return null;

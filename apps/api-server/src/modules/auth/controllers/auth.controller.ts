@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import {
@@ -114,7 +125,6 @@ export class AuthController {
     @Req() request: FastifyRequest,
     @Res() res: FastifyReply
   ): Promise<LogoutResponseDto> {
-
     const sessionToken = request.cookies?.[AgamCookies.ACCESS_TOKEN];
 
     const success = await this.authService.logout(sessionToken);

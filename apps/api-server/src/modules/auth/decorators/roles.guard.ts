@@ -6,11 +6,12 @@ import { AuthGuard } from '@/modules/auth/auth.guard';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector,
-              private readonly authGuard: AuthGuard) {}
+  constructor(
+    private reflector: Reflector,
+    private readonly authGuard: AuthGuard
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-
     const isAuthed = await this.authGuard.canActivate(context);
     if (!isAuthed) return false;
 
@@ -24,6 +25,6 @@ export class RolesGuard implements CanActivate {
     const user = request.user as AuthenticatedUser;
 
     const userRank = USER_ROLE_RANK[user?.role];
-    return requiredRoles.some((required) => userRank >= USER_ROLE_RANK[required]);
+    return requiredRoles.some(required => userRank >= USER_ROLE_RANK[required]);
   }
 }

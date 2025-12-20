@@ -17,7 +17,6 @@ export class FolderDto extends createZodDto(FolderSchema) {}
 
 export class FolderContentsDto extends createZodDto(FolderContentsSchema) {}
 
-
 export function isRootFolder(folderId: string): boolean {
   return !folderId || folderId === 'root';
 }

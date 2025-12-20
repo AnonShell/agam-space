@@ -19,12 +19,6 @@ export class ChallengeVerificationService {
 
     this.logger.debug(`Verifying challenge and signature for identifier: ${payload}`);
 
-    await verifyCmkChallenge(
-      payload,
-      signature,
-      publicKey,
-      timestamp,
-      this.MAX_TIMESTAMP_AGE_MS
-    );
+    await verifyCmkChallenge(payload, signature, publicKey, timestamp, this.MAX_TIMESTAMP_AGE_MS);
   }
 }

@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { and, eq, or } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
@@ -40,7 +47,7 @@ export class UserService {
 
   async listUsers(): Promise<User[]> {
     const usersList = await this.db.select().from(users);
-    return usersList.map((user) => this.toUserDto(user));
+    return usersList.map(user => this.toUserDto(user));
   }
 
   /**
@@ -78,11 +85,15 @@ export class UserService {
       emailVerified: !!(userData.email && userData.oidcProvider),
     };
 
-    return await this.db.transaction(async (tx) => {
+    return await this.db.transaction(async tx => {
       const [createdUser] = await this.db.insert(users).values(newUser).returning();
-      await this.quotaService.createUserQuota(createdUser.id, {
-        totalStorage: this.configService.getConfig().account.defaultUserStorageQuota,
-      }, tx);
+      await this.quotaService.createUserQuota(
+        createdUser.id,
+        {
+          totalStorage: this.configService.getConfig().account.defaultUserStorageQuota,
+        },
+        tx
+      );
       return this.toUserDto(createdUser);
     });
   }
@@ -217,10 +228,7 @@ export class UserService {
     return this.passwordService.verifyPassword(password, user.passwordHash);
   }
 
-  async overridePassword(
-    userId: string,
-    newPassword: string
-  ): Promise<void> {
+  async overridePassword(userId: string, newPassword: string): Promise<void> {
     if (!newPassword || newPassword.length < 8) {
       throw new BadRequestException('New password must be at least 8 characters long');
     }

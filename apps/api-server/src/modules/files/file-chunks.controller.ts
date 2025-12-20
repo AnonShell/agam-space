@@ -22,13 +22,11 @@ import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { logMem } from '@/modules/auth/utils/debugging';
 import { cleanupRequestStream } from '@/common/helpers/stream.utils';
 
-
 @ApiTags('File Chunks')
 @Controller('files/:fileId/chunks')
 @AuthRequired()
 @ApiBearerAuth()
 export class FileChunksController {
-
   constructor(
     private readonly fileChunksService: FileChunkService,
     private readonly filesService: FilesService
@@ -40,9 +38,8 @@ export class FileChunksController {
     @Param('fileId') fileId: string,
     @Param('chunkIndex') chunkIndex: number,
     @CurrentUser() user: AuthenticatedUser,
-    @Req() req: FastifyRequest,
+    @Req() req: FastifyRequest
   ) {
-
     const checksum = req.headers['x-checksum'] as string | undefined;
 
     const fileDirPath = await this.filesService.ensureFileDirectory(user.id, fileId);
@@ -52,7 +49,7 @@ export class FileChunksController {
       fileId,
       chunkIndex,
       checksum,
-      req.raw,
+      req.raw
     );
 
     cleanupRequestStream(req.raw);
@@ -65,7 +62,7 @@ export class FileChunksController {
     @Param('fileId') fileId: string,
     @Param('chunkIndex') chunkIndex: number,
     @CurrentUser() user: AuthenticatedUser,
-    @Res() response: FastifyReply,
+    @Res() response: FastifyReply
   ): Promise<any> {
     const userId = user.id;
     // TODO: check if the chunk belongs to the user
