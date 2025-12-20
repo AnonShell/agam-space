@@ -8,6 +8,7 @@ import {
   logoutApi,
 } from '@agam-space/client';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
+import { SessionManager } from './session-manager';
 
 export const SessionService = {
   async bootstrap() {
@@ -58,4 +59,7 @@ export function resetAllState() {
 
   // Clear in-memory encryption keys
   ClientRegistry.getKeyManager().clearAll();
+
+  // Clear sessionStorage
+  SessionManager.clearSession();
 }
