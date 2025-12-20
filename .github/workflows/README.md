@@ -25,9 +25,14 @@
 ### 1. CI (`ci.yml`)
 
 - Runs on: PR + push to main
-- Does: Lint, test, type-check, build, **Docker build test**
+- Does: Lint, format check, test, **build** (includes type checking), **Docker
+  build test**
 - Time: ~5-7 min
-- **Docker build is tested but NOT pushed** (validates it works)
+- Jobs run sequentially (fail-fast):
+  1. Lint & Format
+  2. Test
+  3. Build - validates TypeScript types
+  4. Docker Build Test
 
 ### 2. Docker Publish (`docker-publish.yml`)
 

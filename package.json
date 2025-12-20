@@ -15,8 +15,7 @@
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --fix --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,js,json,md,yml,yaml}\" --ignore-path .prettierignore",
-    "format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml}\" --ignore-path .prettierignore",
-    "type-check": "tsc --noEmit --skipLibCheck"
+    "format:check": "prettier --check \"**/*.{ts,js,json,md,yml,yaml}\" --ignore-path .prettierignore"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
