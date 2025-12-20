@@ -21,11 +21,11 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "pnpm lint:fix",
-      "pnpm format"
+      "eslint --fix",
+      "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [
-      "pnpm format"
+      "prettier --write"
     ]
   },
   "devDependencies": {
