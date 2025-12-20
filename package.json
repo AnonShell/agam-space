@@ -1,6 +1,5 @@
 {
   "name": "agam-space",
-  "version": "1.0.0",
   "private": true,
   "description": "Private, secure, end-to-end encrypted file storage system",
   "scripts": {

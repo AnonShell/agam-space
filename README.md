@@ -2,6 +2,11 @@
 
 > Self-hosted, end-to-end encrypted file storage platform
 
+[![CI](https://github.com/yourusername/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/agam-space/actions/workflows/ci.yml)
+[![Docker](https://img.shields.io/docker/v/yourusername/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/yourusername/agam-space)
+[![Release](https://img.shields.io/github/v/release/yourusername/agam-space?include_prereleases&label=version)](https://github.com/yourusername/agam-space/releases)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
+
 Agam Space is a privacy-focused file storage solution that puts security first.
 All files, folders, and metadata are encrypted client-side before being stored
 on your own infrastructure.
@@ -47,7 +52,6 @@ agam-space/
 ├── apps/
 │   ├── api-server/    # Backend API (NestJS)
 │   ├── web/           # Web UI (Next.js)
-│   └── cli/           # CLI tools
 ├── packages/
 │   ├── client/        # Client library (API + E2EE)
 │   ├── core/          # Cryptography core
@@ -78,6 +82,18 @@ pnpm test
 pnpm lint
 pnpm format
 ```
+
+## CI/CD & Security
+
+This project includes automated workflows for quality and security:
+
+- ✅ **Automated Testing** - Lint, format, type-check on every PR
+- ✅ **Docker Build Validation** - Prevents broken builds from reaching main
+- ✅ **Security Scanning** - CodeQL for code + Trivy for Docker images
+- ✅ **Dependency Updates** - Dependabot keeps dependencies up-to-date
+- ✅ **Automated Releases** - Tag-based releases with changelog
+
+See [CI/CD Documentation](.github/workflows/README.md) for details.
 
 ## Security
 
