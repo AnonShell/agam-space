@@ -85,8 +85,6 @@ export class WebAuthnService {
     }
     const { rpId, origin } = this.appConfigService.getWebauthnConfig();
 
-    console.log('device', device);
-
     const verification = await verifyAuthenticationResponse({
       response: {
         id: device.credentialId,
