@@ -6,7 +6,7 @@
     "dev": "rimraf tsconfig.tsbuildinfo && nest start --watch",
     "start": "nest start",
     "build": "rimraf dist && nest build && mkdir -p dist/migrations && cp -r ./migrations dist/migrations",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "db:generate": "drizzle-kit generate:pg",
     "db:migrate": "drizzle-kit migrate:pg",
     "db:push": "drizzle-kit push:pg",
