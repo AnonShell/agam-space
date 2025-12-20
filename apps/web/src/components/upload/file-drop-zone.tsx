@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useCallback, useState } from 'react';
-import { extractFlatFiles, groupFilesByFolder, readAllFileSystemEntries } from '@/lib/file-system-entry-reader';
+import { groupFilesByFolder, readAllFileSystemEntries } from '@/lib/file-system-entry-reader';
 
 interface Props {
   onDropFiles: (files: Map<string, File[]>) => void;
