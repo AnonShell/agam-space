@@ -35,21 +35,16 @@ jobs:
       - name: Extract metadata
         id: meta
         run: |
+          # Get version from git tag
+          TAG_VERSION="${{ github.ref_name }}"
+          VERSION="${TAG_VERSION#v}"
+
           # Get short commit SHA
           SHORT_SHA=$(git rev-parse --short HEAD)
 
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            # Tagged release
-            TAG_VERSION="${{ github.ref_name }}"
-            VERSION="${TAG_VERSION#v}"
-            TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}"
-            TAGS="${TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest"
-          else
-            # Push to main - tag as 'dev' to catch build issues
-            VERSION="dev"
-            TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev"
-            TAGS="${TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${SHORT_SHA}"
-          fi
+          # Set Docker tags
+          TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}"
+          TAGS="${TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest"
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT

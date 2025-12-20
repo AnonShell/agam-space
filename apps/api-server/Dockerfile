@@ -1,5 +1,5 @@
 # --- 1. Builder Stage: Build source files ---
-FROM node:20-bullseye-slim AS builder
+FROM node:22-bullseye-slim AS builder
 
 WORKDIR /app
 
@@ -57,7 +57,7 @@ COPY --from=builder /app/apps/web/out ./deploy/public
 
 
  # --- 3. Runner Stage: Minimal runtime image ---
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 RUN apk add --no-cache wget tini
 

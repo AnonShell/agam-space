@@ -36,11 +36,11 @@
 
 ### 2. Docker Publish (`docker-publish.yml`)
 
-- Runs on: Push to main + push tag
+- Runs on: Push tag **only**
 - Does: Build multi-arch Docker image, **push to Docker Hub**, **scan for
   vulnerabilities**
-- Time: ~10-15 min
-- **Actually publishes** the Docker image
+- Time: ~10-15 min (multi-platform: amd64 + arm64)
+- **Only publishes** on official releases (tags)
 - **Scans with Trivy** for security vulnerabilities
 - **Uploads results** to GitHub Security tab
 
