@@ -15,11 +15,11 @@ describe('CmkManager', () => {
     expect(result.masterKey).toBeInstanceOf(Uint8Array);
     expect(result.masterKey.length).toBe(32);
 
-    expect(result.recoveryKey).toBeInstanceOf(Uint8Array);
-    expect(result.recoveryKey.length).toBe(32);
+    expect(typeof result.recoveryKey).toBe('string'); // base58 encoded
+    expect(result.recoveryKey.length).toBeGreaterThan(0);
 
-    expect(result.identityPublicKey).toBeInstanceOf(Uint8Array);
-    expect(result.identityPublicKey.length).toBe(32);
+    expect(typeof result.identityPublicKey).toBe('string'); // base64 encoded
+    expect(result.identityPublicKey.length).toBeGreaterThan(0);
 
     expect(typeof result.encCmkWithPassword).toBe('string');
     expect(typeof result.encCmkWithRecovery).toBe('string');
@@ -51,19 +51,18 @@ describe('CmkManager', () => {
   it('should decrypt CMK with master password or recovery key', async () => {
     const result = await cmkManager.bootstrapCmkWithPassword(TEST_PASSWORD);
 
-    let decryptedCmk = await cmkManager.decryptCmkWithPassword(
+    const decryptedCmk = await cmkManager.decryptCmkWithPassword(
       result.encCmkWithPassword,
       TEST_PASSWORD,
       result.kdfOptions.salt
     );
     expect(Buffer.from(decryptedCmk).equals(result.masterKey)).toBe(true);
 
-    decryptedCmk = await cmkManager.decryptCmkWithPassword(
+    const decryptedCmkWithRecovery = await cmkManager.decryptCmkWithRecoveryKey(
       result.encCmkWithRecovery,
-      result.recoveryKey,
-      result.kdfOptions.salt
+      result.recoveryKey
     );
-    expect(Buffer.from(decryptedCmk).equals(result.masterKey)).toBe(true);
+    expect(Buffer.from(decryptedCmkWithRecovery).equals(result.masterKey)).toBe(true);
 
     const decryptedRecovery = await cmkManager.decryptRecoveryWithCmk(
       result.encRecoveryWithCmk,
