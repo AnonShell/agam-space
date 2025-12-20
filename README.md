@@ -2,46 +2,58 @@
 
 > Self-hosted, end-to-end encrypted file storage platform
 
-## Overview
-
 Agam Space is a privacy-focused file storage solution that puts security first.
-All files, metadata, and tags are encrypted client-side before being stored on
-your own infrastructure.
+All files, folders, and metadata are encrypted client-side before being stored
+on your own infrastructure.
 
 ## Key Features
 
-- 🔒 **End-to-End Encryption**
-  - Zero-knowledge architecture
-  - Modern cryptography (XChaCha20-Poly1305)
-  - Client-side encryption of all data
-
-- 🖥️ **Self-Hosted**
-  - Run on your own infrastructure
-  - Simple Docker Compose deployment
-  - Lightweight and efficient
-
-- 💻 **Cross-Platform**
-  - Responsive web interface
-  - CLI tools for automation
-  - Mobile-friendly design
+- 🔒 **End-to-End Encryption** - Zero-knowledge architecture with client-side
+  encryption
+- 🖥️ **Self-Hosted** - Run on your own infrastructure with Docker
+- 💻 **Cross-Platform** - Web interface, CLI tools, and mobile-friendly design
+- 🔐 **Modern Cryptography** - XChaCha20-Poly1305, WebAuthn, Argon2
+- 🚀 **Fast & Lightweight** - Built with performance in mind
 
 ## Quick Start
 
-1. Clone the repository
-2. Copy and configure `.env` from `.env.example`
-3. Run with Docker Compose:
-
 ```bash
-docker-compose up -d
+# Clone the repository
+git clone https://github.com/yourusername/agam-space.git
+cd agam-space
+
+# Install dependencies
+pnpm install
+
+# Start development servers
+pnpm dev
 ```
+
+For detailed installation, configuration, and deployment instructions, see the
+[Documentation](https://yourusername.github.io/agam-space) (coming soon).
 
 ## Tech Stack
 
-- **Backend**: NestJS, Fastify, PostgreSQL
-- **Frontend**: Next.js 14, Tailwind CSS
-- **Storage**: Local filesystem (S3-compatible storage planned)
-- **Security**: WebCrypto, Libsodium
-- **Build**: pnpm, TypeScript
+- **Backend**: NestJS, Fastify, PostgreSQL, Drizzle ORM
+- **Frontend**: Next.js 15, React, Tailwind CSS, Zustand
+- **Packages**: TypeScript monorepo with pnpm workspaces
+- **Security**: WebCrypto API, Libsodium (WASM), WebAuthn
+- **E2EE**: Client-side encryption with zero-knowledge architecture
+
+## Project Structure
+
+```
+agam-space/
+├── apps/
+│   ├── api-server/    # Backend API (NestJS)
+│   ├── web/           # Web UI (Next.js)
+│   └── cli/           # CLI tools
+├── packages/
+│   ├── client/        # Client library (API + E2EE)
+│   ├── core/          # Cryptography core
+│   └── shared-types/  # Shared TypeScript types
+└── docs/              # Documentation site (Docusaurus)
+```
 
 ## Development
 
@@ -49,19 +61,36 @@ docker-compose up -d
 # Install dependencies
 pnpm install
 
-# Start development servers
+# Start all apps in development mode
 pnpm dev
+
+# Run specific app
+pnpm dev:api    # API server
+pnpm dev:web    # Web interface
 
 # Build for production
 pnpm build
+
+# Run tests
+pnpm test
+
+# Lint and format
+pnpm lint
+pnpm format
 ```
 
 ## Security
 
-- Client Master Key (CMK) is the root of trust
-- All encryption/decryption happens client-side
-- Server never sees unencrypted data
-- Optional recovery key for backup
+- **Client Master Key (CMK)** is the root of trust, derived from user password
+- All encryption/decryption happens **client-side only**
+- Server **never sees** unencrypted data or encryption keys
+- Optional recovery key for account backup
+- WebAuthn support for passwordless device unlock
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines (coming soon)
+before submitting PRs.
 
 ## License
 
@@ -69,4 +98,4 @@ Agam Space is licensed under the [GNU AGPLv3](./LICENSE) license.
 
 ---
 
-Built for privacy-first, self-hosted simplicity
+**Built for privacy, security, and self-sovereignty**
