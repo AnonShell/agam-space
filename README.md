@@ -3,76 +3,130 @@
 > Self-hosted, end-to-end encrypted file storage platform
 
 [![CI](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml)
-[![Docker](https://img.shields.io/docker/v/yourusername/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/yourusername/agam-space)
-[![Release](https://img.shields.io/github/v/release/ramesh-lingappan/agam-space?include_prereleases&label=version)](https://github.com/ramesh-lingappan/agam-space/releases)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
-Agam Space is a privacy-focused file storage solution that puts security first.
-All files, folders, and metadata are encrypted client-side before being stored
-on your own infrastructure.
+End-to-end encrypted file storage you can self-host. All files and metadata
+encrypted on your device before upload. Zero-knowledge architecture - the server
+cannot access your files or encryption keys.
 
-## Key Features
+**Status:** Beta (v0.1.0) - Works but expect bugs and breaking changes.
 
-- 🔒 **End-to-End Encryption** - Zero-knowledge architecture with client-side
-  encryption
-- 🖥️ **Self-Hosted** - Run on your own infrastructure with Docker
-- 💻 **Cross-Platform** - Web interface, CLI tools, and mobile-friendly design
-- 🔐 **Modern Cryptography** - XChaCha20-Poly1305, WebAuthn, Argon2
-- 🚀 **Fast & Lightweight** - Built with performance in mind
+**About the name:** Agam (அகம்) is Tamil for "inner" or "heart" - fitting for a
+platform where your data remains private.
+
+## What it does
+
+- Upload and organize files with end-to-end encryption
+- Files encrypted in browser before upload (XChaCha20-Poly1305)
+- Folder names and metadata also encrypted
+- Biometric unlock on trusted devices (Touch ID, Face ID, Windows Hello)
+- Web interface (desktop and mobile browsers)
+- Self-hosted with Docker
 
 ## Quick Start
 
+Install with Docker Compose:
+
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/agam-space.git
-cd agam-space
+mkdir agam-space && cd agam-space
 
-# Install dependencies
-pnpm install
+# Create docker-compose.yml (see docs for full config)
+curl -o docker-compose.yml https://raw.githubusercontent.com/ramesh-lingappan/agam-space/main/apps/api-server/docker-compose.yaml
 
-# Start development servers
-pnpm dev
+# Start containers
+docker-compose up -d
 ```
 
-For detailed installation, configuration, and deployment instructions, see the
-[Documentation](https://yourusername.github.io/agam-space) (coming soon).
+Access at http://localhost:3331
+
+For production setup with HTTPS, see
+[Installation Guide](./docs/docs/installation/docker-compose.md).
+
+## Features
+
+**Encryption:**
+
+- Client-side encryption (zero-knowledge)
+- Master password derives all keys
+- Recovery key for backup
+- Each file gets unique encryption key
+
+**Authentication:**
+
+- Email/password login
+- Optional SSO (Authelia, Authentik, Keycloak, Google, GitHub)
+- WebAuthn biometric unlock on trusted devices
+
+**File Management:**
+
+- Upload via drag-and-drop or file picker
+- Folder organization
+- File preview (PDF, images, text)
+- Edit text files inline
+- 30-day trash bin
+
+**Storage:**
+
+- Per-user quotas (default 10GB)
+- Chunk-based uploads (resumable)
+- Local filesystem storage
 
 ## Tech Stack
 
-- **Backend**: NestJS, Fastify, PostgreSQL, Drizzle ORM
-- **Frontend**: Next.js 15, React, Tailwind CSS, Zustand
-- **Packages**: TypeScript monorepo with pnpm workspaces
-- **Security**: WebCrypto API, Libsodium (WASM), WebAuthn
-- **E2EE**: Client-side encryption with zero-knowledge architecture
+**Backend:**
+
+- NestJS + Fastify
+- PostgreSQL + Drizzle ORM
+- Local file storage
+
+**Frontend:**
+
+- Next.js 15 + React
+- Tailwind CSS
+- Zustand (state)
+
+**Crypto:**
+
+- Web Crypto API
+- Libsodium (WASM)
+- WebAuthn
+
+**Deployment:**
+
+- Docker + Docker Compose
+- All-in-one container (API + Web)
 
 ## Project Structure
 
 ```
 agam-space/
 ├── apps/
-│   ├── api-server/    # Backend API (NestJS)
-│   ├── web/           # Web UI (Next.js)
+│   ├── api-server/    # NestJS backend
+│   ├── web/           # Next.js frontend
 ├── packages/
-│   ├── client/        # Client library (API + E2EE)
-│   ├── core/          # Cryptography core
-│   └── shared-types/  # Shared TypeScript types
-└── docs/              # Documentation site (Docusaurus)
+│   ├── client/        # API client + E2EE logic
+│   ├── core/          # Cryptography primitives
+│   └── shared-types/  # TypeScript types
+└── docs/              # Documentation (Docusaurus)
 ```
 
 ## Development
 
 ```bash
+# Prerequisites: Node.js 22, pnpm 9
+
 # Install dependencies
 pnpm install
 
-# Start all apps in development mode
+# Start all apps
 pnpm dev
 
-# Run specific app
-pnpm dev:api    # API server
-pnpm dev:web    # Web interface
+# Or start individually
+pnpm dev:api    # API server (port 3001)
+pnpm dev:web    # Web UI (port 3000)
+pnpm dev:docs   # Documentation (port 3002)
 
-# Build for production
+# Build everything
 pnpm build
 
 # Run tests
@@ -83,35 +137,86 @@ pnpm lint
 pnpm format
 ```
 
-## CI/CD & Security
+## Documentation
 
-This project includes automated workflows for quality and security:
-
-- ✅ **Automated Testing** - Lint, format, type-check on every PR
-- ✅ **Docker Build Validation** - Prevents broken builds from reaching main
-- ✅ **Security Scanning** - CodeQL for code + Trivy for Docker images
-- ✅ **Dependency Updates** - Dependabot keeps dependencies up-to-date
-- ✅ **Automated Releases** - Tag-based releases with changelog
-
-See [CI/CD Documentation](.github/workflows/README.md) for details.
+- [Installation](./docs/docs/installation/docker-compose.md) - Docker setup
+- [Configuration](./docs/docs/configuration/index.md) - SSO, quotas, users
+- [Security](./docs/docs/security.md) - How encryption works
+- [Architecture](./docs/docs/architecture.md) - Technical details
+- [FAQ](./docs/docs/faq.md) - Common questions
 
 ## Security
 
-- **Client Master Key (CMK)** is the root of trust, derived from user password
-- All encryption/decryption happens **client-side only**
-- Server **never sees** unencrypted data or encryption keys
-- Optional recovery key for account backup
-- WebAuthn support for passwordless device unlock
+**How it works:**
+
+1. Master password derives Cryptographic Master Key (CMK)
+2. CMK encrypts folder keys
+3. Folder keys encrypt file keys
+4. File keys encrypt file chunks
+5. Everything encrypted before upload
+
+**Server sees:**
+
+- Encrypted binary blobs
+- File sizes and timestamps
+- Folder structure (but not names)
+
+**Server cannot see:**
+
+- File contents
+- File names
+- Folder names
+- Master password or encryption keys
+
+**Not audited** - Personal project for learning. Use at your own risk.
+
+## Why I Built This
+
+Most self-hosted file storage lacks proper end-to-end encryption. Nextcloud's
+E2EE has limitations. The usual advice is "encrypt the disk" but that doesn't
+protect against server compromise or rogue admins.
+
+I wanted to build something where I could offer storage to family and friends
+without being able to access their files. Inspired by Ente Photos' approach to
+privacy.
+
+Also: over a decade in software, interested in security and architecture, wanted
+to learn modern E2EE patterns properly.
+
+## Roadmap
+
+See [planned features](./docs/docs/features.md#planned-features) in
+documentation.
+
+Priority features:
+
+- File sharing between users
+- Desktop sync client
+- S3 backend support
+- File versioning
+- Mobile apps
+
+No timeline - built when I have time.
+
+## CI/CD
+
+Automated workflows:
+
+- **CI**: Lint, test, build on PRs to main
+- **Docker**: Build and publish on git tags
+- **Security**: CodeQL + Trivy scanning
+- **Docs**: GitHub Pages deployment (manual trigger)
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines (coming soon)
-before submitting PRs.
+This is a personal project but contributions welcome. Open an issue first to
+discuss changes.
 
 ## License
 
-Agam Space is licensed under the [GNU AGPLv3](./LICENSE) license.
+[GNU AGPLv3](./LICENSE)
 
 ---
 
-**Built for privacy, security, and self-sovereignty**
+**Note:** This is beta software. Do not use as your only backup. Keep copies of
+important files elsewhere.
