@@ -7,11 +7,23 @@
 [![Release](https://img.shields.io/github/v/release/ramesh-lingappan/agam-space?include_prereleases&label=version)](https://github.com/ramesh-lingappan/agam-space/releases)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
+## ⚠️ **BETA SOFTWARE - USE WITH CAUTION**
+
+**Agam Space is in early beta and not ready for production use.**
+
+- Bugs and data loss are possible
+- Breaking changes may occur between versions
+- **Do not use as your only backup**
+- Keep copies of important files elsewhere
+- Not professionally audited
+
+Once stable, this warning will be removed.
+
+---
+
 End-to-end encrypted file storage you can self-host. All files and metadata
 encrypted on your device before upload. Zero-knowledge architecture - the server
 cannot access your files or encryption keys.
-
-**Status:** Beta (v0.1.0) - Works but expect bugs and breaking changes.
 
 **About the name:** Agam (அகம்) is Tamil for "inner" or "heart" - fitting for a
 platform where your data remains private.
@@ -25,24 +37,18 @@ platform where your data remains private.
 - Web interface (desktop and mobile browsers)
 - Self-hosted with Docker
 
-## Quick Start
+## Why I Built This
 
-Install with Docker Compose:
+Most self-hosted file storage lacks proper end-to-end encryption. Nextcloud's
+E2EE has limitations. The usual advice is "encrypt the disk" but that doesn't
+protect against server compromise or rogue admins.
 
-```bash
-mkdir agam-space && cd agam-space
+I wanted to build something where I could offer storage to family and friends
+without being able to access their files. Inspired by Ente Photos' approach to
+privacy.
 
-# Create docker-compose.yml (see docs for full config)
-curl -o docker-compose.yml https://raw.githubusercontent.com/ramesh-lingappan/agam-space/main/apps/api-server/docker-compose.yaml
-
-# Start containers
-docker-compose up -d
-```
-
-Access at http://localhost:3331
-
-For production setup with HTTPS, see
-[Installation Guide](./docs/docs/installation/docker-compose.md).
+Also: over a decade in software, interested in security and architecture, wanted
+to learn modern E2EE patterns properly.
 
 ## Features
 
@@ -72,6 +78,25 @@ For production setup with HTTPS, see
 - Per-user quotas (default 10GB)
 - Chunk-based uploads (resumable)
 - Local filesystem storage
+
+## Quick Start
+
+Install with Docker Compose:
+
+```bash
+mkdir agam-space && cd agam-space
+
+# Create docker-compose.yml (see docs for full config)
+curl -o docker-compose.yml https://raw.githubusercontent.com/ramesh-lingappan/agam-space/main/apps/api-server/docker-compose.yaml
+
+# Start containers
+docker-compose up -d
+```
+
+Access at http://localhost:3331
+
+For production setup with HTTPS, see
+[Installation Guide](./docs/docs/installation/docker-compose.md).
 
 ## Tech Stack
 
@@ -172,19 +197,6 @@ pnpm format
 
 **Not audited** - Personal project for learning. Use at your own risk.
 
-## Why I Built This
-
-Most self-hosted file storage lacks proper end-to-end encryption. Nextcloud's
-E2EE has limitations. The usual advice is "encrypt the disk" but that doesn't
-protect against server compromise or rogue admins.
-
-I wanted to build something where I could offer storage to family and friends
-without being able to access their files. Inspired by Ente Photos' approach to
-privacy.
-
-Also: over a decade in software, interested in security and architecture, wanted
-to learn modern E2EE patterns properly.
-
 ## Roadmap
 
 See [planned features](./docs/docs/features.md#planned-features) in
@@ -217,8 +229,3 @@ discuss changes.
 ## License
 
 [GNU AGPLv3](./LICENSE)
-
----
-
-**Note:** This is beta software. Do not use as your only backup. Keep copies of
-important files elsewhere.
