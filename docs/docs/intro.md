@@ -5,8 +5,6 @@ slug: /
 
 # Introduction
 
-![Agam Space](../static/img/hero.png)
-
 Agam Space is a self-hosted, end-to-end encrypted file storage platform. All
 files and metadata are encrypted on your device before upload. The server stores
 only encrypted data and cannot access your files or encryption keys.
@@ -16,6 +14,8 @@ Built for users who want control over their data without sacrificing privacy.
 **About the name:** Agam (அகம்) is Tamil for "inner" or "heart." In classical
 literature, it represents the private, inner world - fitting for a platform
 where your data remains private and encrypted.
+
+![Agam Space](../static/img/hero.png)
 
 ## Current status
 
