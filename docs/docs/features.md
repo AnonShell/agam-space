@@ -6,6 +6,33 @@ sidebar_position: 2
 
 What Agam Space can do.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="../static/img/features/explorer.png" alt="File Explorer" />
+      <p align="center"><b>File Explorer</b></p>
+    </td>
+    <td width="50%">
+      <img src="../static/img/features/image-preview.png" alt="Image Preview" />
+      <p align="center"><b>Image Preview</b></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="../static/img/features/setup-encryption.png" alt="Encryption Setup" />
+      <p align="center"><b>Master Password Setup</b></p>
+    </td>
+    <td width="50%">
+      <img src="../static/img/features/device-unlock.png" alt="Device Unlock" />
+      <p align="center"><b>Biometric Device Unlock</b></p>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## Encryption
 
 **End-to-end encrypted**  

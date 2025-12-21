@@ -83,7 +83,41 @@ cryptographic patterns.
 - Chunk-based uploads (resumable)
 - Local filesystem storage
 
-## Quick Start
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="./docs/static/img/features/setup-encryption.png" alt="Encryption Setup" />
+      <p align="center"><b>Master Password Setup</b></p>
+    </td>
+    <td width="50%">
+      <img src="./docs/static/img/features/device-unlock.png" alt="WebAuthn" />
+      <p align="center"><b>Biometric Device Unlock</b></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="./docs/static/img/features/explorer.png" alt="File Explorer" />
+      <p align="center"><b>File Explorer</b></p>
+    </td>
+    <td width="50%">
+      <img src="./docs/static/img/features/image-preview.png" alt="File Preview" />
+      <p align="center"><b>Image Preview</b></p>
+    </td>
+  </tr>
+</table>
+
+<details>
+<summary>📸 More Screenshots</summary>
+
+### Settings & Configuration
+
+![Settings](./docs/static/img/features/settings.png)
+
+</details>
+
+## Tech Stack
 
 **Docker (Recommended):**
 
