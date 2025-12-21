@@ -7,6 +7,8 @@
 [![Release](https://img.shields.io/github/v/release/ramesh-lingappan/agam-space?include_prereleases&label=version)](https://github.com/ramesh-lingappan/agam-space/releases)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
+![Agam Space Dashboard](./docs/static/img/hero.png)
+
 End-to-end encrypted file storage you can self-host. All files and metadata
 encrypted on your device before upload. Zero-knowledge architecture - the server
 cannot access your files or encryption keys.
