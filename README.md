@@ -113,7 +113,7 @@ cryptographic patterns.
 
 ### Settings & Configuration
 
-![Settings](./docs/static/img/features/settings.png)
+![Settings](./docs/static/img/features/settings-encryption.png)
 
 </details>
 

@@ -29,6 +29,12 @@ What Agam Space can do.
       <p align="center"><b>Biometric Device Unlock</b></p>
     </td>
   </tr>
+<tr>
+    <td width="50%">
+      <img src="../static/img/features/settings-encryption.png" alt="Settings Encryption" />
+      <p align="center"><b>Settings - Encryption</b></p>
+    </td>
+</tr>
 </table>
 
 ---
