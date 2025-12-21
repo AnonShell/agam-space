@@ -7,6 +7,13 @@
 [![Release](https://img.shields.io/github/v/release/ramesh-lingappan/agam-space?include_prereleases&label=version)](https://github.com/ramesh-lingappan/agam-space/releases)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
+End-to-end encrypted file storage you can self-host. All files and metadata
+encrypted on your device before upload. Zero-knowledge architecture - the server
+cannot access your files or encryption keys.
+
+**About the name:** Agam (அகம்) is Tamil for "inner" or "heart" - fitting for a
+platform where your data remains private.
+
 ## ⚠️ **BETA SOFTWARE - USE WITH CAUTION**
 
 **Agam Space is in early beta and not ready for production use.**
@@ -21,13 +28,6 @@ Once stable, this warning will be removed.
 
 ---
 
-End-to-end encrypted file storage you can self-host. All files and metadata
-encrypted on your device before upload. Zero-knowledge architecture - the server
-cannot access your files or encryption keys.
-
-**About the name:** Agam (அகம்) is Tamil for "inner" or "heart" - fitting for a
-platform where your data remains private.
-
 ## What it does
 
 - Upload and organize files with end-to-end encryption
@@ -39,16 +39,18 @@ platform where your data remains private.
 
 ## Why I Built This
 
-Most self-hosted file storage lacks proper end-to-end encryption. Nextcloud's
-E2EE has limitations. The usual advice is "encrypt the disk" but that doesn't
-protect against server compromise or rogue admins.
+After years of self-hosting, I got frustrated with E2EE options. Nextcloud's
+implementation has gaps. Most solutions tell you to "just encrypt the disk" -
+but that doesn't help if your server gets compromised or if you're the admin who
+can access everything.
 
-I wanted to build something where I could offer storage to family and friends
-without being able to access their files. Inspired by Ente Photos' approach to
-privacy.
+I wanted to share storage with family and friends without being able to read
+their files. Ente Photos proved this works great for photos. I wanted the same
+for general files.
 
-Also: over a decade in software, interested in security and architecture, wanted
-to learn modern E2EE patterns properly.
+With over a decade in software architecture and a strong interest in application
+security, I wanted to build a proper E2EE app while having fun exploring modern
+cryptographic patterns.
 
 ## Features
 
