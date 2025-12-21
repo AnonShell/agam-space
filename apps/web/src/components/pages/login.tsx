@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,78 +11,76 @@ import { SessionService } from '@/services/session.service';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ username: "", password: "" });
-  const [error, setError] = useState("");
-  const config = useServerConfigStore((s) => s.config);
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+  const config = useServerConfigStore(s => s.config);
   const ssoEnabled = config?.sso?.enabled === true;
   const signupEnabled = config?.account?.allowNewSignup === true;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setError('');
 
     try {
       await SessionService.login(form.username, form.password);
 
-      router.push("/explorer");
+      router.push('/explorer');
     } catch (err) {
       setError((err as Error).message);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background text-foreground">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl font-semibold">Sign in to Agam Space</h1>
-          <p className="text-sm text-muted-foreground">
-            Secure. Private. Yours.
-          </p>
+    <div className='min-h-screen flex items-center justify-center px-4 bg-background text-foreground'>
+      <div className='w-full max-w-md space-y-6'>
+        <div className='text-center space-y-1'>
+          <h1 className='text-2xl font-semibold'>Sign in to Agam Space</h1>
+          <p className='text-sm text-muted-foreground'>Private. Secure. Yours.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='username'>Username</Label>
             <Input
-              id="username"
-              type="text"
+              id='username'
+              type='text'
               value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              onChange={e => setForm({ ...form, username: e.target.value })}
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='password'>Password</Label>
             <Input
-              id="password"
-              type="password"
+              id='password'
+              type='password'
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={e => setForm({ ...form, password: e.target.value })}
               required
             />
           </div>
 
-          <Button className="w-full" type="submit">
+          <Button className='w-full' type='submit'>
             Continue
           </Button>
 
-          {error && (
-            <p className="text-sm text-red-500 text-center">{error}</p>
-          )}
+          {error && <p className='text-sm text-red-500 text-center'>{error}</p>}
         </form>
         {ssoEnabled && (
           <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() =>   window.location.href = '/api/v1/auth/sso/oidc'}
+            variant='secondary'
+            className='w-full'
+            onClick={() => (window.location.href = '/api/v1/auth/sso/oidc')}
           >
             Login with SSO
           </Button>
         )}
         {signupEnabled && (
-          <div className="pt-4 text-center text-sm text-muted-foreground">
-            Don’t have an account?{" "}
-            <Link href="/signup" className="text-primary font-medium hover:underline">Create one</Link>
+          <div className='pt-4 text-center text-sm text-muted-foreground'>
+            Don’t have an account?{' '}
+            <Link href='/signup' className='text-primary font-medium hover:underline'>
+              Create one
+            </Link>
           </div>
         )}
       </div>

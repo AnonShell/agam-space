@@ -73,15 +73,21 @@ export default function E2eeSetupPage() {
   if (initialKeysRef.current?.encCmkWithPassword) {
     return (
       <div className='min-h-screen flex items-center justify-center px-4'>
-        <div className='w-full max-w-md space-y-6 text-center'>
-          <h1 className='text-2xl font-semibold text-green-600'>Encryption Already Setup</h1>
-          <p className='text-sm text-muted-foreground'>
-            Your encryption keys are already configured.
-          </p>
+        <div className='w-full max-w-md space-y-6'>
+          <div className='text-center space-y-3'>
+            <div className='text-green-600 text-5xl mb-2'>✓</div>
+            <h1 className='text-2xl font-semibold'>You're All Set</h1>
+            <p className='text-muted-foreground'>
+              Your encryption is already configured. You can start uploading files or manage your
+              settings.
+            </p>
+          </div>
           <div className='flex flex-col gap-3'>
-            <Button onClick={() => router.replace('/explorer')}>Go to Explorer</Button>
+            <Button onClick={() => router.replace('/explorer')} size='lg'>
+              Go to Files
+            </Button>
             <Button variant='outline' onClick={() => router.replace('/settings/encryption')}>
-              Go to Settings
+              Security Settings
             </Button>
           </div>
         </div>
@@ -92,74 +98,106 @@ export default function E2eeSetupPage() {
   return (
     <div className='min-h-screen flex items-center justify-center px-4'>
       <div className='w-full max-w-md space-y-6'>
-        <div className='text-center space-y-1'>
-          <h1 className='text-2xl font-semibold'>Set up Encryption</h1>
+        <div className='text-center space-y-2'>
+          <div className='text-4xl mb-2'>🔐</div>
+          <h1 className='text-2xl font-semibold'>Secure Your Files</h1>
           <p className='text-sm text-muted-foreground'>
-            You need to set a master password to enable end-to-end encryption.
+            Create a master password to encrypt all your files end-to-end.
           </p>
         </div>
 
         {!recoveryKey && (
-          <form onSubmit={handleSubmit} className='space-y-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='password'>Master Password</Label>
-              <Input
-                id='password'
-                type='password'
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
+          <>
+            <div className='border rounded-lg p-3 bg-muted/50'>
+              <p className='text-xs text-muted-foreground leading-relaxed'>
+                <span className='font-medium text-foreground'>Your master password</span> encrypts
+                all files. Make it strong (20+ chars) and unique. We cannot recover it if forgotten.
+                This is separate from your login password.
+              </p>
             </div>
 
-            <div className='space-y-2'>
-              <Label htmlFor='confirm'>Confirm Master Password</Label>
-              <Input
-                id='confirm'
-                type='password'
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                required
-              />
-            </div>
+            <form onSubmit={handleSubmit} className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='password'>Master Password</Label>
+                <Input
+                  id='password'
+                  type='password'
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder='Enter a strong passphrase or password'
+                  required
+                  minLength={8}
+                />
+                <p className='text-xs text-muted-foreground'>
+                  Use a passphrase or 20+ character password
+                </p>
+              </div>
 
-            <Button className='w-full' type='submit' disabled={submitting}>
-              {submitting ? 'Setting up...' : 'Enable Encryption'}
-            </Button>
+              <div className='space-y-2'>
+                <Label htmlFor='confirm'>Confirm Master Password</Label>
+                <Input
+                  id='confirm'
+                  type='password'
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  placeholder='Re-enter your passphrase or password'
+                  required
+                />
+              </div>
 
-            {error && <p className='text-sm text-red-500 text-center'>{error}</p>}
-          </form>
+              <Button className='w-full' type='submit' disabled={submitting}>
+                {submitting ? 'Setting up encryption...' : 'Continue'}
+              </Button>
+
+              {error && (
+                <div className='text-sm text-red-500 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded p-3 text-center'>
+                  {error}
+                </div>
+              )}
+            </form>
+          </>
         )}
         {recoveryKey && (
           <div className='space-y-6 border p-6 rounded-md bg-muted'>
             <div className='space-y-2 text-center'>
-              <h2 className='text-lg font-semibold text-green-600'>Encryption Enabled</h2>
-              <p className='text-sm text-muted-foreground'>
-                All your folders and files will now be encrypted.
-              </p>
-              <p className='text-sm text-muted-foreground'>
-                Following is your recovery key. You can retrieve it later from settings, but we
-                recommend storing it securely now.
+              <div className='text-green-600 text-4xl mb-2'>✓</div>
+              <h2 className='text-xl font-semibold'>Encryption Enabled</h2>
+              <p className='text-muted-foreground'>
+                Save your recovery key to regain access if you forget your master password.
               </p>
             </div>
 
-            <div className='flex items-center gap-2'>
-              <Input value={recoveryKey} readOnly className='font-mono text-xs' />
-              {clipboardSupported && (
-                <Button type='button' variant='outline' size='sm' onClick={handleCopy}>
-                  {copied ? 'Copied' : 'Copy'}
-                </Button>
-              )}
+            <div className='space-y-3'>
+              <Label className='text-base'>Recovery Key</Label>
+              <div className='flex items-center gap-2'>
+                <Input
+                  value={recoveryKey}
+                  readOnly
+                  className='font-mono bg-background text-foreground'
+                />
+                {clipboardSupported && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleCopy}
+                    className='shrink-0'
+                  >
+                    {copied ? '✓' : 'Copy'}
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <div className='flex items-center gap-2'>
+            <div className='flex items-start gap-3 p-3 rounded border bg-background'>
               <input
                 type='checkbox'
                 id='ack'
                 checked={acknowledged}
                 onChange={e => setAcknowledged(e.target.checked)}
+                className='mt-0.5'
               />
-              <label htmlFor='ack' className='text-sm text-muted-foreground'>
+              <label htmlFor='ack' className='text-sm cursor-pointer'>
                 I’ve saved my recovery key securely
               </label>
             </div>
@@ -169,7 +207,7 @@ export default function E2eeSetupPage() {
               onClick={() => router.replace('/explorer')}
               disabled={!acknowledged}
             >
-              Continue to Explorer
+              Continue
             </Button>
           </div>
         )}
