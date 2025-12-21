@@ -3,7 +3,7 @@
 > Self-hosted, end-to-end encrypted file storage platform
 
 [![CI](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml)
-[![Docker](https://img.shields.io/docker/v/yourusername/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/yourusername/agam-space)
+[![Docker](https://img.shields.io/docker/v/agamspace/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/agamspace/agam-space)
 [![Release](https://img.shields.io/github/v/release/ramesh-lingappan/agam-space?include_prereleases&label=version)](https://github.com/ramesh-lingappan/agam-space/releases)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
@@ -82,6 +82,18 @@ cryptographic patterns.
 - Local filesystem storage
 
 ## Quick Start
+
+**Docker (Recommended):**
+
+```bash
+# Pull from Docker Hub
+docker pull agamspace/agam-space:latest
+
+# Or from GitHub Container Registry
+docker pull ghcr.io/ramesh-lingappan/agam-space:latest
+```
+
+**Docker Compose:**
 
 Install with Docker Compose:
 

@@ -207,8 +207,9 @@ patterns. Scratching my own itch.
 
 ### What's next?
 
-Check the [GitHub roadmap](https://github.com/yourusername/agam-space/issues).
-Rough priorities:
+Check the
+[GitHub roadmap](https://github.com/ramesh-lingappan/agam-space/issues). Rough
+priorities:
 
 1. File sharing
 2. Mobile apps

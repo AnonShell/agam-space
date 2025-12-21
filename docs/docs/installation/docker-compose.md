@@ -257,7 +257,7 @@ To pin to specific version, edit `docker-compose.yml`:
 
 ```yaml
 agam:
-  image: yourdockerhub/agam-space:v0.1.0-beta.1
+  image: agamspace/agam-space:v0.1.0-beta.1
 ```
 
 ## Next Steps

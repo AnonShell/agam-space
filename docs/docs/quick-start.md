@@ -38,7 +38,7 @@ services:
     restart: unless-stopped
 
   agam:
-    image: yourdockerhub/agam-space:latest
+    image: agamspace/agam-space:latest
     ports:
       - '3331:3331'
     environment:
