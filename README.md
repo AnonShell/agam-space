@@ -3,6 +3,8 @@
 > Self-hosted, end-to-end encrypted file storage platform
 
 [![CI](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml)
+[![Docker](https://img.shields.io/docker/v/yourusername/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/yourusername/agam-space)
+[![Release](https://img.shields.io/github/v/release/ramesh-lingappan/agam-space?include_prereleases&label=version)](https://github.com/ramesh-lingappan/agam-space/releases)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
 End-to-end encrypted file storage you can self-host. All files and metadata
