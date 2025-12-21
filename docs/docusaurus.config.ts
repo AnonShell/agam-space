@@ -7,10 +7,10 @@ const config: Config = {
   tagline: 'End-to-end encrypted file storage',
   favicon: 'img/favicon.ico',
 
-  url: 'https://yourusername.github.io',
+  url: 'https://ramesh-lingappan.github.io',
   baseUrl: '/agam-space/',
 
-  organizationName: 'yourusername',
+  organizationName: 'ramesh-lingappan',
   projectName: 'agam-space',
 
   onBrokenLinks: 'throw',
@@ -28,7 +28,7 @@ const config: Config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/yourusername/agam-space/tree/main/docs/',
+          editUrl: 'https://github.com/ramesh-lingappan/agam-space/tree/main/docs/',
         },
         blog: false,
         theme: {
