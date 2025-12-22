@@ -23,7 +23,7 @@ RUN pnpm --filter=web exec pnpm build
 
 
 # --- 2. Deps Stage: Create clean deployable output ---
-FROM node:20-bullseye-slim AS deps
+FROM node:22-bullseye-slim AS deps
 
 WORKDIR /app
 
@@ -50,7 +50,7 @@ COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
 COPY --from=builder /app/apps/api-server/dist ./apps/api-server/dist
 
-RUN pnpm deploy deploy/ --prod --filter=api-server
+RUN pnpm deploy deploy/ --prod --filter=api-server --legacy
 
 COPY ./apps/api-server/migrations/ ./deploy/dist/migrations/
 COPY --from=builder /app/apps/web/out ./deploy/public
