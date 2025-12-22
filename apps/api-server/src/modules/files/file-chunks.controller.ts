@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Controller,
   Get,
-  Head,
   HttpCode,
   HttpStatus,
   NotFoundException,
@@ -95,11 +94,9 @@ export class FileChunksController {
     return response.send(stream);
   }
 
-  /**
-   * Check if chunk exists (HEAD)
-   */
-  @Head('/:chunkIndex')
+  @Get('/:chunkIndex/exists')
   @ApiOperation({ summary: 'Check if chunk exists' })
+  @HttpCode(HttpStatus.NO_CONTENT)
   async checkChunkExists(
     @Param('fileId') fileId: string,
     @Param('chunkIndex') chunkIndex: number,
@@ -109,7 +106,7 @@ export class FileChunksController {
     // TODO: check if the chunk belongs to the user
     const exists = await this.fileChunksService.chunkExists(fileId, chunkIndex);
     if (!exists) {
-      throw new BadRequestException('Chunk not found');
+      throw new NotFoundException('Chunk not found');
     }
   }
 }

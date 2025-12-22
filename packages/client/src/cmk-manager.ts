@@ -5,6 +5,7 @@ import {
   IdentityKeyManager,
   toBase64,
 } from '@agam-space/core';
+
 import { randomBytes } from '@noble/ciphers/webcrypto';
 
 import { ARGON2ID_PRESETS, Argon2idOptions, deriveKeyFromSecret } from './crypto/argon2';

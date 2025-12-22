@@ -20,7 +20,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     console.error(`[${request.method}] ${request.url}`, exception);
 
-    response.code(status).send({
+    response.status(status).send({
       statusCode: status,
       error,
       path: request.url,

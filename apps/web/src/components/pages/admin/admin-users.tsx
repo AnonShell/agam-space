@@ -15,11 +15,10 @@ import { MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/store/auth';
 
 export function AdminUserList() {
-
   const [users, setUsers] = useState<UsersArray>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const currentUser = useAuth((state => state.user));
+  const currentUser = useAuth(state => state.user);
 
   const load = useMemo(
     () => async () => {
@@ -50,16 +49,18 @@ export function AdminUserList() {
 
   const StatusBadge = ({ status }: { status: 'active' | 'disabled' | 'deleted' }) => {
     const map: Record<typeof status, { text: string; classes: string }> = {
-      active:   { text: 'Active',   classes: 'bg-emerald-100 text-emerald-700' },
+      active: { text: 'Active', classes: 'bg-emerald-100 text-emerald-700' },
       disabled: { text: 'Disabled', classes: 'bg-amber-100 text-amber-700' },
-      deleted:  { text: 'Deleted',  classes: 'bg-red-100 text-red-700' },
+      deleted: { text: 'Deleted', classes: 'bg-red-100 text-red-700' },
     };
 
     const { text, classes } = map[status];
     return (
-      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}>
-      {text}
-    </span>
+      <span
+        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${classes}`}
+      >
+        {text}
+      </span>
     );
   };
 
@@ -73,64 +74,67 @@ export function AdminUserList() {
       console.error('Failed to change user status:', error);
       setError('Failed to change user status');
     }
-  }
+  };
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <h2 className="text-xl font-semibold">User Management</h2>
-        <Button onClick={load} disabled={loading} size="sm" variant="secondary">
+      <div className='mb-4 flex items-center justify-between gap-2'>
+        <h2 className='text-xl font-semibold'>User Management</h2>
+        <Button onClick={load} disabled={loading} size='sm' variant='secondary'>
           {loading ? 'Refreshing…' : 'Refresh'}
         </Button>
       </div>
 
-      <div className="border rounded-xl overflow-hidden">
+      <div className='border rounded-xl overflow-hidden'>
         {error ? (
-          <div className="p-4 text-sm text-red-600 bg-red-50">{error}</div>
+          <div className='p-4 text-sm text-red-600 bg-red-50'>{error}</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-muted text-muted-foreground">
-            <tr>
-              <th className="text-left px-4 py-2">Username</th>
-              <th className="text-left px-4 py-2">Email</th>
-              <th className="text-left px-4 py-2">Role</th>
-              <th className="text-left px-4 py-2">Status</th>
-              <th className="text-left px-4 py-2">Last Login</th>
-              <th className="text-left px-4 py-2">Actions</th>
-            </tr>
+          <table className='w-full text-sm'>
+            <thead className='bg-muted text-muted-foreground'>
+              <tr>
+                <th className='text-left px-4 py-2'>Username</th>
+                <th className='text-left px-4 py-2'>Email</th>
+                <th className='text-left px-4 py-2'>Role</th>
+                <th className='text-left px-4 py-2'>Status</th>
+                <th className='text-left px-4 py-2'>Last Login</th>
+                {/*<th className="text-left px-4 py-2">Actions</th>*/}
+              </tr>
             </thead>
             <tbody>
-            {loading && users.length === 0 ? (
-              <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
-                  Loading users…
-                </td>
-              </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td className="px-4 py-6 text-muted-foreground" colSpan={6}>
-                  No users found
-                </td>
-              </tr>
-            ) : (
-              users.map((user) => (
-                <tr key={user.id} className="border-t hover:bg-muted/20">
-                  <td className="px-4 py-2">{user.username} {currentUser?.id === user.id ? '(You) ' : ''}  </td>
-                  <td className="px-4 py-2">{user.email}</td>
-                  <td className="px-4 py-2 capitalize">{user.role}</td>
-                  <td className="px-4 py-2 space-x-2">
-                    <StatusBadge status={user.status as 'active' | 'disabled' | 'deleted'} />
+              {loading && users.length === 0 ? (
+                <tr>
+                  <td className='px-4 py-6 text-muted-foreground' colSpan={5}>
+                    Loading users…
                   </td>
-                  <td className="px-4 py-2">
-                    {(() => {
-                      const { relative, exact } = formatLastSeen(user.lastLoginAt, 'en');
-                      return (
-                        <span title={exact ?? undefined} className="whitespace-nowrap">
-                        {relative}
-                      </span>
-                      );
-                    })()}
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td className='px-4 py-6 text-muted-foreground' colSpan={5}>
+                    No users found
                   </td>
+                </tr>
+              ) : (
+                users.map(user => (
+                  <tr key={user.id} className='border-t hover:bg-muted/20'>
+                    <td className='px-4 py-2'>
+                      {user.username} {currentUser?.id === user.id ? '(You) ' : ''}{' '}
+                    </td>
+                    <td className='px-4 py-2'>{user.email}</td>
+                    <td className='px-4 py-2 capitalize'>{user.role}</td>
+                    <td className='px-4 py-2 space-x-2'>
+                      <StatusBadge status={user.status as 'active' | 'disabled' | 'deleted'} />
+                    </td>
+                    <td className='px-4 py-2'>
+                      {(() => {
+                        const { relative, exact } = formatLastSeen(user.lastLoginAt, 'en');
+                        return (
+                          <span title={exact ?? undefined} className='whitespace-nowrap'>
+                            {relative}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    {/* Actions column - commented out until implemented
                   <td className="px-4 py-2">
                     {user.status === 'deleted' || currentUser?.id === user.id ? (
                       <div className="flex items-center justify-center h-8 w-8">
@@ -146,7 +150,7 @@ export function AdminUserList() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="w-44 bg-white dark:bg-neutral-900 border rounded-md shadow-md"
+                            className="w-44 bg-background border shadow-md"
                           >
                             {user.status === 'active' ? (
                               <DropdownMenuItem
@@ -162,7 +166,7 @@ export function AdminUserList() {
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
-                              className="text-red-600 focus:text-red-600"
+                              className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                               onClick={() => changeUserStatus(user.id, UserStatus.DELETED)}
                             >
                               Delete…
@@ -172,9 +176,10 @@ export function AdminUserList() {
                       </div>
                     )}
                   </td>
-                </tr>
-              ))
-            )}
+                  */}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}

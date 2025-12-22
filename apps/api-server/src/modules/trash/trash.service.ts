@@ -150,6 +150,7 @@ export class TrashService {
 
   private async getTopLevelTrashedFiles(userId: string): Promise<File[]> {
     const fileSelectSql = Object.values(files)
+      .filter(col => col && typeof col === 'object' && 'name' in col)
       .map(col => `files.${col.name}`)
       .join(', ');
 
@@ -173,8 +174,8 @@ export class TrashService {
       metadataEncrypted: fileRow[files.metadataEncrypted.name] as string,
       nameHash: fileRow[files.nameHash.name] as string,
       fkWrapped: fileRow[files.fkWrapped.name] as string,
-      createdAt: fileRow[files.createdAt.name] as string,
-      updatedAt: fileRow[files.updatedAt.name] as string,
+      createdAt: new Date(fileRow[files.createdAt.name] as string | Date).toISOString(),
+      updatedAt: new Date(fileRow[files.updatedAt.name] as string | Date).toISOString(),
       chunkCount: fileRow[files.chunkCount.name] as number,
       approxSize: fileRow[files.approxSize.name] as number,
       status: 'trashed',
