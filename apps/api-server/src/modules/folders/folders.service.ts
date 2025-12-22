@@ -351,8 +351,8 @@ export class FoldersService {
         fkWrapped: folder[folders.fkWrapped.name],
         userId: folder[folders.userId.name],
         status: folder[folders.status.name],
-        createdAt: folder[folders.createdAt.name],
-        updatedAt: folder[folders.updatedAt.name],
+        createdAt: new Date(folder[folders.createdAt.name] as string | Date).toISOString(),
+        updatedAt: new Date(folder[folders.updatedAt.name] as string | Date).toISOString(),
       });
     });
   }

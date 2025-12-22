@@ -142,8 +142,8 @@ export class TrashService {
       metadataEncrypted: folderRow[folders.metadataEncrypted.name],
       nameHash: folderRow[folders.nameHash.name],
       fkWrapped: folderRow[folders.fkWrapped.name],
-      createdAt: folderRow[folders.createdAt.name],
-      updatedAt: folderRow[folders.updatedAt.name],
+      createdAt: new Date(folderRow[folders.createdAt.name] as string | Date).toISOString(),
+      updatedAt: new Date(folderRow[folders.updatedAt.name] as string | Date).toISOString(),
       status: 'trashed',
     }));
   }
