@@ -1,0 +1,141 @@
+# GitHub Labels Configuration
+# This file documents the labels used in the project
+# Apply these manually via GitHub UI or use a tool like github-label-sync
+
+## Type Labels (what kind of issue)
+- name: 'bug'
+  color: 'd73a4a'
+  description: "Something isn't working"
+
+- name: 'feature'
+  color: '0e8a16'
+  description: 'New feature or enhancement request'
+
+- name: 'documentation'
+  color: '0075ca'
+  description: 'Improvements or additions to documentation'
+
+- name: 'question'
+  color: 'd876e3'
+  description: 'Further information is requested'
+
+- name: 'security'
+  color: 'ee0701'
+  description: 'Security-related issue or vulnerability'
+
+## Priority Labels (how urgent)
+- name: 'priority: critical'
+  color: 'b60205'
+  description: 'Critical issue - data loss, security, or complete breakage'
+
+- name: 'priority: high'
+  color: 'd93f0b'
+  description: 'High priority - significant impact'
+
+- name: 'priority: medium'
+  color: 'fbca04'
+  description: 'Medium priority - normal importance'
+
+- name: 'priority: low'
+  color: '0e8a16'
+  description: 'Low priority - nice to have'
+
+## Status Labels (current state)
+- name: 'triage'
+  color: 'ededed'
+  description: 'Needs initial review and categorization'
+
+- name: 'investigating'
+  color: 'c5def5'
+  description: 'Currently investigating the issue'
+
+- name: 'blocked'
+  color: 'e99695'
+  description: 'Blocked by external dependency or other issue'
+
+- name: 'wontfix'
+  color: 'ffffff'
+  description: 'This will not be worked on'
+
+- name: 'duplicate'
+  color: 'cfd3d7'
+  description: 'This issue already exists'
+
+- name: 'help wanted'
+  color: '008672'
+  description: 'Community contributions welcome'
+
+- name: 'good first issue'
+  color: '7057ff'
+  description: 'Good for newcomers'
+
+## Component Labels (which part of the system)
+- name: 'component: api'
+  color: 'fbca04'
+  description: 'Backend API server'
+
+- name: 'component: web'
+  color: 'fbca04'
+  description: 'Web frontend application'
+
+- name: 'component: encryption'
+  color: 'fbca04'
+  description: 'E2EE encryption/decryption logic'
+
+- name: 'component: storage'
+  color: 'fbca04'
+  description: 'File storage backend'
+
+- name: 'component: database'
+  color: 'fbca04'
+  description: 'Database schema or queries'
+
+- name: 'component: docker'
+  color: 'fbca04'
+  description: 'Docker deployment or configuration'
+
+- name: 'component: ci/cd'
+  color: 'fbca04'
+  description: 'CI/CD pipelines or workflows'
+
+## Platform Labels (where it affects)
+- name: 'platform: linux'
+  color: 'bfdadc'
+  description: 'Specific to Linux'
+
+- name: 'platform: macos'
+  color: 'bfdadc'
+  description: 'Specific to macOS'
+
+- name: 'platform: windows'
+  color: 'bfdadc'
+  description: 'Specific to Windows'
+
+- name: 'platform: docker'
+  color: 'bfdadc'
+  description: 'Docker-specific issue'
+
+## Special Labels
+- name: 'breaking change'
+  color: 'd73a4a'
+  description: 'Introduces breaking changes'
+
+- name: 'dependencies'
+  color: '0366d6'
+  description: 'Dependency updates'
+
+- name: 'performance'
+  color: '1d76db'
+  description: 'Performance improvement'
+
+- name: 'ui/ux'
+  color: 'c2e0c6'
+  description: 'User interface or experience'
+
+- name: 'needs reproduction'
+  color: 'fef2c0'
+  description: 'Bug report needs more details or reproduction steps'
+
+- name: 'stale'
+  color: 'eeeeee'
+  description: 'No activity for extended period'
