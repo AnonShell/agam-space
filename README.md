@@ -2,9 +2,9 @@
 
 > Self-hosted, end-to-end encrypted file storage platform
 
-[![CI](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/ramesh-lingappan/agam-space/actions/workflows/ci.yml)
+[![CI](https://github.com/agam-space/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/agam-space/agam-space/actions/workflows/ci.yml)
 [![Docker](https://img.shields.io/docker/v/agamspace/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/agamspace/agam-space)
-[![Release](https://img.shields.io/github/v/release/ramesh-lingappan/agam-space?include_prereleases&label=version)](https://github.com/ramesh-lingappan/agam-space/releases)
+[![Release](https://img.shields.io/github/v/release/agam-space/agam-space?include_prereleases&label=version)](https://github.com/agam-space/agam-space/releases)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
 ![Agam Space Dashboard](./docs/static/img/hero.png)
@@ -126,7 +126,7 @@ cryptographic patterns.
 docker pull agamspace/agam-space:latest
 
 # Or from GitHub Container Registry
-docker pull ghcr.io/ramesh-lingappan/agam-space:latest
+docker pull ghcr.io/agam-space/agam-space:latest
 ```
 
 **Docker Compose:**
@@ -137,7 +137,7 @@ Install with Docker Compose:
 mkdir agam-space && cd agam-space
 
 # Create docker-compose.yml (see docs for full config)
-curl -o docker-compose.yml https://raw.githubusercontent.com/ramesh-lingappan/agam-space/main/apps/api-server/docker-compose.yaml
+curl -o docker-compose.yml https://raw.githubusercontent.com/agam-space/agam-space/main/apps/api-server/docker-compose.yaml
 
 # Start containers
 docker-compose up -d
