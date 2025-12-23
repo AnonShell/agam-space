@@ -18,7 +18,6 @@ import { FileChunkService } from './file-chunk.service';
 import { AuthRequired, CurrentUser } from '../auth/auth.decorator';
 import { FilesService } from './files.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
-import { logMem } from '@/modules/auth/utils/debugging';
 import { cleanupRequestStream } from '@/common/helpers/stream.utils';
 
 @ApiTags('File Chunks')

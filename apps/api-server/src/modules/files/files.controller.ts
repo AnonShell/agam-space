@@ -10,7 +10,6 @@ import {
   Post,
   Put,
   Query,
-  Request,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -73,8 +72,8 @@ export class FilesController {
     description: 'File retrieved successfully',
     type: FileDto,
   })
-  async getFile(@Request() req: any, @Param('id') id: string): Promise<FileDto> {
-    return this.filesService.getFile(req.user.id, id);
+  async getFile(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<FileDto> {
+    return this.filesService.getFile(user.id, id);
   }
 
   @Patch(':fileId')
