@@ -5,7 +5,7 @@ WORKDIR /app
 
 RUN apt-get update && \
   apt-get install -y --no-install-recommends python3 make g++ && \
-  npm install -g pnpm && \
+  npm install -g npm@11.7.0 pnpm && \
   rm -rf /var/lib/apt/lists/*
 
 COPY . .
@@ -29,7 +29,7 @@ WORKDIR /app
 
 RUN apt-get update && \
   apt-get install -y --no-install-recommends python3 make g++ && \
-  npm install -g pnpm && \
+  npm install -g npm@latest pnpm && \
   rm -rf /var/lib/apt/lists/*
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
@@ -59,7 +59,8 @@ COPY --from=builder /app/apps/web/out ./deploy/public
  # --- 3. Runner Stage: Minimal runtime image ---
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache wget tini
+RUN apk add --no-cache wget tini && \
+  npm install -g npm@11.7.0
 
 ARG BUILD_ID
 ARG BUILD_COMMIT
