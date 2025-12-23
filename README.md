@@ -216,11 +216,19 @@ pnpm format
 
 ## Documentation
 
-- [Installation](./docs/docs/installation/docker-compose.md) - Docker setup
-- [Configuration](./docs/docs/configuration/index.md) - SSO, quotas, users
-- [Security](./docs/docs/security.md) - How encryption works
-- [Architecture](./docs/docs/architecture.md) - Technical details
-- [FAQ](./docs/docs/faq.md) - Common questions
+Full documentation: **https://agam-space.github.io/agam-space/**
+
+Quick links:
+
+- [Installation](https://agam-space.github.io/agam-space/installation/docker-compose) -
+  Docker setup
+- [Configuration](https://agam-space.github.io/agam-space/configuration/) - SSO,
+  quotas, users
+- [Security](https://agam-space.github.io/agam-space/security) - How encryption
+  works
+- [Architecture](https://agam-space.github.io/agam-space/architecture) -
+  Technical details
+- [FAQ](https://agam-space.github.io/agam-space/faq) - Common questions
 
 ## Security
 

@@ -18,13 +18,51 @@ env:
   IMAGE_NAME: agam-space
 
 jobs:
+  # Check if relevant files changed (only for workflow_run events)
+  check-changes:
+    name: Check File Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run'
+    outputs:
+      should_build: ${{ steps.filter.outputs.should_build }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+
+      - name: Check changed files
+        id: filter
+        run: |
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Check if any relevant files changed
+          if echo "$CHANGED_FILES" | grep -qE '^(apps/|packages/|Dockerfile|pnpm-lock.yaml|package.json|pnpm-workspace.yaml)'; then
+            echo "Relevant files changed - will build Docker image"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "No relevant files changed - skipping Docker build"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+          fi
+
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    # Only run if CI passed (for workflow_run) or if it's a tag push
+    needs: [check-changes]
+    # For workflow_run: Only build if CI passed AND relevant files changed
+    # For tags: Always build (skip path check)
     if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+      always() &&
+      (
+        (github.event_name == 'workflow_run' && 
+         github.event.workflow_run.conclusion == 'success' && 
+         needs.check-changes.outputs.should_build == 'true') ||
+        (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+      )
     permissions:
       contents: read
       packages: write
