@@ -13,12 +13,6 @@ Choose how you want to install Agam Space:
 📦 **[Docker Compose (Recommended)](./docker-compose.md)** - Easiest way to
 deploy Agam Space
 
-Coming soon:
-
-- Kubernetes deployment
-- Native installation
-- Platform-specific packages
-
 ## After Installation
 
 Once installed, complete these important steps:

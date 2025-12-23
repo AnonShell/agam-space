@@ -38,6 +38,9 @@ services:
     restart: unless-stopped
 
   agam:
+    # Available from Docker Hub or GHCR:
+    # Docker Hub: agamspace/agam-space:latest
+    # GHCR: ghcr.io/agam-space/agam-space:latest
     image: agamspace/agam-space:latest
     ports:
       - '3331:3331'

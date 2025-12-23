@@ -21,6 +21,13 @@ mkdir agam-space && cd agam-space
 
 Create `docker-compose.yml`:
 
+:::tip Docker Registry Options Agam Space images are published to both:
+
+- **Docker Hub:** `agamspace/agam-space:latest`
+- **GitHub Container Registry:** `ghcr.io/agam-space/agam-space:latest`
+
+Use either registry in the `image:` field below. :::
+
 ```yaml
 version: '3.8'
 
@@ -38,6 +45,9 @@ services:
       - agam
 
   agam:
+    # Available from Docker Hub or GitHub Container Registry:
+    # image: agamspace/agam-space:latest
+    # image: ghcr.io/agam-space/agam-space:latest
     image: agamspace/agam-space:latest
     ports:
       - '3331:3331'
@@ -257,7 +267,11 @@ To pin to specific version, edit `docker-compose.yml`:
 
 ```yaml
 agam:
+  # Docker Hub
   image: agamspace/agam-space:v0.1.0-beta.1
+
+  # OR GitHub Container Registry
+  # image: ghcr.io/agam-space/agam-space:v0.1.0-beta.1
 ```
 
 ## Next Steps
