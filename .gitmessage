@@ -1,0 +1,22 @@
+# <type>(<scope>): <subject>
+#
+# type: feat, fix, docs, style, refactor, perf, test, chore, ci, security
+# scope: api, web, docker, github, crypto, storage, database, etc.
+# subject: brief description in present tense (lowercase, no period)
+#
+# Examples:
+# feat(api): add file sharing between users
+# fix(docker): upgrade npm to resolve CVE-2025-64756
+# docs(readme): update installation instructions
+# chore(deps): upgrade drizzle-orm to v0.45.1
+# security(deps): patch validator vulnerability
+#
+# Body (optional): Explain what and why, not how
+# - Detail 1
+# - Detail 2
+#
+# Footer (optional): Breaking changes, issue references
+# BREAKING CHANGE: describe what breaks
+# Fixes #123
+# Closes #456
+
