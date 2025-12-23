@@ -13,8 +13,8 @@ are encrypted on your device before upload and the server can't read them.
 
 ### Is it ready for production?
 
-No. It's in beta (v0.1.0). Works for personal use but expect bugs. Not
-recommended for mission-critical data.
+No. It's in beta. Works for personal use but expect bugs. Not recommended for
+mission-critical data.
 
 ### Is it open source?
 

@@ -9,13 +9,16 @@ Agam Space is a self-hosted, end-to-end encrypted file storage platform. All
 files and metadata are encrypted on your device before upload. The server stores
 only encrypted data and cannot access your files or encryption keys.
 
+Think of it as a self-hosted alternative to Mega or Proton Drive - encrypted
+cloud storage you control.
+
 Built for users who want control over their data without sacrificing privacy.
 
-**About the name:** Agam (அகம்) is Tamil for "inner" or "heart." In classical
-literature, it represents the private, inner world - fitting for a platform
-where your data remains private and encrypted.
+**About the name:** Agam (அகம்) comes from Tamil language and refers to the
+inner, personal world, distinct from what is public. It reflects our commitment
+to keeping your data private and encrypted.
 
-![Agam Space](../static/img/hero.png)
+![Agam Space](/img/hero.png)
 
 ## Current status
 
@@ -29,8 +32,8 @@ Once stable, this warning will be removed.
 
 :::
 
-Agam Space is in **beta** (v0.1.0) and under active development. Core features
-work but expect bugs and breaking changes.
+Agam Space is in **beta** stage and under active development. Core features work
+but expect bugs and breaking changes.
 
 **What works:**
 
@@ -81,21 +84,27 @@ their files.
 
 **Bottom line:** Personal project for learning and sharing with people I trust.
 
-## What Agam Space is NOT
+## What Agam Space is Not
 
 **Not a photo backup solution**  
 Looking for E2EE photo storage? Check out [Ente](https://ente.io) -
 purpose-built for photos with mobile apps, face recognition, and automatic
 backups. It's awesome.
 
-**Not a feature-rich file browser**  
-Need advanced file management, media streaming, or extensive integrations? Try
-[Filebrowser](https://filebrowser.org), [FileGator](https://filegator.io), or
-similar tools. They're excellent for general file browsing without the
-encryption overhead.
+**Not a general file browser or server file manager**  
+Need to browse server files, share drives, or manage media on your server? Try
+[FileBrowser](https://github.com/filebrowser/filebrowser) or
+[FileGator](https://filegator.io) - excellent for accessing and sharing your
+server's filesystem.
 
-Agam Space fills a specific niche: self-hosted E2EE file storage for people who
-want privacy without cloud services.
+**Not a feature-rich platform**  
+Need calendar, contacts, office suite, and extensive integrations? Try
+[Nextcloud](https://nextcloud.com) - mature, feature-rich, and well-supported.
+It's great if you want Dropbox/Google Drive features without the encryption
+overhead.
+
+Agam Space is specifically for **private encrypted storage** where even the
+server admin can't read your files.
 
 ## How it works
 

@@ -7,8 +7,12 @@ const config: Config = {
   tagline: 'End-to-end encrypted file storage',
   favicon: 'img/favicon.ico',
 
-  url: 'https://agam-space.github.io',
-  baseUrl: '/agam-space/',
+  // Use / for local dev, /agam-space/ for GitHub Pages
+  url:
+    process.env.NODE_ENV === 'production'
+      ? 'https://agam-space.github.io'
+      : 'http://localhost:3002',
+  baseUrl: process.env.NODE_ENV === 'production' ? '/agam-space/' : '/',
 
   organizationName: 'agam-space',
   projectName: 'agam-space',
@@ -49,7 +53,7 @@ const config: Config = {
           label: 'Documentation',
         },
         {
-          href: 'https://github.com/yourusername/agam-space',
+          href: 'https://github.com/agam-space/agam-space',
           label: 'GitHub',
           position: 'right',
         },

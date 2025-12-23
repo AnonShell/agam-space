@@ -11,27 +11,27 @@ What Agam Space can do.
 <table>
   <tr>
     <td width="50%">
-      <img src="../static/img/features/explorer.png" alt="File Explorer" />
+      <img src="/img/features/explorer.png" alt="File Explorer" />
       <p align="center"><b>File Explorer</b></p>
     </td>
     <td width="50%">
-      <img src="../static/img/features/image-preview.png" alt="Image Preview" />
+      <img src="/img/features/image-preview.png" alt="Image Preview" />
       <p align="center"><b>Image Preview</b></p>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="../static/img/features/setup-encryption.png" alt="Encryption Setup" />
+      <img src="/img/features/setup-encryption.png" alt="Encryption Setup" />
       <p align="center"><b>Master Password Setup</b></p>
     </td>
     <td width="50%">
-      <img src="../static/img/features/device-unlock.png" alt="Device Unlock" />
+      <img src="/img/features/device-unlock.png" alt="Device Unlock" />
       <p align="center"><b>Biometric Device Unlock</b></p>
     </td>
   </tr>
 <tr>
     <td width="50%">
-      <img src="../static/img/features/settings-encryption.png" alt="Settings Encryption" />
+      <img src="/img/features/settings-encryption.png" alt="Settings Encryption" />
       <p align="center"><b>Settings - Encryption</b></p>
     </td>
 </tr>
@@ -206,13 +206,20 @@ uploads.
 
 ## Planned features
 
-Things I'm working on or considering for future releases:
+**Current focus: Stability & Testing**
 
-**File sharing** - Share files/folders with other users securely  
-**File versioning** - Keep history of file changes  
-**Search** - Full-text search across encrypted files  
-**Public links** - Share files with non-users (encrypted links)  
-**S3 backend** - Store files on S3-compatible storage
+Before adding new features, focus is on making the project stable and reliable:
 
-No timeline for these - just ideas. Building what makes sense as the project
-evolves.
+- Comprehensive test suite (unit, integration, E2E)
+- Bug fixes from early users
+- Documentation improvements
+
+**Next focus:**
+
+- **File sharing** - Share files/folders with other users
+- **Public links** - Share via link with optional expiry
+- **Local search** - Search files and folders
+- **Encrypted tags** - Organize and search files by tags
+- **S3 backend** - Use object storage instead of local disk
+
+No timeline commitments. Features built as time permits.

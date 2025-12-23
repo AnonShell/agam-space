@@ -13,8 +13,9 @@ End-to-end encrypted file storage you can self-host. All files and metadata
 encrypted on your device before upload. Zero-knowledge architecture - the server
 cannot access your files or encryption keys.
 
-**About the name:** Agam (அகம்) is Tamil for "inner" or "heart" - fitting for a
-platform where your data remains private.
+**About the name:** Agam (அகம்) comes from Tamil language and refers to the
+inner, personal world, distinct from what is public. It reflects our commitment
+to keeping your data private and encrypted.
 
 ## ⚠️ **BETA SOFTWARE - USE WITH CAUTION**
 
@@ -257,18 +258,31 @@ Quick links:
 
 ## Roadmap
 
-See [planned features](./docs/docs/features.md#planned-features) in
-documentation.
+**Current focus: Stability & Testing**
 
-Priority features:
+The project is currently in beta. Before adding major features, the focus is on
+stability and reliability.
 
-- File sharing between users
-- Desktop sync client
-- S3 backend support
-- File versioning
-- Mobile apps
+### Short-term
 
-No timeline - built when I have time.
+- **Comprehensive test suite** - Unit, integration, and E2E tests for critical
+  paths
+- **Bug fixes** - Address issues reported by early users
+- **Documentation improvements** - Better guides and troubleshooting
+
+### Next focus
+
+- **File sharing** - Share files/folders with other users
+- **Public links** - Share via link with optional expiry
+- **Local search** - Search files and folders
+- **Encrypted tags** - Organize and search files by tags
+- **S3 backend support** - Use object storage instead of local disk
+
+**No timeline commitments.** Features built as time permits. Priorities may
+shift based on user feedback.
+
+See [Features](./docs/docs/features.md#planned-features) in documentation for
+detailed feature list.
 
 ## CI/CD
 

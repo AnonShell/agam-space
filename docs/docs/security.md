@@ -251,14 +251,19 @@ While the server can't read your data, a malicious server could:
 Agam Space has not been professionally audited. This is a personal project for
 learning and self-hosting.
 
-If the project gains traction and gets wider adoption, a professional security
-audit is planned. For now, use at your own risk.
+If the project gains traction and community adoption, a professional security
+audit may be conducted. For now, use at your own risk and keep backups.
 
 ## Reporting security issues
 
-Found a vulnerability? Open a GitHub issue (mark as security-related).
+**Thank you for helping improve Agam Space's security!**
 
-Do NOT publicly disclose until fixed.
+If you discover a vulnerability, please report it privately via email to:
+**security.agamspace@proton.me**
+
+**Do NOT report security vulnerabilities through public GitHub issues.**
+
+Your contribution helps make the project safer for everyone in the community.
 
 ## Further reading
 

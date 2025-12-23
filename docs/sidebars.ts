@@ -18,12 +18,11 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Configuration',
       link: {
-        type: 'generated-index',
-        title: 'Configuration',
-        description: 'Configure and customize your Agam Space instance.',
-        slug: '/configuration',
+        type: 'doc',
+        id: 'configuration/index',
       },
       items: [
+        'configuration/configuration-reference',
         'configuration/first-steps',
         'configuration/sso',
         'configuration/trusted-devices',

@@ -1,21 +1,17 @@
 # Security Policy
 
-## Supported Versions
-
-| Version    | Supported          |
-| ---------- | ------------------ |
-| 0.1.x-beta | :white_check_mark: |
-
 ## Reporting a Vulnerability
+
+**Thank you for helping improve Agam Space's security!** Your contribution makes
+the project safer for everyone in the community.
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to: [your-email@example.com]
+Instead, report them privately via email to: **security.agamspace@proton.me**
 
-You should receive a response within 48 hours. If for some reason you do not,
-please follow up to ensure we received your original message.
+### What to Include
 
-Please include:
+To help us understand and address the issue effectively:
 
 - Type of vulnerability
 - Full paths of source file(s) related to the vulnerability
@@ -24,16 +20,19 @@ Please include:
 - Proof-of-concept or exploit code (if possible)
 - Impact of the issue, including how an attacker might exploit it
 
-This information will help us triage your report more quickly.
+The more detail you provide, the faster we can validate and fix the issue.
 
 ## Disclosure Policy
 
-When we receive a security bug report, we will:
+When we receive a security bug report:
 
-1. Confirm the problem and determine affected versions
+1. We'll confirm the problem and determine affected versions
 2. Audit code to find any similar problems
 3. Prepare fixes for all supported versions
-4. Release patched versions as soon as possible
+4. Release patched versions and publicly acknowledge your contribution (unless
+   you prefer to remain anonymous)
+
+We appreciate your patience as we work to address security issues responsibly.
 
 ## Security Best Practices for Users
 

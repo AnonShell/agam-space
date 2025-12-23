@@ -94,16 +94,19 @@ Access at `http://localhost:3331`
 
 ## Environment Variables
 
-| Variable            | Default    | Description                  |
-| ------------------- | ---------- | ---------------------------- |
-| `DATABASE_HOST`     | postgres   | Database hostname            |
-| `DATABASE_PORT`     | 5432       | Database port                |
-| `DATABASE_USERNAME` | postgres   | Database user                |
-| `DATABASE_PASSWORD` | -          | Database password (required) |
-| `DATABASE_NAME`     | agam_space | Database name                |
-| `HTTP_PORT`         | 3331       | Server port                  |
-| `ALLOW_NEW_SIGNUP`  | false      | Allow new user registration  |
-| `CORS_ORIGIN`       | \*         | Allowed CORS origins         |
+See **[Configuration Guide](../configuration/index.md)** for complete details on
+configuring Agam Space.
+
+Quick reference of essential variables:
+
+| Variable            | Required | Default    | Description                 |
+| ------------------- | -------- | ---------- | --------------------------- |
+| `DATABASE_HOST`     | ✅       | -          | Database hostname           |
+| `DATABASE_USERNAME` | ✅       | -          | Database user               |
+| `DATABASE_PASSWORD` | ✅       | -          | Database password           |
+| `DATABASE_NAME`     | No       | agam_space | Database name               |
+| `HTTP_PORT`         | No       | 3331       | Server port                 |
+| `ALLOW_NEW_SIGNUP`  | No       | true       | Allow new user registration |
 
 ## Reverse Proxy Setup
 
