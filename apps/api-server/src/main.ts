@@ -10,7 +10,8 @@ import { patchNestJsSwagger } from 'nestjs-zod';
 import type { FastifyCookieOptions } from '@fastify/cookie';
 import fastifyCookie from '@fastify/cookie';
 import { AllExceptionsFilter } from '@/common/filters/all-exceptions.filter';
-import helmet from 'helmet';
+import helmet from '@fastify/helmet';
+import { setupStaticAssets } from '@/common/setup-spa';
 
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
@@ -39,22 +40,18 @@ async function bootstrap() {
 
   await app.register(fastifyCookie as any, {} as FastifyCookieOptions);
 
-  app.use(
-    helmet({
-      contentSecurityPolicy: false,
-      crossOriginEmbedderPolicy: false,
-    })
-  );
+  await app.register(helmet, {
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  });
 
-  // Run database migrations using the provider's connection
+  // Run database migrations
   await runMigrations(app);
 
   const corsOrigin = config.cors.origin;
-
   const resolvedOrigin =
     !corsOrigin || corsOrigin === '*' || corsOrigin === 'true' ? true : corsOrigin;
 
-  // Enable CORS
   app.enableCors({
     origin: resolvedOrigin,
     credentials: config.cors.credentials,
@@ -62,6 +59,9 @@ async function bootstrap() {
 
   // API prefix (from config)
   app.setGlobalPrefix(configService.getApiPrefix());
+
+  // Setup static file serving and SPA fallback
+  setupStaticAssets(app);
 
   // Swagger setup (if enabled)
   if (configService.isDocsEnabled()) {
