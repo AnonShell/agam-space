@@ -1,6 +1,6 @@
 # Agam Space
 
-> Self-hosted, end-to-end encrypted file storage platform
+> Self-hosted, **zero-knowledge**, end-to-end encrypted file storage
 
 [![CI](https://github.com/agam-space/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/agam-space/agam-space/actions/workflows/ci.yml)
 [![Docker](https://img.shields.io/docker/v/agamspace/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/agamspace/agam-space)
@@ -9,9 +9,14 @@
 
 ![Agam Space Dashboard](./docs/static/img/hero.png)
 
-End-to-end encrypted file storage you can self-host. All files and metadata
-encrypted on your device before upload. Zero-knowledge architecture - the server
-cannot access your files or encryption keys.
+**True zero-knowledge encryption for self-hosted file storage.**
+
+All files and metadata encrypted in your browser before upload. Your master
+password never leaves your device. The server stores only encrypted blobs and
+cannot decrypt your data - even the server admin cannot access your files.
+
+Think of it as a self-hosted alternative to Mega or Proton Drive, where privacy
+is guaranteed by cryptography, not trust.
 
 **About the name:** Agam (அகம்) comes from Tamil language and refers to the
 inner, personal world, distinct from what is public. It reflects our commitment
@@ -57,26 +62,32 @@ cryptographic patterns.
 
 ## Features
 
-**Encryption:**
+**Zero-Knowledge Encryption:**
 
-- Client-side encryption (zero-knowledge)
-- Master password derives all keys
-- Recovery key for backup
-- Each file gets unique encryption key
+- Master password never leaves your device
+- All encryption happens in your browser (client-side)
+- Server stores only encrypted blobs it cannot decrypt
+- File names, folder names, and metadata all encrypted
+- XChaCha20-Poly1305 authenticated encryption with 256-bit keys
+- Argon2id key derivation (memory-hard, GPU-resistant)
+- Each file gets unique encryption key derived from folder key hierarchy
+- Even the server admin cannot access your data
+- Recovery key for emergency access (save it securely!)
 
 **Authentication:**
 
-- Email/password login
+- Email/password login (separate from master password)
 - Optional SSO (Authelia, Authentik, Keycloak, Google, GitHub)
-- WebAuthn biometric unlock on trusted devices
+- WebAuthn biometric unlock on trusted devices (Touch ID, Face ID, Windows
+  Hello)
 
 **File Management:**
 
 - Upload via drag-and-drop or file picker
-- Folder organization
+- Folder organization (nested folders supported)
 - File preview (PDF, images, text)
 - Edit text files inline
-- 30-day trash bin
+- 30-day trash bin with restore
 
 **Storage:**
 

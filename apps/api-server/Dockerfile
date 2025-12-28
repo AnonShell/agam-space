@@ -56,10 +56,18 @@ COPY ./apps/api-server/migrations/ ./deploy/dist/migrations/
 COPY --from=builder /app/apps/web/out ./deploy/public
 
 
- # --- 3. Runner Stage: Minimal runtime image ---
+# --- 3. Runner Stage: Minimal production image ---
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache wget tini
+# Runtime doesn't need package managers - only node binary to execute dist/main.js
+RUN apk add --no-cache wget tini && \
+    rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm \
+           /usr/local/bin/npx \
+           /usr/local/bin/yarn \
+           /usr/local/bin/yarnpkg \
+           /usr/local/bin/corepack
 
 ARG BUILD_ID
 ARG BUILD_COMMIT
