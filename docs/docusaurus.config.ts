@@ -7,12 +7,9 @@ const config: Config = {
   tagline: 'End-to-end encrypted file storage',
   favicon: 'img/favicon.ico',
 
-  // Use / for local dev, /agam-space/ for GitHub Pages
   url:
-    process.env.NODE_ENV === 'production'
-      ? 'https://agam-space.github.io'
-      : 'http://localhost:3002',
-  baseUrl: process.env.NODE_ENV === 'production' ? '/agam-space/' : '/',
+    process.env.NODE_ENV === 'production' ? 'https://docs.agamspace.app' : 'http://localhost:3002',
+  baseUrl: '/',
 
   organizationName: 'agam-space',
   projectName: 'agam-space',
