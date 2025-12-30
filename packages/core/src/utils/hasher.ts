@@ -2,11 +2,15 @@ import { blake3 } from '@noble/hashes/blake3';
 import { bytesToHex } from '@noble/hashes/utils';
 import { toBase64 } from './encoding';
 
-export function blake3Hash(input: string, length = 32): Uint8Array {
-  return blake3(input, { dkLen: length });
+export function blake3Hash(input: string | Uint8Array, length = 32): Uint8Array {
+  const inputBytes = typeof input === 'string' ? new TextEncoder().encode(input) : input;
+  return blake3(inputBytes, { dkLen: length });
 }
 
-export function blake3HashWithEncoding(input: string, output: 'hex' | 'base64' = 'hex'): string {
+export function blake3HashWithEncoding(
+  input: string | Uint8Array,
+  output: 'hex' | 'base64' = 'hex'
+): string {
   const hash = blake3Hash(input);
 
   if (output === 'hex') {
