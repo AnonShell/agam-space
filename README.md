@@ -45,6 +45,20 @@ Once stable, this warning will be removed.
 - Web interface (desktop and mobile browsers)
 - Self-hosted with Docker
 
+## Documentation
+
+📚 **Full documentation: [docs.agamspace.app](https://docs.agamspace.app)**
+
+Quick links:
+
+- [Installation](https://docs.agamspace.app/installation/docker-compose) -
+  Docker setup
+- [Configuration](https://docs.agamspace.app/configuration/) - SSO, quotas,
+  users
+- [Security](https://docs.agamspace.app/security) - How encryption works
+- [Architecture](https://docs.agamspace.app/architecture) - Technical details
+- [FAQ](https://docs.agamspace.app/faq) - Common questions
+
 ## Why I Built This
 
 After years of self-hosting, I got frustrated with E2EE options. Nextcloud's
@@ -157,8 +171,8 @@ docker-compose up -d
 
 Access at http://localhost:3331
 
-For production setup with HTTPS, see
-[Installation Guide](./docs/docs/installation/docker-compose.md).
+For production setup with HTTPS, see the
+[Installation Guide](https://docs.agamspace.app/installation/docker-compose).
 
 ## Tech Stack
 
@@ -225,20 +239,6 @@ pnpm test
 pnpm lint
 pnpm format
 ```
-
-## Documentation
-
-Full documentation: **https://docs.agamspace.app**
-
-Quick links:
-
-- [Installation](https://docs.agamspace.app/installation/docker-compose) -
-  Docker setup
-- [Configuration](https://docs.agamspace.app/configuration/) - SSO, quotas,
-  users
-- [Security](https://docs.agamspace.app/security) - How encryption works
-- [Architecture](https://docs.agamspace.app/architecture) - Technical details
-- [FAQ](https://docs.agamspace.app/faq) - Common questions
 
 ## Security
 
