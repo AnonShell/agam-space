@@ -1,16 +1,12 @@
 name: Deploy Docs to GitHub Pages
 
-# Disabled by default - uncomment "on:" section to enable
-# on:
-#   push:
-#     branches:
-#       - main
-#     paths:
-#       - 'docs/**'
-#   workflow_dispatch:
-
 on:
-  workflow_dispatch: # Manual trigger only for now
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -46,6 +42,19 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          static_site_generator: 'docusaurus'
+
+      - name: Restore Docusaurus cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            docs/.docusaurus
+            docs/node_modules/.cache
+          key: ${{ runner.os }}-docusaurus-${{ hashFiles('docs/pnpm-lock.yaml') }}-${{ hashFiles('docs/**.[jt]s', 'docs/**.[jt]sx', 'docs/**/*.md') }}
+          restore-keys: |
+            ${{ runner.os }}-docusaurus-${{ hashFiles('docs/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-docusaurus-
 
       - name: Install dependencies
         run: cd docs && pnpm install --frozen-lockfile --ignore-workspace
