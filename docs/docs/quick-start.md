@@ -6,6 +6,11 @@ sidebar_position: 2
 
 Get Agam Space running in 5 minutes.
 
+:::tip Zero-Knowledge Encryption Agam Space uses true zero-knowledge encryption.
+Your master password never leaves your device, and the server cannot decrypt
+your files. Remember: if you lose your master password and recovery key, your
+data is permanently unrecoverable. :::
+
 ## Prerequisites
 
 Docker and Docker Compose installed.
@@ -98,8 +103,7 @@ You can re-enable it later if you want to invite others.
 
 Replace `localhost` with your server's IP address or domain name.
 
-For HTTPS and external access, see
-[Installation](./installation.md#reverse-proxy).
+For HTTPS and external access, see [Installation](./installation#reverse-proxy).
 
 ## Storage location
 
@@ -109,10 +113,9 @@ Database is in `./postgres-data/`.
 
 ## Next steps
 
-📖 **[Installation guide](./installation.md)** - Production setup with HTTPS and
+📖 **[Installation guide](./installation)** - Production setup with HTTPS and
 reverse proxy
 
-🔒 **[Security overview](./security.md)** - How encryption works and threat
-model
+🔒 **[Security overview](./security)** - How encryption works and threat model
 
-✨ **[Features](./features.md)** - What Agam Space can do
+✨ **[Features](./features)** - What Agam Space can do

@@ -4,26 +4,39 @@ sidebar_position: 5
 
 # Security
 
-How Agam Space protects your data.
+How Agam Space protects your data with zero-knowledge encryption.
 
-## Zero-knowledge encryption
+## Zero-knowledge Architecture
 
-All encryption happens on your device. The server stores encrypted data and
-cannot access your files or encryption keys.
+Agam Space is built on **zero-knowledge** principles. This means:
 
-**What this means:**
+**The server cannot decrypt your data**
 
+- All encryption happens in your browser before upload
 - Your master password never leaves your device
-- Files encrypted before upload
-- File names, folder names, and metadata encrypted
-- Server operator cannot read your files
+- The server stores only your encrypted CMK (which it cannot decrypt)
+- File contents, names, folder names, and metadata are encrypted client-side
+- Even the server administrator cannot access your files
 
-**Trade-off:**
+**What "zero-knowledge" guarantees:**
 
-- If you lose your master password AND recovery key, your data is unrecoverable
-- No password reset via email (by design)
+- ✅ Server compromise? Your data stays encrypted
+- ✅ Database leak? Only encrypted blobs are exposed
+- ✅ Malicious admin? Cannot read your files
+- ✅ Stolen backups? Still encrypted
+- ✅ Legal seizure? Nothing to decrypt without your password
 
-## How encryption works
+**The trade-off:**
+
+- ❌ If you lose your master password AND recovery key, your data is permanently
+  unrecoverable
+- ❌ No password reset via email (by design - that would break zero-knowledge)
+- ❌ Server admin cannot help recover your password (and that's the point)
+
+This is cryptographic privacy, not just trust. The math makes it impossible for
+anyone without your password to access your data.
+
+## How zero-knowledge encryption works
 
 ### Key hierarchy
 
@@ -111,15 +124,29 @@ Without your master password, the server sees:
 
 ## Authentication
 
+### Two separate passwords (recommended)
+
+For maximum security, use different passwords:
+
+1. **Login password** - Stored as Argon2id hash on server, used for
+   authentication
+2. **Master password** - Never sent to server, used only in your browser to
+   decrypt your CMK
+
+If someone steals the server database, they get login password hashes but your
+encrypted data remains secure because they don't have your master password.
+
 ### Login flow
 
-1. Enter email and password
-2. Server verifies credentials (standard bcrypt hash)
-3. Server sends encrypted CMK material
-4. Browser derives CMK from your master password
-5. CMK unlocked in memory for session
+1. Enter email and login password
+2. Server verifies credentials (checks Argon2id hash stored in database)
+3. Server sends encrypted CMK material to browser (server cannot decrypt this)
+4. Browser prompts for master password (never sent to server)
+5. Browser derives CMK from master password using Argon2id (client-side only)
+6. CMK unlocked in browser memory for session
 
-Your master password is separate from your login password (recommended).
+**Key point:** The server never sees your master password. All CMK derivation
+happens in your browser.
 
 ### Session security
 
@@ -267,5 +294,5 @@ Your contribution helps make the project safer for everyone in the community.
 
 ## Further reading
 
-- [Architecture](./architecture.md) - Technical implementation details
-- [FAQ](./faq.md#security-questions) - Common security questions
+- [Architecture](./architecture) - Technical implementation details
+- [FAQ](./faq#security-questions) - Common security questions

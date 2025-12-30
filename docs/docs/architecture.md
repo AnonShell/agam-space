@@ -8,35 +8,46 @@ Overview of Agam Space's system architecture and design decisions.
 
 ## System Overview
 
-Agam Space consists of three main components that work together to provide
-encrypted file storage:
+Agam Space is built on a **zero-knowledge architecture** where all encryption
+happens client-side. The server stores and serves encrypted data but cannot
+decrypt it.
+
+The system consists of three main components:
 
 ```
 ┌─────────────┐
-│  Web Client │
-│  (React)    │
+│  Web Client │  ← All encryption/decryption happens here
+│  (React)    │  ← Master password never leaves this layer
 └──────┬──────┘
-       │ HTTPS/REST
+       │ HTTPS/REST (only encrypted data transmitted)
        │
 ┌──────▼──────┐      ┌──────────────┐
 │ API Server  │◄─────┤  PostgreSQL  │
-│  (NestJS)   │      │   Database   │
+│  (NestJS)   │      │   Database   │  ← Stores only encrypted data
 └──────┬──────┘      └──────────────┘
        │
        │
 ┌──────▼──────┐
-│   Storage   │
+│   Storage   │  ← Stores only encrypted file chunks
 │ (Local/S3)  │
 └─────────────┘
 ```
 
 **Web Client** - React application that handles all encryption/decryption
-client-side  
+client-side. Master password and CMK never leave the browser.
+
 **API Server** - NestJS backend that manages authentication, metadata, and
-encrypted file storage  
-**PostgreSQL** - Database for user accounts, metadata, and encrypted folder/file
-information  
-**Storage** - File system or S3-compatible storage for encrypted file chunks
+encrypted file storage. Cannot decrypt user data.
+
+**PostgreSQL** - Database for user accounts, encrypted metadata, and wrapped
+encryption keys. All sensitive data is encrypted.
+
+**Storage** - File system or S3-compatible storage for encrypted file chunks.
+Only stores encrypted binary blobs.
+
+**Key principle:** The server operator (even if it's you) cannot access user
+files without their master password. This is enforced by cryptography, not
+access controls.
 
 ## Technology Stack
 
@@ -58,22 +69,42 @@ information
 
 ## Encryption Architecture
 
-All encryption happens client-side. The server never has access to plaintext
-data or encryption keys.
+**Zero-knowledge design:** All encryption happens client-side in the browser.
+The server never has access to plaintext data, encryption keys, or your master
+password.
+
+**What the server stores:**
+
+- Encrypted CMK (wrapped with password-derived key)
+- Encrypted file chunks (binary blobs)
+- Encrypted folder/file metadata
+- File sizes and timestamps (for quota and basic operations)
+
+**What the server CANNOT access:**
+
+- Your master password (never sent to server)
+- Decrypted CMK (only has encrypted version)
+- File contents
+- File names or folder names
+- Any metadata
+
+Even with full database access, the server operator cannot decrypt your data
+without your master password.
 
 ### Key Hierarchy
 
 ```
-Master Password (user input)
+Master Password (user input, never sent to server)
     │
-    ▼ Argon2id KDF
+    ▼ Argon2id KDF (runs in browser)
 Cryptographic Master Key (CMK)
+    │ (stored on server encrypted with password-derived key)
     │
     ├─► Folder Key (per folder, encrypted with CMK or parent key)
     │       │
     │       └─► File Encryption Key (FEK, per file)
     │               │
-    │               └─► Encrypted File Chunks
+    │               └─► Encrypted File Chunks (stored on server)
     │
     ├─► Recovery Key (optional, can decrypt CMK)
     │

@@ -41,15 +41,38 @@ What Agam Space can do.
 
 ## Encryption
 
-**End-to-end encrypted**  
-Everything is encrypted on your device before upload - files, folder names,
-tags, metadata. Uses XChaCha20-Poly1305 (AEAD cipher) with 256-bit keys.
+**Zero-knowledge, end-to-end encrypted**  
+All encryption happens in your browser before any data leaves your device. The
+server stores only encrypted blobs and has no way to decrypt them. This is true
+zero-knowledge: the server operator (even if it's you running your own instance)
+cannot access your files, folder names, or any metadata.
+
+**What gets encrypted:**
+
+- File contents
+- File names
+- Folder names
+- MIME types
+- All metadata
+
+**What the server can see:**
+
+- Your email address
+- File sizes (for quota enforcement)
+- Upload timestamps
+- Encrypted data blobs (unreadable without your keys)
 
 **Master password is the root of trust**  
 Your master password generates your Cryptographic Master Key (CMK) using
-Argon2id. This CMK is the foundation of your encryption - it derives all other
-keys. Without your master password (or recovery key), your data is
-mathematically unrecoverable. Even we can't help you.
+Argon2id (memory-hard, GPU-resistant key derivation). This CMK is the foundation
+of your encryption - it derives all other keys.
+
+**Critical:** Your master password never leaves your device. The server only
+stores your CMK encrypted with your password - it cannot decrypt it without your
+master password.
+
+Without your master password (or recovery key), your data is mathematically
+unrecoverable. Even the server admin cannot help you.
 
 **Key hierarchy**  
 Each folder gets its own encryption key (derived from CMK or parent folder key).
@@ -58,8 +81,8 @@ layered approach enables future features like secure sharing while keeping
 everything encrypted.
 
 ```
-Master Password (your memory)
-    ↓ (Argon2id)
+Master Password (only in your memory, never sent to server)
+    ↓ (Argon2id key derivation in browser)
 Cryptographic Master Key (CMK)
     ↓
 Root Folder Key
@@ -68,16 +91,20 @@ Root Folder Key
       ↓
     File Encryption Key (FEK)
         ↓
-      Encrypted Chunks
+      Encrypted Chunks (stored on server)
 ```
 
-Without the master password, the entire chain breaks - no keys can be derived,
+The server stores your CMK encrypted with your password-derived key. Without the
+master password to decrypt it, the entire chain breaks - no keys can be derived,
 no data can be decrypted.
 
-**Zero-knowledge architecture**  
-Server stores only encrypted data. Your encryption keys never leave your device.
-The server operator (even if it's you) cannot decrypt your files without your
-master password.
+**Industry-standard cryptography:**
+
+- **File encryption:** XChaCha20-Poly1305 (256-bit keys, authenticated
+  encryption)
+- **Key derivation:** Argon2id (memory-hard, GPU-resistant)
+- **Device keys:** X25519 (elliptic curve Diffie-Hellman)
+- No custom crypto - battle-tested algorithms only
 
 **Recovery key**  
 Generated during setup as a backup to decrypt your CMK. Accessible anytime in
@@ -86,20 +113,37 @@ master password.
 
 ## Authentication
 
-**Login**  
-Email and password authentication. Optional SSO support (Authelia, PocketID,
-etc.) if configured. First user becomes admin.
+**Two-layer security: Login + Encryption**
+
+Agam Space separates authentication from encryption for better security:
+
+1. **Login password** - Authenticates your identity to the server (like any web
+   service)
+2. **Master password** - Unlocks your encryption keys (never sent to server)
+
+This separation is recommended: if someone compromises the server database, they
+get login password hashes but cannot decrypt your CMK without your master
+password.
+
+**Login flow:**
+
+1. Enter email and login password
+2. Server verifies credentials (standard Argon2id hash stored on server)
+3. Server sends your encrypted CMK material (it cannot decrypt this)
+4. Enter master password (client-side only)
+5. Browser derives CMK from master password using Argon2id
+6. CMK unlocked in memory for this session
 
 **Master password unlock**  
 After login, you must unlock with your master password to decrypt your CMK. This
-happens once per session - your login password and master password are separate
-(recommended for security).
+happens once per session in your browser. The master password never leaves your
+device - all key derivation happens client-side.
 
 **Biometric unlock (trusted devices)**  
 Register devices using WebAuthn (Touch ID, Face ID, Windows Hello). On
 registered devices, unlock with biometrics instead of typing master password.
 Your CMK is encrypted with device-specific keys stored in hardware secure
-enclave.
+enclave - even more secure than typing a password. enclave.
 
 **Session management**  
 Sessions persist across page reloads (encrypted CMK in sessionStorage).

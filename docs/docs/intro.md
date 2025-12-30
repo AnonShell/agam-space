@@ -5,12 +5,20 @@ slug: /
 
 # Introduction
 
-Agam Space is a self-hosted, end-to-end encrypted file storage platform. All
-files and metadata are encrypted on your device before upload. The server stores
-only encrypted data and cannot access your files or encryption keys.
+Agam Space is a self-hosted, **zero-knowledge**, end-to-end encrypted file
+storage platform.
+
+**Zero-knowledge means:**
+
+- Your master password never leaves your device
+- All encryption happens in your browser before upload
+- The server stores only encrypted data - it cannot decrypt your files
+- Even the server admin cannot access your data
+- File names, folder names, and all metadata are encrypted
 
 Think of it as a self-hosted alternative to Mega or Proton Drive - encrypted
-cloud storage you control.
+cloud storage you control, with true privacy guaranteed by cryptography, not
+trust.
 
 Built for users who want control over their data without sacrificing privacy.
 
@@ -129,12 +137,12 @@ Built as a monorepo with TypeScript throughout.
 
 ## Next steps
 
-✨ **[Features](./features.md)** - What Agam Space can do
+✨ **[Features](./features)** - What Agam Space can do
 
-🚀 **[Quick Start](./quick-start.md)** - Get running in 5 minutes
+🚀 **[Quick Start](./quick-start)** - Get running in 5 minutes
 
-📖 **[Installation](./installation.md)** - Production setup guide
+📖 **[Installation](./installation)** - Production setup guide
 
-🔒 **[Security](./security.md)** - How encryption works
+🔒 **[Security](./security)** - How encryption works
 
-🏗️ **[Architecture](./architecture.md)** - Technical deep dive
+🏗️ **[Architecture](./architecture)** - Technical deep dive

@@ -21,6 +21,10 @@ concurrency:
   group: 'pages'
   cancel-in-progress: false
 
+env:
+  PNPM_VERSION: '10.26.1'
+  NODE_VERSION: '22'
+
 jobs:
   build:
     name: Build Docusaurus
@@ -32,22 +36,22 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION || '8.12.0' }}
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: cd docs && pnpm install --frozen-lockfile --ignore-workspace
 
       - name: Build website
-        run: pnpm --filter docs build
+        run: cd docs && pnpm build
         env:
           NODE_ENV: production
 

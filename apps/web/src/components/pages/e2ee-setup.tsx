@@ -108,11 +108,11 @@ export default function E2eeSetupPage() {
 
         {!recoveryKey && (
           <>
-            <div className='border rounded-lg p-3 bg-muted/50'>
-              <p className='text-xs text-muted-foreground leading-relaxed'>
+            <div className='border rounded-lg p-4 bg-muted/50'>
+              <p className='text-sm text-muted-foreground leading-relaxed'>
                 <span className='font-medium text-foreground'>Your master password</span> encrypts
-                all files. Make it strong (20+ chars) and unique. We cannot recover it if forgotten.
-                This is separate from your login password.
+                all files. Make it strong and unique. We cannot recover it if forgotten. This is
+                separate from your login password.
               </p>
             </div>
 
@@ -126,10 +126,10 @@ export default function E2eeSetupPage() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder='Enter a strong passphrase or password'
                   required
-                  minLength={8}
+                  minLength={6}
                 />
                 <p className='text-xs text-muted-foreground'>
-                  Use a passphrase or 20+ character password
+                  Recommended: 12+ characters or a memorable passphrase
                 </p>
               </div>
 
