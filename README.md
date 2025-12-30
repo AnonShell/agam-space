@@ -228,19 +228,17 @@ pnpm format
 
 ## Documentation
 
-Full documentation: **https://agam-space.github.io/agam-space/**
+Full documentation: **https://docs.agamspace.app**
 
 Quick links:
 
-- [Installation](https://agam-space.github.io/agam-space/installation/docker-compose) -
+- [Installation](https://docs.agamspace.app/installation/docker-compose) -
   Docker setup
-- [Configuration](https://agam-space.github.io/agam-space/configuration/) - SSO,
-  quotas, users
-- [Security](https://agam-space.github.io/agam-space/security) - How encryption
-  works
-- [Architecture](https://agam-space.github.io/agam-space/architecture) -
-  Technical details
-- [FAQ](https://agam-space.github.io/agam-space/faq) - Common questions
+- [Configuration](https://docs.agamspace.app/configuration/) - SSO, quotas,
+  users
+- [Security](https://docs.agamspace.app/security) - How encryption works
+- [Architecture](https://docs.agamspace.app/architecture) - Technical details
+- [FAQ](https://docs.agamspace.app/faq) - Common questions
 
 ## Security
 
