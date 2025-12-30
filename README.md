@@ -61,18 +61,22 @@ Quick links:
 
 ## Why I Built This
 
-After years of self-hosting, I got frustrated with E2EE options. Nextcloud's
-implementation has gaps. Most solutions tell you to "just encrypt the disk" -
-but that doesn't help if your server gets compromised or if you're the admin who
-can access everything.
+For a while now, I've wanted to offer file storage to family and friends on my
+homelab. But I was always hesitant - I didn't want the ability to access their
+files. Even if I wouldn't look, the fact that I _could_ bothered me. They knew
+it too, which made them hesitant to use it.
 
-I wanted to share storage with family and friends without being able to read
-their files. Ente Photos proved this works great for photos. I wanted the same
-for general files.
+Looking at self-hosted options, true E2EE is surprisingly limited. Nextcloud has
+E2EE but with known gaps. Most solutions rely on disk encryption, which only
+protects against physical theft - not server compromise or admin access.
 
-With over a decade in software architecture and a strong interest in application
-security, I wanted to build a proper E2EE app while having fun exploring modern
-cryptographic patterns.
+Ente Photos showed me this works great for photos - people can actually trust
+their homelab admin because the encryption makes it impossible to peek. I wanted
+the same for general files.
+
+With over a decade in software development and a strong interest in application
+security, I built what I was looking for - a proper zero-knowledge file storage
+system where the math guarantees privacy, not just trust.
 
 ## Features
 
