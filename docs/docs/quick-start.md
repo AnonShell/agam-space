@@ -6,10 +6,14 @@ sidebar_position: 2
 
 Get Agam Space running in 5 minutes.
 
-:::tip Zero-Knowledge Encryption Agam Space uses true zero-knowledge encryption.
-Your master password never leaves your device, and the server cannot decrypt
-your files. Remember: if you lose your master password and recovery key, your
-data is permanently unrecoverable. :::
+:::tip Zero-Knowledge Encryption
+
+Agam Space uses true zero-knowledge encryption. Your master password never
+leaves your device, and the server cannot decrypt your files. Remember: if you
+lose your master password and recovery key, your data is permanently
+unrecoverable.
+
+:::
 
 ## Prerequisites
 
@@ -25,8 +29,12 @@ mkdir agam-space && cd agam-space
 
 Create `docker-compose.yml`:
 
-:::info The `agam` image is all-in-one - includes both the backend API and web
-application in a single container. :::
+:::info
+
+The `agam` image is all-in-one - includes both the backend API and web
+application in a single container.
+
+:::
 
 ```yaml
 version: '3.8'
