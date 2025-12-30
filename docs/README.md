@@ -6,7 +6,7 @@ Documentation site for Agam Space built with Docusaurus.
 
 ```bash
 cd docs
-npm install
+pnpm install
 ```
 
 ## Development
