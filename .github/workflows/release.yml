@@ -1,9 +1,14 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  workflow_run:
+    workflows: ['Build and Push Docker Images']
+    types:
+      - completed
+    branches-ignore:
+      - '**'
+  # Uncomment below to also allow manual release creation
+  # workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,24 +17,41 @@ jobs:
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch != 'main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+
+      - name: Get tag name
+        id: get_tag
+        run: |
+          # Get the tag that triggered the Docker build
+          TAG_NAME=$(git describe --tags --exact-match ${{ github.event.workflow_run.head_sha }} 2>/dev/null || echo "")
+          if [ -z "$TAG_NAME" ]; then
+            echo "No tag found for this commit"
+            exit 1
+          fi
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Found tag: $TAG_NAME"
 
       - name: Generate changelog
         id: changelog
         run: |
           # Get the previous tag
-          PREVIOUS_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1) 2>/dev/null || echo "")
+          CURRENT_TAG="${{ steps.get_tag.outputs.tag_name }}"
+          PREVIOUS_TAG=$(git describe --abbrev=0 --tags ${CURRENT_TAG}^ 2>/dev/null || echo "")
 
           if [ -z "$PREVIOUS_TAG" ]; then
             # First release - get all commits
             CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
           else
             # Get commits since previous tag
-            CHANGELOG=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+            CHANGELOG=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges)
           fi
 
           # Save to file
@@ -43,22 +65,31 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ steps.get_tag.outputs.tag_name }}
+          name: Release ${{ steps.get_tag.outputs.tag_name }}
           body: |
-            ## 🚀 Agam Space ${{ github.ref_name }}
+            ## 🚀 Agam Space ${{ steps.get_tag.outputs.tag_name }}
 
             ### Changes in this release:
             ${{ steps.changelog.outputs.changelog }}
 
             ### 📦 Docker Images
 
+            **Docker Hub:**
             ```bash
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/agam-space:${{ github.ref_name }}
+            docker pull agamspace/agam-space:${{ steps.get_tag.outputs.tag_name }}
+            docker pull agamspace/agam-space:latest
+            ```
+
+            **GitHub Container Registry:**
+            ```bash
+            docker pull ghcr.io/agam-space/agam-space:${{ steps.get_tag.outputs.tag_name }}
+            docker pull ghcr.io/agam-space/agam-space:latest
             ```
 
             ### 🔐 Security
 
-            This is a beta release. Use with caution in production environments.
+            This is a beta release. Always keep backups of your data.
 
             ---
 
