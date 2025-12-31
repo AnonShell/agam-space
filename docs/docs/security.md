@@ -195,12 +195,22 @@ re-authentication on every page reload. SessionStorage is accessible to
 JavaScript in the same origin, so the security model relies on preventing
 malicious code from running (CSP headers, HTTPS, code auditing).
 
-**Important:** We're actively looking for better ways to secure the CMK in
-sessionStorage while maintaining UX convenience - such as encrypting it with a
-WebAuthn-derived key. Until a more secure solution is implemented, this feature
-could be placed behind a feature flag if needed, allowing users to choose
-between convenience (sessionStorage persistence) or maximum security
-(re-authentication on every page reload).
+**Important caveat:** The CMK alone is not sufficient to access your data. Even
+if someone obtains your CMK from sessionStorage (via XSS or device theft), they
+cannot make API requests without a valid session token issued by the server.
+Every API request requires server-side session validation - the server checks
+that your session is valid and hasn't expired. This means:
+
+- CMK stolen from sessionStorage → Cannot access your files without valid
+  session
+- XSS attack → Still needs to bypass server session validation
+
+**Additional security layer being explored:** We're actively looking for better
+ways to secure the CMK in sessionStorage while maintaining UX convenience - such
+as encrypting it with a WebAuthn-derived key. Until a more secure solution is
+implemented, this feature could be placed behind a feature flag if needed,
+allowing users to choose between convenience (sessionStorage persistence) or
+maximum security (re-authentication on every page reload).
 
 ### Trusted devices (WebAuthn)
 

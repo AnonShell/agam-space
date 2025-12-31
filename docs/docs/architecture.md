@@ -146,8 +146,15 @@ Server stores only:
 ```
 
 **Technical note:** CMK is persisted in sessionStorage (base64 encoded) for UX
-convenience across page reloads. See [Security](./security.md#session-security)
-for security implications and trade-offs.
+convenience across page reloads. However, the CMK alone is not sufficient to
+access user data - every API request requires a valid session token issued by
+the server. Server-side session validation ensures that even if the CMK is
+obtained from sessionStorage (via XSS or device compromise), an attacker cannot
+make API requests without a valid session. This follows the same security model
+as MEGA and other E2EE platforms.
+
+See [Security](./security.md#session-security) for security implications and
+trade-offs.
 
 ### SSO/OIDC Flow
 
