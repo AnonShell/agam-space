@@ -129,6 +129,8 @@ export class AuthService {
       ipAddress?: string;
     }
   ): Promise<LoginResponse> {
+    this.logger.log(`Authenticated user from sso: ${userInfo.preferred_username}`);
+
     let user = await this.userService.findUserForAuth(userInfo.preferred_username);
     if (!user) {
       if (!this.configService.getConfig().account.allowNewSignup) {
@@ -141,7 +143,7 @@ export class AuthService {
         oidcSubject: userInfo.sub,
       };
 
-      user = await this.userService.createUser(newUserData);
+      user = await this.userService.createUser(newUserData, true);
       this.logger.log(`Auto created new user from sso : ${user.username} (${user.id})`);
     }
 

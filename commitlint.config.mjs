@@ -9,7 +9,7 @@ export default {
     'scope-enum': [
       2,
       'always',
-      ['api', 'web', 'core', 'client', 'docker', 'github', 'crypto', 'storage', 'database', 'deps', 'ci', 'release', 'commitlint', 'docs', 'config'],
+      ['api', 'server', 'web', 'core', 'client', 'docker', 'github', 'crypto', 'storage', 'database', 'deps', 'ci', 'release', 'commitlint', 'docs', 'config'],
     ],
     'subject-case': [2, 'never', ['sentence-case', 'start-case', 'pascal-case', 'upper-case']],
     'subject-empty': [2, 'never'],

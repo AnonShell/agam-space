@@ -50,22 +50,20 @@ export class UserService {
     return usersList.map(user => this.toUserDto(user));
   }
 
-  /**
-   * Create a new user (signup)
-   */
-  async createUser(userData: CreateUserData): Promise<User> {
+  async createUser(userData: CreateUserData, isSSO: boolean = false): Promise<User> {
     // Check for existing username or email
     await this.checkIfUsernameExists(userData.username);
     if (userData.email) {
       await this.checkIfEmailExists(userData.email);
     }
 
+    this.logger.log(`Creating user with email ${userData.username}, SSO: ${isSSO}`);
     let passwordHash: string | undefined;
 
     // Hash password if provided (local auth)
     if (userData.password) {
       passwordHash = await this.passwordService.hashPassword(userData.password);
-    } else if (userData.oidcProvider && userData.oidcSubject) {
+    } else if (isSSO && userData.oidcSubject) {
       passwordHash = null;
     } else {
       throw new BadRequestException('Password is required');
