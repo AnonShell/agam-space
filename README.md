@@ -103,8 +103,7 @@ system where the math guarantees privacy, not just trust.
 
 - Upload via drag-and-drop or file picker
 - Folder organization (nested folders supported)
-- File preview (PDF, images, text)
-- Edit text files inline
+- File preview (PDF, images, text, video/audio)
 - 30-day trash bin with restore
 
 **Storage:**

@@ -4,7 +4,11 @@ sidebar_position: 5
 
 # Security
 
-How Agam Space protects your data with zero-knowledge encryption.
+How Agam Space protects your data with zero-knowledge encryption. This guide
+explains the security model, privacy guarantees, and limitations for users and
+security auditors.
+
+**For technical implementation details, see [Architecture](./architecture.md).**
 
 ## Zero-knowledge Architecture
 
@@ -35,6 +39,33 @@ Agam Space is built on **zero-knowledge** principles. This means:
 
 This is cryptographic privacy, not just trust. The math makes it impossible for
 anyone without your password to access your data.
+
+## What the server knows (and doesn't know)
+
+Understanding what the server can and cannot access:
+
+**What the server stores:**
+
+- Encrypted CMK (wrapped with password-derived key) - **cannot decrypt**
+- Encrypted file chunks (binary blobs) - **cannot decrypt**
+- Encrypted folder/file metadata - **cannot decrypt**
+- File sizes and timestamps (needed for quota management)
+- User emails and login credentials (for authentication)
+
+**What the server CANNOT access:**
+
+- ✗ Your master password (never sent to server)
+- ✗ Decrypted CMK (only has encrypted version)
+- ✗ File contents
+- ✗ File names or folder names
+- ✗ Any metadata (MIME types, tags, etc.)
+
+**Key guarantee:** Even with full database access, the server operator (or
+someone who compromises it) cannot decrypt your data without your master
+password.
+
+For technical implementation details, see
+[Architecture](./architecture#encryption-architecture).
 
 ## How zero-knowledge encryption works
 
@@ -150,10 +181,26 @@ happens in your browser.
 
 ### Session security
 
-- Sessions expire after 15 minutes of inactivity
-- CMK stored in browser memory (cleared on logout)
-- Optional: Save encrypted session in sessionStorage for page reloads
+- Sessions expire after 15 minutes of inactivity (client-side timeout)
+- CMK stored in browser memory during session
+- CMK persisted in sessionStorage (base64 encoded) for convenience across page
+  reloads
+- SessionStorage cleared on tab close or explicit logout
 - HTTPS required for production (use reverse proxy)
+
+**Security note:** The CMK in sessionStorage is base64 encoded for
+serialization, not encrypted. This is a UX trade-off - it allows the app to work
+across page reloads without re-entering your master password. The alternative is
+re-authentication on every page reload. SessionStorage is accessible to
+JavaScript in the same origin, so the security model relies on preventing
+malicious code from running (CSP headers, HTTPS, code auditing).
+
+**Important:** We're actively looking for better ways to secure the CMK in
+sessionStorage while maintaining UX convenience - such as encrypting it with a
+WebAuthn-derived key. Until a more secure solution is implemented, this feature
+could be placed behind a feature flag if needed, allowing users to choose
+between convenience (sessionStorage persistence) or maximum security
+(re-authentication on every page reload).
 
 ### Trusted devices (WebAuthn)
 

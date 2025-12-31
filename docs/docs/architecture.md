@@ -4,7 +4,11 @@ sidebar_position: 5
 
 # Architecture
 
-Overview of Agam Space's system architecture and design decisions.
+Technical overview of Agam Space's system architecture and implementation
+details. This guide is for developers and contributors who want to understand or
+modify the codebase.
+
+**For security guarantees and threat model, see [Security](./security.md).**
 
 ## System Overview
 
@@ -70,26 +74,18 @@ access controls.
 ## Encryption Architecture
 
 **Zero-knowledge design:** All encryption happens client-side in the browser.
-The server never has access to plaintext data, encryption keys, or your master
-password.
+The server never has access to plaintext data, encryption keys, or master
+passwords.
 
-**What the server stores:**
+**Technical implementation:**
 
-- Encrypted CMK (wrapped with password-derived key)
-- Encrypted file chunks (binary blobs)
-- Encrypted folder/file metadata
-- File sizes and timestamps (for quota and basic operations)
+- Client-side encryption using WebCrypto API
+- Server stores only encrypted blobs and wrapped keys
+- All sensitive metadata encrypted in database JSONB columns
+- No plaintext data ever transmitted or stored server-side
 
-**What the server CANNOT access:**
-
-- Your master password (never sent to server)
-- Decrypted CMK (only has encrypted version)
-- File contents
-- File names or folder names
-- Any metadata
-
-Even with full database access, the server operator cannot decrypt your data
-without your master password.
+For detailed security model, threat analysis, and user-facing security
+guarantees, see [Security](./security.md).
 
 ### Key Hierarchy
 
@@ -146,8 +142,12 @@ Server stores only:
 3. Server issues session token
 4. Client prompts for master password
 5. Client derives CMK from master password (Argon2id)
-6. CMK stored in memory/sessionStorage (never sent to server)
+6. CMK stored in memory and sessionStorage (base64 encoded, never sent to server)
 ```
+
+**Technical note:** CMK is persisted in sessionStorage (base64 encoded) for UX
+convenience across page reloads. See [Security](./security.md#session-security)
+for security implications and trade-offs.
 
 ### SSO/OIDC Flow
 
@@ -268,31 +268,6 @@ Folders form a tree:
         │   (Container)   │
         └─────────────────┘
 ```
-
-## Performance
-
-### Optimizations
-
-- Chunked uploads enable resumability and parallel transfer
-- Lazy folder loading (fetch children on demand)
-- Client-side caching of folder structures
-- PostgreSQL connection pooling
-- Encrypted chunk deduplication (planned)
-
-### Scalability
-
-Current implementation tested with:
-
-- Single server deployment
-- Up to 100GB per user
-- Thousands of files per folder
-
-Planned improvements:
-
-- S3-compatible storage backend
-- Horizontal scaling of API servers
-- CDN for static assets
-- Database read replicas
 
 ## Development Setup
 

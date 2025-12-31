@@ -146,8 +146,9 @@ Your CMK is encrypted with device-specific keys stored in hardware secure
 enclave - even more secure than typing a password. enclave.
 
 **Session management**  
-Sessions persist across page reloads (encrypted CMK in sessionStorage).
-15-minute inactivity timeout. Sessions clear on tab close or logout.
+Sessions persist across page reloads (CMK stored in sessionStorage, base64
+encoded). 15-minute inactivity timeout clears the CMK from memory and storage.
+Sessions clear on tab close or logout.
 
 **Multi-user support**  
 Multiple users with separate encrypted storage. Each user has their own CMK -

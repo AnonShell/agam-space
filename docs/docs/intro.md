@@ -47,9 +47,8 @@ but expect bugs and breaking changes.
 
 - File upload/download with encryption
 - Folder organization
-- File previews (PDF, images, text)
-- Text file editing
-- Trash bin (30-day auto-delete)
+- File previews (PDF, images, text, video/audio)
+- Trash bin (30-day retention)
 - WebAuthn device unlock
 - Storage quota enforcement
 
