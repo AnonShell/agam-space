@@ -101,7 +101,7 @@ the CMK:
 **Both required:** Server access (valid session + unlock key) AND physical
 device (biometric authentication) to decrypt CMK.
 
-## 3. SessionStorage Persistence (Optional)
+## 3. SessionStorage Persistence (Default, will be optional in future)
 
 Keep CMK unlocked across page reloads without re-authenticating.
 
