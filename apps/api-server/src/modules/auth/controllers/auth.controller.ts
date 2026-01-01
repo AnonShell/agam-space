@@ -170,7 +170,7 @@ export class AuthController {
     const userAgent = req.headers['user-agent'];
     const ipAddress = req.ip;
 
-    const loginResponse = await this.authService.loginSSO(userInfo, {
+    const loginResponse = await this.authService.authSSO(userInfo, {
       userAgent,
       ipAddress,
     });

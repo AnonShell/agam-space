@@ -121,7 +121,7 @@ export class AuthService {
     };
   }
 
-  async loginSSO(
+  async authSSO(
     userInfo: UserInfo,
     device: {
       deviceFingerprint?: string;
@@ -133,8 +133,15 @@ export class AuthService {
 
     let user = await this.userService.findUserForAuth(userInfo.preferred_username);
     if (!user) {
-      if (!this.configService.getConfig().account.allowNewSignup) {
-        throw new UnauthorizedException('Invalid credentials');
+      const accountConfig = this.configService.getConfig().account;
+      const ssoConfig = this.configService.getConfig().sso;
+
+      if (!accountConfig.allowNewSignup) {
+        throw new UnauthorizedException('New user registration is disabled.');
+      }
+
+      if (!ssoConfig?.autoCreateUser) {
+        throw new UnauthorizedException('User not found. SSO auto-create is disabled.');
       }
 
       const newUserData: CreateUserData = {

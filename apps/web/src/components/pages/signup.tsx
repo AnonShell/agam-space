@@ -7,12 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { signupApi } from '@agam-space/client';
 import Link from 'next/link';
+import { useServerConfigStore } from '@/store/server-config.store';
 
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const config = useServerConfigStore(s => s.config);
+  const ssoSignupEnabled = config?.sso?.enabled === true && config?.sso?.autoCreateUser === true;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,6 +91,25 @@ export default function SignupPage() {
 
             {error && <p className='text-sm text-red-500 text-center'>{error}</p>}
           </form>
+        )}
+        {!success && ssoSignupEnabled && (
+          <>
+            <div className='relative'>
+              <div className='absolute inset-0 flex items-center'>
+                <span className='w-full border-t' />
+              </div>
+              <div className='relative flex justify-center text-xs uppercase'>
+                <span className='bg-background px-2 text-muted-foreground'>Or</span>
+              </div>
+            </div>
+            <Button
+              variant='secondary'
+              className='w-full'
+              onClick={() => (window.location.href = '/api/v1/auth/sso/oidc')}
+            >
+              Sign up with SSO
+            </Button>
+          </>
         )}
         {!success && (
           <div className='pt-4 text-center text-sm text-muted-foreground'>

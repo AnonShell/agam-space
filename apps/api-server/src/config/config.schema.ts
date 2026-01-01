@@ -78,7 +78,7 @@ export const ssoConfigSchema = z
     clientId: z.string(),
     clientSecret: z.string(),
     redirectUri: z.string().url(),
-    autoCreateUser: z.boolean().optional().default(false), // Automatically create user on first SSO login
+    autoCreateUser: z.boolean().optional().default(false),
   })
   .optional();
 

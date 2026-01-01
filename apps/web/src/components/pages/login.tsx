@@ -67,13 +67,23 @@ export default function LoginPage() {
           {error && <p className='text-sm text-red-500 text-center'>{error}</p>}
         </form>
         {ssoEnabled && (
-          <Button
-            variant='secondary'
-            className='w-full'
-            onClick={() => (window.location.href = '/api/v1/auth/sso/oidc')}
-          >
-            Login with SSO
-          </Button>
+          <>
+            <div className='relative'>
+              <div className='absolute inset-0 flex items-center'>
+                <span className='w-full border-t' />
+              </div>
+              <div className='relative flex justify-center text-xs uppercase'>
+                <span className='bg-background px-2 text-muted-foreground'>Or</span>
+              </div>
+            </div>
+            <Button
+              variant='secondary'
+              className='w-full'
+              onClick={() => (window.location.href = '/api/v1/auth/sso/oidc')}
+            >
+              Login with SSO
+            </Button>
+          </>
         )}
         {signupEnabled && (
           <div className='pt-4 text-center text-sm text-muted-foreground'>

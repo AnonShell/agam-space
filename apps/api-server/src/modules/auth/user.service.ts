@@ -51,7 +51,6 @@ export class UserService {
   }
 
   async createUser(userData: CreateUserData, isSSO: boolean = false): Promise<User> {
-    // Check for existing username or email
     await this.checkIfUsernameExists(userData.username);
     if (userData.email) {
       await this.checkIfEmailExists(userData.email);

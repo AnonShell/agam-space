@@ -52,6 +52,9 @@ export class ServerConfigService implements OnModuleInit {
       },
       sso: {
         enabled: this.isSsoEnabled,
+        autoCreateUser: this.isSsoEnabled
+          ? (this.configService.getConfig().sso?.autoCreateUser ?? false)
+          : false,
       },
     };
 

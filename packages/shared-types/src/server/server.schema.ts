@@ -19,6 +19,7 @@ export const ServerConfigSchema = z.object({
   }),
   sso: z.object({
     enabled: z.boolean().default(false),
+    autoCreateUser: z.boolean().default(false),
   }),
   account: z.object({
     allowNewSignup: z.boolean().default(true),
