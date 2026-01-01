@@ -21,12 +21,16 @@ mkdir agam-space && cd agam-space
 
 Create `docker-compose.yml`:
 
-:::tip Docker Registry Options Agam Space images are published to both:
+:::tip
+
+Docker Registry Options Agam Space images are published to both:
 
 - **Docker Hub:** `agamspace/agam-space:latest`
 - **GitHub Container Registry:** `ghcr.io/agam-space/agam-space:latest`
 
-Use either registry in the `image:` field below. :::
+Use either registry in the `image:` field below.
+
+:::
 
 ```yaml
 version: '3.8'
@@ -45,9 +49,6 @@ services:
       - agam
 
   agam:
-    # Available from Docker Hub or GitHub Container Registry:
-    # image: agamspace/agam-space:latest
-    # image: ghcr.io/agam-space/agam-space:latest
     image: agamspace/agam-space:latest
     ports:
       - '3331:3331'
@@ -116,9 +117,7 @@ HTTPS encryption and better security.
 
 Choose your reverse proxy:
 
-### Caddy
-
-Create or edit `/etc/caddy/Caddyfile`:
+**Example Caddy config:**
 
 ```
 files.yourdomain.com {
@@ -126,86 +125,24 @@ files.yourdomain.com {
 }
 ```
 
-Reload Caddy:
-
-```bash
-sudo systemctl reload caddy
-```
-
-Caddy automatically handles Let's Encrypt certificates.
-
-### Nginx
-
-Create `/etc/nginx/sites-available/agam-space`:
+**Example Nginx config:**
 
 ```nginx
 server {
-    listen 80;
     server_name files.yourdomain.com;
-
     client_max_body_size 10G;
 
     location / {
         proxy_pass http://localhost:3331;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-
-        proxy_read_timeout 3600;
-        proxy_connect_timeout 3600;
-        proxy_send_timeout 3600;
     }
 }
 ```
 
-Enable site:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/agam-space /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-Get SSL certificate with Certbot:
-
-```bash
-sudo certbot --nginx -d files.yourdomain.com
-```
-
-Certbot auto-configures HTTPS and certificate renewal.
-
-## First User Setup
-
-Create your admin account:
-
-1. Open `https://files.yourdomain.com` (or localhost)
-2. Click **Sign Up**
-3. Enter email and password
-4. Set master password
-5. Save recovery key
-
-After creating your account, disable signups:
-
-```bash
-nano docker-compose.yml
-```
-
-Change:
-
-```yaml
-ALLOW_NEW_SIGNUP: 'false'
-```
-
-Restart:
-
-```bash
-docker-compose restart agam
-```
+Configure SSL certificates with your reverse proxy of choice.
 
 ## Storage Configuration
 
@@ -228,19 +165,6 @@ Create directory with correct permissions:
 mkdir -p /mnt/storage/agam
 chown -R 1000:1000 /mnt/storage/agam
 ```
-
-### Storage Structure
-
-```
-/data/files/
-  u-<userId>/
-    f/<fileId>/
-      chunk-0
-      chunk-1
-      ...
-```
-
-Each user gets their own directory. Files are split into encrypted chunks.
 
 ## Updates
 
@@ -266,19 +190,16 @@ docker-compose logs -f agam
 
 ### Version Pinning
 
-To pin to specific version, edit `docker-compose.yml`:
+To pin to specific version:
 
 ```yaml
 agam:
-  # Docker Hub
-  image: agamspace/agam-space:v0.1.0-beta.1
-
-  # OR GitHub Container Registry
-  # image: ghcr.io/agam-space/agam-space:v0.1.0-beta.1
+  image: agamspace/agam-space:v0.2.0
 ```
 
 ## Next Steps
 
-🚀 **[First Steps](./first-steps.md)** - Create admin account and initial setup
+🚀 **[First Steps](../configuration/first-steps.md)** - Create admin account and
+initial setup
 
 💾 **[Set up backups](./backups.md)** - Automate database and file backups

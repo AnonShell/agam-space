@@ -29,7 +29,20 @@ const sidebars: SidebarsConfig = {
         'configuration/user-management',
       ],
     },
-    'security',
+    {
+      type: 'category',
+      label: 'Security',
+      link: {
+        type: 'doc',
+        id: 'security/index',
+      },
+      items: [
+        'security/authentication',
+        'security/encryption',
+        'security/cmk-unlock',
+        'security/recovery',
+      ],
+    },
     'architecture',
     'faq',
   ],

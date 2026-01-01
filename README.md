@@ -103,13 +103,13 @@ system where the math guarantees privacy, not just trust.
 
 - Upload via drag-and-drop or file picker
 - Folder organization (nested folders supported)
-- File preview (PDF, images, text, video/audio)
+- File preview (PDF, images, text)
 - 30-day trash bin with restore
 
 **Storage:**
 
 - Per-user quotas (default 10GB)
-- Chunk-based uploads (resumable)
+- Chunk-based uploads
 - Local filesystem storage
 
 ## Screenshots

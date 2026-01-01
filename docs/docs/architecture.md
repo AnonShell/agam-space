@@ -8,7 +8,7 @@ Technical overview of Agam Space's system architecture and implementation
 details. This guide is for developers and contributors who want to understand or
 modify the codebase.
 
-**For security guarantees and threat model, see [Security](./security.md).**
+**For security guarantees and threat model, see [Security](./security/).**
 
 ## System Overview
 
@@ -85,7 +85,7 @@ passwords.
 - No plaintext data ever transmitted or stored server-side
 
 For detailed security model, threat analysis, and user-facing security
-guarantees, see [Security](./security.md).
+guarantees, see [Security](./security/).
 
 ### Key Hierarchy
 
@@ -153,7 +153,7 @@ obtained from sessionStorage (via XSS or device compromise), an attacker cannot
 make API requests without a valid session. This follows the same security model
 as MEGA and other E2EE platforms.
 
-See [Security](./security.md#session-security) for security implications and
+See [Security](./security/#session-security) for security implications and
 trade-offs.
 
 ### SSO/OIDC Flow
@@ -194,9 +194,6 @@ trade-offs.
 9. Upload marked complete after all chunks uploaded
 ```
 
-Uploads are resumable. If interrupted, the client can resume from the last
-successful chunk.
-
 ## File Download Flow
 
 ```
@@ -208,9 +205,6 @@ successful chunk.
 6. Decrypted data assembled in browser
 7. File saved or displayed to user
 ```
-
-For media files (video/audio), decryption happens on-the-fly using the
-MediaSource API for streaming playback.
 
 ## Database Schema
 
@@ -234,6 +228,53 @@ Folders form a tree:
 - Each folder has parent_id pointing to parent
 - Folder keys encrypted with parent folder key or CMK
 - Efficient traversal via recursive queries
+
+### Server-Side Storage Structure
+
+How encrypted files are physically stored on disk:
+
+**Example:** User uploads `Documents/passport.pdf`
+
+**What user sees:**
+
+```
+My Files/
+  Documents/
+    passport.pdf
+```
+
+**What's stored on server filesystem:**
+
+```
+/data/files/
+  u-01H2K3M4N5P6Q7R8S9/           ← User ID (ULID)
+    f-01H9X8W7V6U5T4S3R2/          ← File ID (ULID)
+      chunk-0                      ← Encrypted chunk (binary)
+      chunk-1                      ← Encrypted chunk (binary)
+      chunk-2                      ← Encrypted chunk (binary)
+```
+
+**What's in the database:**
+
+- File ID: `01H9X8W7V6U5T4S3R2` (visible)
+- Encrypted filename: `xk9mP2...` (server cannot decrypt "passport.pdf")
+- Encrypted folder name: `7hQ3z...` (server cannot decrypt "Documents")
+- File size: `2.4 MB` (visible, for quota)
+- Chunk count: `3` (visible)
+- Encrypted FEK: `wrapped with folder key` (server cannot decrypt)
+
+**Server sees:**
+
+- Random file/folder IDs
+- Encrypted binary chunks on disk
+- File sizes and timestamps
+- Parent-child folder relationships (structure, not names)
+
+**Server CANNOT see:**
+
+- Folder names ("Documents")
+- File names ("passport.pdf")
+- File contents
 
 ## Deployment Architecture
 

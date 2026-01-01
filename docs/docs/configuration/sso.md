@@ -4,34 +4,29 @@ sidebar_position: 2
 
 # Single Sign-On
 
-Configure SSO login with self-hosted authentication servers or cloud providers.
+Configure SSO authentication with OIDC-compatible providers.
+
+:::info Important
+
+SSO only handles authentication. Encryption keys are still derived from your
+master password, which you must set separately after first login.
+
+:::
 
 ## Supported Providers
 
-**Self-hosted (Recommended):**
+Any OIDC-compatible provider works:
 
-- Authelia - Lightweight, easy to configure
-- Authentik - Feature-rich, modern UI
-- Keycloak - Enterprise-grade
-- Zitadel - Cloud-native identity platform
-
-**Cloud providers:**
-
+- Authelia
+- Authentik
+- Keycloak
+- Zitadel
 - Google
 - GitHub
 - Microsoft
 - Auth0
 
-Any OIDC-compatible provider works.
-
 ## SSO with Authelia
-
-Authelia is a popular lightweight open-source authentication server.
-
-### Prerequisites
-
-- Authelia already installed and configured
-- Domain names configured (e.g., auth.yourdomain.com, files.yourdomain.com)
 
 ### Configure Authelia
 
@@ -104,8 +99,6 @@ docker-compose restart agam
 
 ## SSO with Authentik
 
-Authentik is a modern, feature-rich identity provider.
-
 ### Create Provider in Authentik
 
 1. Login to Authentik admin panel
@@ -143,8 +136,6 @@ agam:
 
 ## SSO with Keycloak
 
-For those using Keycloak:
-
 ### Create Client
 
 1. Login to Keycloak admin console
@@ -176,63 +167,18 @@ agam:
     DOMAIN: 'https://files.yourdomain.com'
 ```
 
-## Cloud Providers
+## Configuration Variables
 
-### Google OAuth
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Create project or select existing
-3. Enable Google+ API
-4. Create OAuth 2.0 Client ID
-5. Set redirect URI:
-   `https://files.yourdomain.com/api/v1/auth/sso/oidc/callback`
-
-```yaml
-SSO_ISSUER: 'https://accounts.google.com'
-SSO_CLIENT_ID: 'your-client-id.apps.googleusercontent.com'
-SSO_CLIENT_SECRET: 'your-client-secret'
-SSO_REDIRECT_URI: 'https://files.yourdomain.com/api/v1/auth/sso/oidc/callback'
-SSO_AUTO_CREATE_USER: 'false'
-DOMAIN: 'https://files.yourdomain.com'
-```
-
-### GitHub OAuth
-
-1. GitHub Settings → Developer settings → OAuth Apps
-2. New OAuth App
-3. Callback URL: `https://files.yourdomain.com/api/v1/auth/sso/oidc/callback`
-
-```yaml
-SSO_ISSUER: 'https://github.com'
-SSO_CLIENT_ID: 'your-github-client-id'
-SSO_CLIENT_SECRET: 'your-github-client-secret'
-SSO_REDIRECT_URI: 'https://files.yourdomain.com/api/v1/auth/sso/oidc/callback'
-SSO_AUTO_CREATE_USER: 'false'
-DOMAIN: 'https://files.yourdomain.com'
-```
-
-## How SSO Works
-
-1. **Login:** User authenticates via SSO provider
-2. **Account:** First SSO login creates Agam Space account
-3. **Master Password:** User must still set master password
-4. **Why?** Master password encrypts files - never sent to server or SSO
-   provider
-5. **Result:** Convenient login + end-to-end encryption
-
-**Important:** SSO only handles authentication. Encryption keys are still
-derived from your master password, which you must set separately.
+See [Configuration Reference](../configuration/) for all SSO environment
+variables.
 
 ## Disable Password Login
 
-If you want SSO-only (no email/password login):
+To use SSO-only authentication:
 
 ```yaml
 ALLOW_PASSWORD_LOGIN: 'false'
 ```
-
-**Warning:** Make sure SSO works first! Test with a different browser before
-disabling password login.
 
 ## Troubleshooting
 
@@ -259,12 +205,3 @@ disabling password login.
 
 - This is normal! Master password encrypts your files
 - SSO handles authentication, not encryption
-- You need both
-
-## Security Notes
-
-- SSO provider can see login activity
-- SSO provider cannot decrypt your files (master password protects them)
-- If SSO provider compromised: attacker can login but not decrypt files without
-  master password
-- Recommended: Use SSO + strong master password + trusted device unlock

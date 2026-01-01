@@ -30,7 +30,7 @@ Done! You're ready to upload files.
 
 ## Disable Public Signups
 
-After creating your admin account, prevent others from signing up:
+After creating your admin account, prevent others from signing up (if needed):
 
 Edit `docker-compose.yml`:
 

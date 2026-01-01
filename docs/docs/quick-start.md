@@ -6,18 +6,23 @@ sidebar_position: 2
 
 Get Agam Space running in 5 minutes.
 
-:::tip Zero-Knowledge Encryption
+:::danger Critical: Zero-Knowledge Encryption
 
 Agam Space uses true zero-knowledge encryption. Your master password never
-leaves your device, and the server cannot decrypt your files. Remember: if you
-lose your master password and recovery key, your data is permanently
-unrecoverable.
+leaves your device, and the server cannot decrypt your files.
+
+**If you lose your master password AND recovery key, your data is permanently
+unrecoverable. No one can help you - not even the server admin.**
 
 :::
 
 ## Prerequisites
 
-Docker and Docker Compose installed.
+- Docker and Docker Compose installed
+- System requirements (recommended):
+  - 512MB RAM minimum
+  - 1 CPU core
+  - Storage space for your files + database
 
 ## Setup
 
