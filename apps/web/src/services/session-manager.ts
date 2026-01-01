@@ -1,10 +1,11 @@
 import { toBase64, fromBase64 } from '@agam-space/core';
+import { usePreferencesStore } from '@/store/preferences.store';
 
 const SESSION_KEY = 'agam_cmk_session';
-const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+const SESSION_TIMEOUT_MS = 15 * 60 * 1000;
 
 interface SessionData {
-  cmk: string; // base64 encoded
+  cmk: string;
   timestamp: number;
   userId: string;
 }
@@ -12,6 +13,11 @@ interface SessionData {
 export class SessionManager {
   static saveSession(cmk: Uint8Array, userId: string): void {
     if (typeof window === 'undefined') return;
+
+    const persistEnabled = usePreferencesStore.getState().security?.persistCMKInSession ?? false;
+    if (!persistEnabled) {
+      return;
+    }
 
     const sessionData: SessionData = {
       cmk: toBase64(cmk),
@@ -28,6 +34,11 @@ export class SessionManager {
 
   static restoreSession(userId: string): Uint8Array | null {
     if (typeof window === 'undefined') return null;
+
+    const persistEnabled = usePreferencesStore.getState().security?.persistCMKInSession ?? false;
+    if (!persistEnabled) {
+      return null;
+    }
 
     try {
       const stored = sessionStorage.getItem(SESSION_KEY);

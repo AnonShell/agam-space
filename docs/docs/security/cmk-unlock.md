@@ -101,9 +101,12 @@ the CMK:
 **Both required:** Server access (valid session + unlock key) AND physical
 device (biometric authentication) to decrypt CMK.
 
-## 3. SessionStorage Persistence (Default, will be optional in future)
+## 3. SessionStorage Persistence (Optional)
 
 Keep CMK unlocked across page reloads without re-authenticating.
+
+**Disabled by default** - you must explicitly enable this in Settings →
+Encryption → "Keep me unlocked during session"
 
 **Why this exists:**
 
@@ -117,15 +120,18 @@ inactivity (client-side).
 
 **How it works:**
 
+- Enable the preference in Settings → Encryption
 - After unlocking CMK (via master password or trusted device), CMK is saved to
   sessionStorage
 - Page reload retrieves CMK from sessionStorage - no prompt needed
-- 15-minute inactivity timeout
-- Cleared automatically on tab close or logout
+- 15-minute inactivity timeout (client-side only)
+- Cleared automatically on tab close, logout, or when you disable the preference
 
 **The trade-off:**
 
-This is the most convenient option but comes with a security compromise:
+This is the most convenient option but comes with a security compromise. **It's
+disabled by default** - you must consciously choose convenience over maximum
+security.
 
 **Convenience side:**
 
@@ -139,6 +145,9 @@ This is the most convenient option but comes with a security compromise:
 - SessionStorage accessible to JavaScript - XSS attacks can read it
 - CMK readable via browser console/developer tools (sessionStorage.getItem)
 - CMK persists in browser until timeout or tab close
+
+**You can toggle this off anytime** in Settings → Encryption. When disabled,
+existing session data is immediately cleared.
 
 **Important mitigation:** Even if an attacker steals your CMK from
 sessionStorage (via XSS), they still can't access your encrypted files without a

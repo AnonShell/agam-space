@@ -5,6 +5,9 @@ import TrustedDevicesPage from '@/components/pages/settings/devices';
 import { RecoveryKeyModal } from '@/components/settings/recovery-key-model';
 import { ResetPasswordModal } from '@/components/settings/reset-password-model';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { usePreferencesStore } from '@/store/preferences.store';
+import { SessionManager } from '@/services/session-manager';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
@@ -31,6 +34,16 @@ export default function SettingsPage({ initialTab }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState('Account');
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+
+  const persistCMKInSession = usePreferencesStore(s => s.security?.persistCMKInSession ?? false);
+  const setPersistCMKInSession = usePreferencesStore(s => s.setPersistCMKInSession);
+
+  const handlePersistToggle = (enabled: boolean) => {
+    setPersistCMKInSession(enabled);
+    if (!enabled) {
+      SessionManager.clearSession();
+    }
+  };
 
   // Initialize active section based on initialTab prop
   useEffect(() => {
@@ -67,6 +80,29 @@ export default function SettingsPage({ initialTab }: SettingsPageProps) {
         {activeSection === 'Encryption' && (
           <div className='space-y-6'>
             <h2 className='text-xl font-semibold'>Encryption Settings</h2>
+
+            <div className='border p-4 rounded-xl'>
+              <div className='flex items-start justify-between'>
+                <div className='flex-1'>
+                  <h3 className='font-medium'>Keep me unlocked during session</h3>
+                  <p className='text-sm text-muted-foreground mt-1'>
+                    Store your encryption key in browser sessionStorage to avoid re-entering master
+                    password on page reload. Session expires after 15 minutes or when you close the
+                    tab.
+                  </p>
+                  <p className='text-sm text-amber-600 dark:text-amber-500 mt-2'>
+                    ⚠️ When enabled, your encryption key is stored in plaintext in sessionStorage,
+                    which can be accessed by browser extensions or XSS attacks. Disable this for
+                    maximum security.
+                  </p>
+                </div>
+                <Switch
+                  checked={persistCMKInSession}
+                  onCheckedChange={handlePersistToggle}
+                  className='ml-4'
+                />
+              </div>
+            </div>
 
             <div className='border p-4 rounded-xl'>
               <h3 className='font-medium'>Show Recovery Key</h3>

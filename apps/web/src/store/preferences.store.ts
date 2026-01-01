@@ -9,9 +9,13 @@ type ExplorerPrefs = {
   sortDir: 'asc' | 'desc';
 };
 
+type SecurityPrefs = {
+  persistCMKInSession: boolean;
+};
+
 type Preferences = {
   explorer: ExplorerPrefs;
-  // future: theme?: 'light'|'dark'; language?: 'en'|'nl'; etc.
+  security: SecurityPrefs;
 };
 
 type Actions = {
@@ -19,10 +23,12 @@ type Actions = {
   setExplorerSortBy: (v: ExplorerPrefs['sortBy']) => void;
   setExplorerSortDir: (v: ExplorerPrefs['sortDir']) => void;
   setExplorerPrefs: (p: Partial<ExplorerPrefs>) => void;
+  setPersistCMKInSession: (enabled: boolean) => void;
 };
 
 const DEFAULT_PREFS: Preferences = {
   explorer: { view: 'grid', sortBy: 'name', sortDir: 'asc' },
+  security: { persistCMKInSession: false },
 };
 
 export const usePreferencesStore = create<Preferences & Actions>()(
@@ -33,12 +39,14 @@ export const usePreferencesStore = create<Preferences & Actions>()(
       setExplorerSortBy: sortBy => set(s => ({ explorer: { ...s.explorer, sortBy } })),
       setExplorerSortDir: sortDir => set(s => ({ explorer: { ...s.explorer, sortDir } })),
       setExplorerPrefs: p => set(s => ({ explorer: { ...s.explorer, ...p } })),
+      setPersistCMKInSession: persistCMKInSession =>
+        set(s => ({ security: { ...s.security, persistCMKInSession } })),
     }),
     {
       name: 'preferences',
       version: 1,
       storage: createJSONStorage(() => localStorage),
-      partialize: s => ({ explorer: s.explorer }), // only persist what we need for now
+      partialize: s => ({ explorer: s.explorer, security: s.security }),
     }
   )
 );
