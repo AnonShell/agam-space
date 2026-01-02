@@ -10,7 +10,7 @@ type ExplorerPrefs = {
 };
 
 type SecurityPrefs = {
-  persistCMKInSession: boolean;
+  sessionAutoUnlock: boolean;
 };
 
 type Preferences = {
@@ -23,12 +23,12 @@ type Actions = {
   setExplorerSortBy: (v: ExplorerPrefs['sortBy']) => void;
   setExplorerSortDir: (v: ExplorerPrefs['sortDir']) => void;
   setExplorerPrefs: (p: Partial<ExplorerPrefs>) => void;
-  setPersistCMKInSession: (enabled: boolean) => void;
+  setSessionAutoUnlock: (enabled: boolean) => void;
 };
 
 const DEFAULT_PREFS: Preferences = {
   explorer: { view: 'grid', sortBy: 'name', sortDir: 'asc' },
-  security: { persistCMKInSession: false },
+  security: { sessionAutoUnlock: false },
 };
 
 export const usePreferencesStore = create<Preferences & Actions>()(
@@ -39,8 +39,8 @@ export const usePreferencesStore = create<Preferences & Actions>()(
       setExplorerSortBy: sortBy => set(s => ({ explorer: { ...s.explorer, sortBy } })),
       setExplorerSortDir: sortDir => set(s => ({ explorer: { ...s.explorer, sortDir } })),
       setExplorerPrefs: p => set(s => ({ explorer: { ...s.explorer, ...p } })),
-      setPersistCMKInSession: persistCMKInSession =>
-        set(s => ({ security: { ...s.security, persistCMKInSession } })),
+      setSessionAutoUnlock: sessionAutoUnlock =>
+        set(s => ({ security: { ...s.security, sessionAutoUnlock } })),
     }),
     {
       name: 'preferences',

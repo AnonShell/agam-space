@@ -9,7 +9,7 @@ import { IdentityKeyManager, toBase64 } from '@agam-space/core';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { useDeviceCredentialsStore } from '@/store/device-credentials.store';
 import { TrustedDevicesService } from '@/services/trusted-devices.service';
-import { SessionManager } from '@/services/session-manager';
+import { SessionUnlockManager } from '@/services/session-unlock-manager';
 import { useAuth } from '@/store/auth'; // ✅ ADD: Need current user
 import type { DeviceInfo } from '@agam-space/shared-types';
 
@@ -145,7 +145,7 @@ export default function E2eeUnlockPage() {
     ClientRegistry.getKeyManager().setCMK(cmk);
     ClientRegistry.getKeyManager().setIdentityKeyPair(identifyKeyPair);
 
-    SessionManager.saveSession(cmk, user.id);
+    await SessionUnlockManager.saveCMKForAutoUnlock(cmk);
 
     router.replace(redirectTo);
   };

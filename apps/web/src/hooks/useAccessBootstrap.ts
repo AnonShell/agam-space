@@ -5,7 +5,7 @@ import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { resetAllState } from '@/services/session.service';
 import { useBootstrapStore } from '@/store/bootstrap.store';
 import { ClientRegistry } from '@agam-space/client';
-import { SessionManager } from '@/services/session-manager';
+import { SessionUnlockManager } from '@/services/session-unlock-manager';
 import { IdentityKeyManager } from '@agam-space/core';
 
 type BootstrapMode = 'public' | 'loggedIn' | 'unlocked';
@@ -20,8 +20,8 @@ function redirectWithQuery(router: ReturnType<typeof useRouter>, path: string, r
   router.replace(`${path}?redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
-async function restoreSessionIfAvailable(userId: string) {
-  const restoredCmk = SessionManager.restoreSession(userId);
+async function restoreCMKForAutoUnlockIfAvailable() {
+  const restoredCmk = await SessionUnlockManager.restoreCMKForAutoUnlock();
   if (restoredCmk) {
     const identityKeyPair = await IdentityKeyManager.generateIdentityKeyPair(restoredCmk);
     ClientRegistry.getKeyManager().setCMK(restoredCmk);
@@ -73,7 +73,7 @@ export function useAccessBootstrap(
 
     async function checkUnlockStatus() {
       if (!ClientRegistry.getKeyManager().getCMK() && user?.id) {
-        await restoreSessionIfAvailable(user.id);
+        await restoreCMKForAutoUnlockIfAvailable();
       }
 
       if (!ClientRegistry.getKeyManager().getCMK() && pathname !== '/e2ee/unlock') {

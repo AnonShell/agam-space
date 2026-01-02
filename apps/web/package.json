@@ -27,6 +27,7 @@
     "@tabler/icons-react": "^3.36.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "idb": "^8.0.3",
     "libsodium-wrappers-sumo": "^0.7.16",
     "lucide-react": "^0.562.0",
     "next": "15.5.9",

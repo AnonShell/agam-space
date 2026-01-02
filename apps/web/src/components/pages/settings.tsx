@@ -7,7 +7,7 @@ import { ResetPasswordModal } from '@/components/settings/reset-password-model';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { usePreferencesStore } from '@/store/preferences.store';
-import { SessionManager } from '@/services/session-manager';
+import { SessionUnlockManager } from '@/services/session-unlock-manager';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 
@@ -35,13 +35,13 @@ export default function SettingsPage({ initialTab }: SettingsPageProps) {
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
 
-  const persistCMKInSession = usePreferencesStore(s => s.security?.persistCMKInSession ?? false);
-  const setPersistCMKInSession = usePreferencesStore(s => s.setPersistCMKInSession);
+  const sessionAutoUnlock = usePreferencesStore(s => s.security?.sessionAutoUnlock ?? false);
+  const setSessionAutoUnlock = usePreferencesStore(s => s.setSessionAutoUnlock);
 
-  const handlePersistToggle = (enabled: boolean) => {
-    setPersistCMKInSession(enabled);
+  const handleAutoUnlockToggle = async (enabled: boolean) => {
+    setSessionAutoUnlock(enabled);
     if (!enabled) {
-      SessionManager.clearSession();
+      await SessionUnlockManager.clearAutoUnlockData();
     }
   };
 
@@ -84,21 +84,16 @@ export default function SettingsPage({ initialTab }: SettingsPageProps) {
             <div className='border p-4 rounded-xl'>
               <div className='flex items-start justify-between'>
                 <div className='flex-1'>
-                  <h3 className='font-medium'>Keep me unlocked during session</h3>
+                  <h3 className='font-medium'>Auto-unlock on page reload</h3>
                   <p className='text-sm text-muted-foreground mt-1'>
-                    Store your encryption key in browser sessionStorage to avoid re-entering master
-                    password on page reload. Session expires after 15 minutes or when you close the
-                    tab.
-                  </p>
-                  <p className='text-sm text-amber-600 dark:text-amber-500 mt-2'>
-                    ⚠️ When enabled, your encryption key is stored in plaintext in sessionStorage,
-                    which can be accessed by browser extensions or XSS attacks. Disable this for
-                    maximum security.
+                    Avoid re-entering your master password when you reload the page. <br />
+                    Your key is still stored encrypted, works only in this tab, and automatically
+                    expires after 15 minutes or when you close the tab.
                   </p>
                 </div>
                 <Switch
-                  checked={persistCMKInSession}
-                  onCheckedChange={handlePersistToggle}
+                  checked={sessionAutoUnlock}
+                  onCheckedChange={handleAutoUnlockToggle}
                   className='ml-4'
                 />
               </div>

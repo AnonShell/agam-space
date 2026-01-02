@@ -2,6 +2,7 @@ export * from './bootstrap';
 export * from './errors';
 export * from './cmk-manager';
 export * from './crypto/xchacha';
+export * from './crypto/argon2';
 export * from './file-manager';
 export * from './folder-manager';
 export * from './encryption/encryption-strategy';

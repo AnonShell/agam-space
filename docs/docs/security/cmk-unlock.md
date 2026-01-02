@@ -11,6 +11,10 @@ How to unlock your Cryptographic Master Key (CMK) to access encrypted data.
 After logging in, your CMK must be unlocked to decrypt files. The CMK is always
 encrypted at rest - you need to unlock it to load it into browser memory.
 
+**Important: Your CMK is never stored in plaintext anywhere.** It only exists
+unencrypted in browser memory during an active session. All persistence (server
+database, browser storage) contains only encrypted forms of the CMK.
+
 **Three methods available, each with different convenience vs security
 trade-offs:**
 
@@ -101,78 +105,103 @@ the CMK:
 **Both required:** Server access (valid session + unlock key) AND physical
 device (biometric authentication) to decrypt CMK.
 
-## 3. SessionStorage Persistence (Optional)
+## 3. Auto-unlock on Page Reload (Optional)
 
-Keep CMK unlocked across page reloads without re-authenticating.
+**⚠️ If you need maximum security, keep this option disabled.**
 
-**Disabled by default** - you must explicitly enable this in Settings →
-Encryption → "Keep me unlocked during session"
+Avoid re-entering your password or biometric prompt when reloading the page
+(Disabled by default). You must explicitly enable this in Settings → Encryption
+→ "Auto-unlock on page reload"
 
 **Why this exists:**
 
-Even with trusted devices, you still get a biometric prompt on every page
-reload. For some users, this feels excessive - especially if you're just
-accidentally refreshing or navigating between pages in the same session.
-
-SessionStorage persistence lets you unlock once (with master password or
-biometric), then stays unlocked until you close the tab or after 15 minutes of
-inactivity (client-side).
+Even with trusted devices, biometric prompts on every page reload can feel
+excessive. This feature lets you unlock once, then stays unlocked until you
+close the tab or the 15-minute window expires.
 
 **How it works:**
 
-- Enable the preference in Settings → Encryption
-- After unlocking CMK (via master password or trusted device), CMK is saved to
-  sessionStorage
-- Page reload retrieves CMK from sessionStorage - no prompt needed
-- 15-minute inactivity timeout (client-side only)
-- Cleared automatically on tab close, logout, or when you disable the preference
+After you unlock (with master password or trusted device):
 
-**The trade-off:**
+1. Client generates random seed (stored in sessionStorage, tab-scoped)
+2. Server issues random nonce (unique per login session, 15-minute TTL, cached
+   in memory)
+3. Encryption key derived from server nonce + client seed using Argon2id
+4. CMK encrypted using XChaCha20-Poly1305 with derived key
+5. Encrypted CMK stored in IndexedDB, namespaced by tab ID
 
-This is the most convenient option but comes with a security compromise. **It's
-disabled by default** - you must consciously choose convenience over maximum
-security.
+**On page reload:**
 
-**Convenience side:**
+1. Client retrieves seed from sessionStorage
+2. Client requests server nonce (strict server-side validation - only issued
+   with valid session)
+3. Derives decryption key from nonce + seed
+4. Decrypts CMK from IndexedDB
+5. CMK loaded into memory
 
-- Unlock once, work freely without interruption
-- No re-entering master password on page reload
-- No biometric prompt on accidental refresh
+**Security model:**
 
-**Security risk side:**
+Split-key approach where **both** server and client components are required.
+Without either, the encrypted CMK is undecryptable:
 
-- CMK stored in plaintext in sessionStorage
-- SessionStorage accessible to JavaScript - XSS attacks can read it
-- CMK readable via browser console/developer tools (sessionStorage.getItem)
-- CMK persists in browser until timeout or tab close
+- **Server:** Random nonce (unique per session, 15-minute TTL)
+- **Client:** Random seed in sessionStorage (cleared on tab close)
+- **IndexedDB:** Encrypted CMK
 
-**You can toggle this off anytime** in Settings → Encryption. When disabled,
-existing session data is immediately cleared.
+**Why 15-minute limit:**
 
-**Important mitigation:** Even if an attacker steals your CMK from
-sessionStorage (via XSS), they still can't access your encrypted files without a
-valid login session. The server validates every API request - CMK alone is
-useless without authentication.
+Server nonce expires after 15 minutes to limit the window of opportunity if
+session credentials are compromised. Even if an attacker steals your session
+cookie and encrypted CMK from IndexedDB, they only have 15 minutes before the
+nonce expires and the encrypted CMK becomes undecryptable. Your login session
+remains active - you'll just need to unlock again.
 
-**Future improvement:** Actively looking to improve this security model to
-balance convenience and security. If you know better approaches, feel free to
-suggest via GitHub issues.
+**What this protects against:**
 
-## Security Model
+- **Stolen browser profile:** Encrypted CMK useless without server nonce
+  (requires valid session) and client seed (cleared on tab close)
+- **Time-limited exposure:** Server nonce expires after 15 minutes
+- **Session hijacking:** Session cookie is HttpOnly (JavaScript cannot read it),
+  preventing client-side session theft
+- **Tab isolation:** Each tab has independent seed and encrypted CMK entry
 
-**CMK in memory:**
+**What this does NOT protect against:**
 
-- Required to decrypt files
-- Exists only during active session
-- Cleared on logout or page close
+- **XSS attacks:** Malicious JavaScript can access sessionStorage (client seed)
+  and make API calls (browser automatically sends HttpOnly cookie) to get server
+  nonce, then decrypt CMK from IndexedDB
+- **Browser extensions with network permissions:** Can access sessionStorage and
+  IndexedDB, and make API requests (browser sends HttpOnly cookie automatically)
+  to obtain server nonce
 
-**Two-layer protection:**
+**When auto-unlock fails:**
 
-- CMK alone cannot download encrypted files (needs valid login session for API
-  requests)
-- Login session alone cannot decrypt files (needs CMK from master password)
+You'll be prompted to unlock manually (no data loss) when:
 
-Both pieces required to access encrypted data.
+- Server nonce expires (after 15 minutes - login session remains active)
+- Tab closed (client seed lost)
+- Logout (all data wiped)
+- Session revoked on server
+
+**Security vs convenience:**
+
+This is a session-bound convenience feature that relies on the browser
+environment being trusted (no XSS, no malicious extensions).
+
+If your threat model requires maximum security, keep this disabled and use
+master password or trusted device unlock on every page load.
+
+## Two-Layer Protection
+
+Regardless of which unlock method you use, accessing your encrypted files
+requires **both**:
+
+- **Valid login session** - to make authenticated API requests to download
+  encrypted files
+- **Unlocked CMK in memory** - to decrypt the downloaded files
+
+CMK alone is useless without server access. Login session alone cannot decrypt
+files. Both are required.
 
 ## Further Reading
 

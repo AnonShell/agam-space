@@ -2,6 +2,7 @@ import sodium from 'libsodium-wrappers-sumo';
 
 export enum Argon2idVersion {
   v1 = 'v1',
+  session = 'session',
 }
 
 export interface Argon2idOptions {
@@ -14,6 +15,11 @@ export const ARGON2ID_PRESETS: Record<Argon2idVersion, Argon2idOptions> = {
   v1: {
     opslimit: 3,
     memlimit: 65_536,
+    hashLength: 32,
+  },
+  session: {
+    opslimit: 2,
+    memlimit: 32_768,
     hashLength: 32,
   },
 };

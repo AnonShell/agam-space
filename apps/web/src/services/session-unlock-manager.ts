@@ -10,6 +10,16 @@ import { idbSessionStore } from '@/storage/indexdb';
 
 const CLIENT_SEED_KEY = 'agam_client_seed';
 const STATIC_SALT = new Uint8Array(16);
+const TAB_ID_KEY = 'agam_tab_id';
+
+function getOrCreateTabId(): string {
+  let tabId = sessionStorage.getItem(TAB_ID_KEY);
+  if (!tabId) {
+    tabId = crypto.randomUUID();
+    sessionStorage.setItem(TAB_ID_KEY, tabId);
+  }
+  return tabId;
+}
 
 export class SessionUnlockManager {
   private static getOrCreateClientSeed(): Uint8Array | null {
@@ -76,8 +86,8 @@ export class SessionUnlockManager {
 
       const envelope = await EncryptionRegistry.get().encrypt(cmk, key);
       const serialized = EncryptedEnvelopeCodec.serializeToTLV(envelope);
-
-      await idbSessionStore.storeEncryptedCMK(serialized);
+      const tabId = getOrCreateTabId();
+      await idbSessionStore.storeEncryptedCMK(tabId, serialized);
     } catch {
       return;
     }
@@ -92,13 +102,12 @@ export class SessionUnlockManager {
         await this.clearAutoUnlockData();
         return null;
       }
-
-      const combined = await idbSessionStore.getEncryptedCMK();
+      const tabId = getOrCreateTabId();
+      const combined = await idbSessionStore.getEncryptedCMK(tabId);
       if (!combined || combined.length < 24) {
         await this.clearAutoUnlockData();
         return null;
       }
-
       const envelope = EncryptedEnvelopeCodec.deserializeFromTLV(combined);
       return await EncryptionRegistry.get().decrypt(envelope, sessionKey);
     } catch {
@@ -107,11 +116,21 @@ export class SessionUnlockManager {
     }
   }
 
-  static async clearAutoUnlockData(): Promise<void> {
+  static async clearAutoUnlockData(clearAll: boolean = false): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
       sessionStorage.removeItem(CLIENT_SEED_KEY);
-      await idbSessionStore.clearEncryptedCMK();
+
+      if (clearAll) {
+        await idbSessionStore.clearAllEncryptedCMK();
+        return;
+      }
+
+      const tabId = sessionStorage.getItem(TAB_ID_KEY);
+      if (tabId) {
+        await idbSessionStore.clearEncryptedCMK(tabId);
+        sessionStorage.removeItem(TAB_ID_KEY);
+      }
     } catch {
       return;
     }
