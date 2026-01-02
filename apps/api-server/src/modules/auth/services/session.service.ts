@@ -9,6 +9,7 @@ import { AppConfigService } from '../../../config/config.service';
 import { DATABASE_CONNECTION } from '../../../database/database.providers';
 import { type NewUserSession, type UserSession, userSessions } from '../../../database/schema';
 import { randomBytes } from 'node:crypto';
+import type { SessionCryptoMaterial } from '@agam-space/shared-types';
 
 export interface CreateSessionData {
   userId: string;
@@ -21,10 +22,6 @@ export interface CreateSessionData {
 /**
  * Session management service for authentication tokens
  * Handles session lifecycle: create, validate, refresh, cleanup
- * Optimized with NestJS cache manager and lazy last-used updates
- *
- * SECURITY: Session tokens are hashed (SHA-256) before storage to prevent
- * session hijacking if database is compromised
  */
 @Injectable()
 export class SessionService {
@@ -33,18 +30,17 @@ export class SessionService {
   // Lazy update threshold: 5 minutes
   private readonly LAZY_UPDATE_THRESHOLD_MS = 5 * 60 * 1000;
 
+  // Session encryption nonce TTL: 15 minutes
+  private readonly SESSION_ENC_NONCE_TTL_MS = 15 * 60 * 1000;
+
   constructor(
     @Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly configService: AppConfigService
   ) {}
 
-  /**
-   * Hash a session token using SHA-256
-   * Used for secure storage - prevents session hijacking if DB is compromised
-   */
   private hashToken(token: string): string {
-    return createHash('sha256').update(token, 'utf8').digest('hex');
+    return createHash('sha256').update(token, 'utf8').digest('base64');
   }
 
   /**
@@ -71,12 +67,12 @@ export class SessionService {
     }
   }
 
-  /**
-   * Generate cache key for session token hash
-   * Note: We cache by token hash for security consistency
-   */
   private getCacheKey(tokenHash: string): string {
     return `session:${tokenHash}`;
+  }
+
+  private getEncNonceCacheKey(sessionId: string): string {
+    return `session-enc-nonce:${sessionId}`;
   }
 
   /**
@@ -100,12 +96,11 @@ export class SessionService {
     const sessionDurationMs = data.expiresInMs || this.parseTimeToMs(sessionTimeout);
     const expiresAt = new Date(Date.now() + sessionDurationMs);
 
-    // Generate raw token (never stored in database)
     const rawToken = randomBytes(32).toString('base64url');
     const tokenHash = this.hashToken(rawToken);
 
     const newSession: NewUserSession = {
-      tokenHash: tokenHash, // Store hash, not raw token
+      tokenHash: tokenHash,
       userId: data.userId,
       deviceFingerprint: data.deviceFingerprint || null,
       userAgent: data.userAgent || null,
@@ -119,24 +114,17 @@ export class SessionService {
       `Session created for user ${data.userId}: ${session.id} (token hash: ${tokenHash.slice(0, 16)}...)`
     );
 
-    // Cache the session with token hash as key
     await this.cacheManager.set(this.getCacheKey(tokenHash), session);
 
     return { session, rawToken };
   }
 
-  /**
-   * Find session by raw token and validate it's not expired
-   * Optimized with caching and lazy last-used updates
-   */
   async findActiveSession(rawToken: string): Promise<UserSession | null> {
     const tokenHash = this.hashToken(rawToken);
     const cacheKey = this.getCacheKey(tokenHash);
 
-    // Check cache first
     const cached = await this.cacheManager.get<UserSession>(cacheKey);
     if (cached) {
-      // Verify session hasn't expired
       if (cached.expiresAt.getTime() > Date.now()) {
         // Lazy update last_used_at if needed (async, non-blocking)
         if (this.shouldUpdateLastUsed(cached)) {
@@ -147,12 +135,11 @@ export class SessionService {
 
         return cached;
       } else {
-        // Session expired, remove from cache
         await this.cacheManager.del(cacheKey);
+        await this.cacheManager.del(this.getEncNonceCacheKey(cached.id));
       }
     }
 
-    // Cache miss - query database using token hash
     this.logger.debug(`Cache miss for session: ${tokenHash.slice(0, 16)}...`);
 
     const [session] = await this.db
@@ -165,7 +152,6 @@ export class SessionService {
       return null;
     }
 
-    // Cache the session
     await this.cacheManager.set(cacheKey, session);
 
     // Lazy update last_used_at if needed (async, non-blocking)
@@ -184,13 +170,11 @@ export class SessionService {
   private async updateLastUsedAsync(sessionId: string, tokenHash: string): Promise<void> {
     const now = new Date();
 
-    // Update database
     await this.db
       .update(userSessions)
       .set({ lastUsedAt: now })
       .where(eq(userSessions.id, sessionId));
 
-    // Update cached version too
     const cacheKey = this.getCacheKey(tokenHash);
     const cached = await this.cacheManager.get<UserSession>(cacheKey);
     if (cached) {
@@ -211,13 +195,9 @@ export class SessionService {
       .where(eq(userSessions.id, sessionId));
   }
 
-  /**
-   * Delete a specific session by raw token (logout)
-   */
   async deleteSession(sessionId: string): Promise<boolean> {
-    const cacheKey = this.getCacheKey(sessionId);
-
-    await this.cacheManager.del(cacheKey);
+    await this.cacheManager.del(this.getCacheKey(sessionId));
+    await this.cacheManager.del(this.getEncNonceCacheKey(sessionId));
 
     const result = await this.db
       .delete(userSessions)
@@ -232,28 +212,45 @@ export class SessionService {
     return false;
   }
 
-  /**
-   * Clean up expired sessions
-   */
   async cleanupExpiredSessions(): Promise<number> {
-    // Delete expired sessions
     const result = await this.db.delete(userSessions).where(sql`${userSessions.expiresAt} < NOW()`);
 
     const deletedCount = result.length;
 
     if (deletedCount > 0) {
       this.logger.log(`Cleaned up ${deletedCount} expired sessions`);
-      // Note: Cache entries will expire naturally due to TTL
+      // Note: Cache entries will expire naturally due to TTL, maybe in future we can track and delete them here as well
     }
 
     return deletedCount;
   }
 
   /**
-   * Verify session token is valid and active
+   * Get or create encryption nonce for session-based CMK encryption
+   * Returns random nonce that rotates every 15 minutes
    */
-  async isSessionValid(rawToken: string): Promise<boolean> {
-    const session = await this.findActiveSession(rawToken);
-    return !!session;
+  async getOrCreateEncryptionNonce(sessionId: string): Promise<SessionCryptoMaterial> {
+    const cacheKey = this.getEncNonceCacheKey(sessionId);
+
+    const cached = await this.cacheManager.get<SessionCryptoMaterial>(cacheKey);
+
+    if (cached && cached.expiresAt > Date.now()) {
+      return { ...cached, isNew: false };
+    }
+
+    const nonce = randomBytes(32).toString('base64');
+    const expiresAt = Date.now() + this.SESSION_ENC_NONCE_TTL_MS;
+
+    const material: SessionCryptoMaterial = {
+      nonce,
+      expiresAt,
+      isNew: true,
+    };
+
+    await this.cacheManager.set(cacheKey, material, this.SESSION_ENC_NONCE_TTL_MS);
+
+    this.logger.debug(`Generated new encryption nonce for session ${sessionId}`);
+
+    return material;
   }
 }

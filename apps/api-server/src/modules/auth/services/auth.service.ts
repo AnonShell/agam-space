@@ -25,7 +25,6 @@ export interface LoginRequest {
 
 export interface SessionContext {
   sessionId: string;
-  sessionToken: string;
   userId: string;
   user: AuthenticatedUser;
 }
@@ -85,13 +84,11 @@ export class AuthService {
       throw new BadRequestException('Username and password are required');
     }
 
-    // Find user by username or email
     const user = await this.userService.findUserEntityForAuth(username);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Verify password
     if (!user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -101,7 +98,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Create session - now returns both session and raw token
     const sessionData: CreateSessionData = {
       userId: user.id,
       deviceFingerprint,
@@ -154,7 +150,6 @@ export class AuthService {
       this.logger.log(`Auto created new user from sso : ${user.username} (${user.id})`);
     }
 
-    // Create session - now returns both session and raw token
     const sessionData: CreateSessionData = {
       userId: user.id,
       ...device,
@@ -179,37 +174,29 @@ export class AuthService {
 
     this.logger.log(`Session created for user ${sessionData.userId}: ${session.id}`);
 
-    // Update last login
     await this.userService.updateLastLogin(sessionData.userId);
 
     return { session, rawToken };
   }
 
-  /**
-   * Validate session token and return user context
-   */
   async validateSession(sessionToken: string): Promise<SessionContext | null> {
     if (!sessionToken) {
       return null;
     }
 
-    // Find active session
     const session = await this.sessionService.findActiveSession(sessionToken);
     if (!session) {
       return null;
     }
 
-    // Get user data
     const user = await this.userService.findUserById(session.userId);
     if (!user || user.status !== UserStatus.ACTIVE) {
-      // Session exists but user doesn't - clean up session
       await this.sessionService.deleteSession(sessionToken);
       return null;
     }
 
     return {
       sessionId: session.id,
-      sessionToken: sessionToken,
       userId: user.id,
       user: {
         id: user.id,
@@ -219,9 +206,6 @@ export class AuthService {
     };
   }
 
-  /**
-   * Logout from current session
-   */
   async logout(sessionToken: string): Promise<boolean> {
     if (!sessionToken) {
       return false;
@@ -238,12 +222,5 @@ export class AuthService {
     }
 
     return success;
-  }
-
-  /**
-   * Administrative cleanup of expired sessions
-   */
-  async cleanupExpiredSessions(): Promise<number> {
-    return await this.sessionService.cleanupExpiredSessions();
   }
 }

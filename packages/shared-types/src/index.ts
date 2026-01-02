@@ -8,6 +8,7 @@ export * from './folder.types';
 export * from './user-keys-setup.schema';
 
 export * from './auth/login.schema';
+export * from './auth/session.schema';
 export * from './server/server.schema';
 
 export * from './e2ee/e2ee.schema';

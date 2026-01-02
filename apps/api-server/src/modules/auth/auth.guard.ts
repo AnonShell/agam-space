@@ -11,7 +11,6 @@ import { AuthService } from './services/auth.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { AgamCookies } from '@/modules/auth/auth.models';
 
-// Extend FastifyRequest to include user context
 declare module 'fastify' {
   interface FastifyRequest {
     user?: AuthenticatedUser;
@@ -57,7 +56,6 @@ export class AuthGuard implements CanActivate {
   }
 
   private extractTokenFromRequest(request: FastifyRequest): string | null {
-    // Try Authorization header first: "Bearer <token>"
     const authHeader = request.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       return authHeader.slice(7);
