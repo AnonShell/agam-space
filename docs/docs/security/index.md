@@ -10,6 +10,18 @@ your data.
 **Trade-off:** Lost master password + recovery key = permanent data loss. No
 password reset, no admin recovery.
 
+## Trust Model
+
+**Important:** There's a difference between **protocol-level zero-knowledge**
+(cryptographically secure) and **implementation-level trust** (you must trust
+the server to deliver unmodified code).
+
+Agam Space is zero-knowledge by protocol - the server cannot decrypt your data.
+But like all web apps, you must trust it to deliver correct JavaScript.
+
+**Read the full explanation:**
+[Understanding Zero-Knowledge in Web Apps](./trust-model.md)
+
 ## Security Topics
 
 - **[Authentication](./authentication.md)** - Login, passwords, and sessions

@@ -16,6 +16,13 @@ storage platform.
 - Even the server admin cannot access your data
 - File names, folder names, and all metadata are encrypted
 
+:::info
+
+Understanding zero-knowledge and the trust model helps you make informed
+decisions. Read the [trust model](./security/trust-model) before trying.
+
+:::
+
 Think of it as a self-hosted alternative to Mega or Proton Drive - encrypted
 cloud storage you control, with true privacy guaranteed by cryptography, not
 trust.

@@ -37,6 +37,7 @@ const sidebars: SidebarsConfig = {
         id: 'security/index',
       },
       items: [
+        'security/trust-model',
         'security/authentication',
         'security/encryption',
         'security/cmk-unlock',
