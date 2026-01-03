@@ -56,8 +56,8 @@ COPY ./apps/api-server/migrations/ ./deploy/dist/migrations/
 COPY --from=builder /app/apps/web/out ./deploy/public
 
 
-# --- 3. Runner Stage: Minimal production image ---
-FROM node:22-alpine AS runner
+# --- 3. Hardened Runner Stage: Security-hardened production image ---
+FROM dhi.io/node:22-alpine3.23 AS runner-hardened
 
 # Runtime doesn't need package managers - only node binary to execute dist/main.js
 RUN apk add --no-cache wget tini && \
@@ -95,8 +95,8 @@ ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/main.js"]
 
 
-# --- 4. Hardened Runner Stage: Security-hardened production image ---
-FROM dhi.io/node:22-alpine3.23 AS runner-hardened
+# --- 4. Runner Stage: Minimal production image (DEFAULT) ---
+FROM node:22-alpine AS runner
 
 # Runtime doesn't need package managers - only node binary to execute dist/main.js
 RUN apk add --no-cache wget tini && \

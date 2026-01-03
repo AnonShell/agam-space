@@ -125,6 +125,7 @@ jobs:
         with:
           context: .
           file: ./apps/api-server/Dockerfile
+          target: runner
           push: false
           tags: agam-space:test
           build-args: |
