@@ -5,15 +5,6 @@ import { users } from './users';
 
 /**
  * Trusted device credentials for biometric unlock
- *
- * SECURITY: This table stores the encrypted unlock key that allows access
- * to the user's CMK. The unlock key is only released after successful
- * device authentication (WebAuthn, PIN, hardware keys), maintaining
- * zero-knowledge security.
- *
- * The credential_id and public_key are used to verify authentication assertions.
- * The encrypted_unlock_key is the symmetric key that decrypts the device
- * private key stored locally on the client.
  */
 export const trustedDevices = pgTable(
   'trusted_devices',
@@ -29,6 +20,7 @@ export const trustedDevices = pgTable(
     webauthnPublicKey: text('webauthn_public_key').notNull(),
     devicePublicKey: text('device_public_key').notNull(),
 
+    // just server nonce, not full key, uses split-key approach
     unlockKey: text('unlock_key').notNull(),
 
     encryptedCMK: text('encrypted_cmk').notNull(),

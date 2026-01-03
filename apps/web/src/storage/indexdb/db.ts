@@ -2,10 +2,14 @@ import { openDB, type IDBPDatabase } from 'idb';
 import { STORE_NAMES } from './constants';
 
 const DB_NAME = 'agam-storage';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export interface AgamDB {
   [STORE_NAMES.SESSION_DATA]: {
+    key: string;
+    value: Uint8Array | string | number | object;
+  };
+  [STORE_NAMES.DEVICE_DATA]: {
     key: string;
     value: Uint8Array | string | number | object;
   };

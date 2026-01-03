@@ -7,10 +7,9 @@ import { Button } from '@/components/ui/button';
 import { ClientRegistry, CmkManager } from '@agam-space/client';
 import { IdentityKeyManager, toBase64 } from '@agam-space/core';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
-import { useDeviceCredentialsStore } from '@/store/device-credentials.store';
 import { TrustedDevicesService } from '@/services/trusted-devices.service';
 import { SessionUnlockManager } from '@/services/session-unlock-manager';
-import { useAuth } from '@/store/auth'; // ✅ ADD: Need current user
+import { useAuth } from '@/store/auth';
 import type { DeviceInfo } from '@agam-space/shared-types';
 
 function getIdentityKeyPairFromCmk(cmk: Uint8Array) {
@@ -28,36 +27,38 @@ export default function E2eeUnlockPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/explorer';
 
-  const credentials = user
-    ? useDeviceCredentialsStore.getState().getCredentialsForUser(user.id)
-    : null;
-
-  // Fetch latest trusted devices from backend before showing unlock button
   const [serverDevice, setServerDevice] = useState<DeviceInfo | null>(null);
+  const [hasDeviceData, setHasDeviceData] = useState(false);
+
   useEffect(() => {
     async function checkTrustedDevice() {
-      if (!credentials) {
+      if (!user?.id) {
+        setServerDevice(null);
+        setHasDeviceData(false);
+        return;
+      }
+
+      const deviceData = await TrustedDevicesService.getDeviceData(user.id);
+      if (!deviceData) {
+        setHasDeviceData(false);
         setServerDevice(null);
         return;
       }
+
+      setHasDeviceData(true);
+
       const devices: DeviceInfo[] = await TrustedDevicesService.fetchDevices();
-      const device = devices.find(d => d.id === credentials.deviceId);
-      if (
-        device &&
-        credentials.credentialId === device.credentialId &&
-        credentials.devicePublicKey === device.devicePublicKey
-      ) {
+      const device = devices.find(d => d.id === deviceData.deviceId);
+      if (device && deviceData.credentialId === device.credentialId) {
         setServerDevice(device);
       } else {
         setServerDevice(null);
       }
     }
     checkTrustedDevice();
-  }, [credentials]);
+  }, [user?.id]);
 
-  const hasTrustedDevice = Boolean(
-    credentials && serverDevice && credentials.credentialId && credentials.encryptedDevicePrivateKey
-  );
+  const hasTrustedDevice = Boolean(hasDeviceData && serverDevice);
 
   const handleUnlock = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -95,27 +96,19 @@ export default function E2eeUnlockPage() {
     setLoading(true);
     setError('');
     try {
-      if (!credentials) {
-        setError('No device credentials found');
+      if (!user?.id || !serverDevice) {
+        setError('Device data not available');
         setLoading(false);
         return;
       }
-      // Fetch latest trusted device from backend
-      const devices: DeviceInfo[] = await TrustedDevicesService.fetchDevices();
-      const device = devices.find(d => d.id === credentials.deviceId);
-      if (!device) {
-        setError('Device not found on server');
-        setLoading(false);
-        return;
-      }
-      // Use server-fetched encryptedCMK and devicePublicKey
+
       const cmk = await TrustedDevicesService.unlockWithDevice({
-        credentialId: credentials.credentialId,
-        encryptedDevicePrivateKey: credentials.encryptedDevicePrivateKey,
-        encryptedCMK: device.encryptedCMK,
-        deviceId: credentials.deviceId,
-        devicePublicKey: device.devicePublicKey,
+        userId: user.id,
+        deviceId: serverDevice.id,
+        encryptedCMK: serverDevice.encryptedCMK,
+        devicePublicKey: serverDevice.devicePublicKey,
       });
+
       const initError = await initializeCmk(cmk);
       if (initError) {
         setError(initError.message);

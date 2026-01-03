@@ -8,6 +8,8 @@ import {
   removeTrustedDevice,
   requestUnlockChallenge,
   verifyUnlockAssertion,
+  deriveKeyFromSecret,
+  Argon2idVersion,
 } from '@agam-space/client';
 import {
   PublicKeyCredentialDescriptorJSON,
@@ -17,12 +19,26 @@ import {
 } from '@simplewebauthn/browser';
 import { DeviceKeyManager, EncryptedEnvelopeCodec, fromBase64, toBase64 } from '@agam-space/core';
 import { toast } from 'sonner';
-import { DeviceCredentials } from '@/store/device-credentials.store';
+import { idbDeviceStore } from '@/storage/indexdb';
 
 export const TrustedDevicesService = {
   async fetchDevices() {
     return await listTrustedDevices();
   },
+
+  async deriveDeviceUnlockKey(
+    serverNonce: Uint8Array,
+    deviceSeed: Uint8Array,
+    salt: Uint8Array
+  ): Promise<Uint8Array> {
+    const combined = new Uint8Array(serverNonce.length + deviceSeed.length);
+    combined.set(serverNonce, 0);
+    combined.set(deviceSeed, serverNonce.length);
+
+    const { key } = await deriveKeyFromSecret(combined, salt, Argon2idVersion.light);
+    return key;
+  },
+
   async registerDevice({
     userId,
     deviceName,
@@ -32,69 +48,85 @@ export const TrustedDevicesService = {
     deviceName: string;
     cmk: Uint8Array;
   }) {
-    // 1. Generate DeviceKeyPair and UnlockKey
     const { publicKey: devicePublicKey, privateKey: devicePrivateKey } =
       await DeviceKeyManager.generateDeviceKeyPair();
-    const unlockKey = crypto.getRandomValues(new Uint8Array(32));
 
-    // 2. Encrypt DevicePrivateKey with UnlockKey (XChaCha)
+    const serverNonce = crypto.getRandomValues(new Uint8Array(16));
+    const deviceSeed = crypto.getRandomValues(new Uint8Array(16));
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+
+    const unlockKey = await this.deriveDeviceUnlockKey(serverNonce, deviceSeed, salt);
+
     const envelopePriv = await EncryptionRegistry.get().encrypt(devicePrivateKey, unlockKey);
-    const encryptedDevicePrivateKey = EncryptedEnvelopeCodec.serialize(envelopePriv);
+    const encryptedDevicePrivateKey = EncryptedEnvelopeCodec.serializeToTLV(envelopePriv);
 
-    // 3. Encrypt CMK with DevicePublicKey (X25519)
     const encryptedCMKBytes = await DeviceKeyManager.encryptWithDevicePublicKey(
       cmk,
       devicePublicKey
     );
     const encryptedCMK = toBase64(encryptedCMKBytes);
 
-    // 4. Request registration challenge from backend
     const challengeResp = await getRegisterChallenge(deviceName);
 
-    // 5. Start WebAuthn registration in browser
     const regResp = await startRegistration(challengeResp.options);
 
-    // 6. Prepare registration payload (only required fields)
     const payload = {
       credentialId: regResp.id,
       attestationObject: regResp.response.attestationObject,
       clientDataJSON: regResp.response.clientDataJSON,
       devicePublicKey: toBase64(devicePublicKey),
-      unlockKey: Buffer.from(unlockKey).toString('base64'),
+      unlockKey: toBase64(serverNonce),
       encryptedCMK,
       deviceName,
       challenge: challengeResp.options.challenge,
     };
 
-    console.log(payload);
-
-    // 7. Register device with backend
     const result = await registerTrustedDevice(payload);
-    // 8. Return credentials for zustand store
+
+    await idbDeviceStore.storeDeviceData(userId, {
+      deviceId: result.deviceId,
+      credentialId: regResp.id,
+      encryptedDevicePrivateKey: toBase64(encryptedDevicePrivateKey),
+      deviceSeed: toBase64(deviceSeed),
+      devicePublicKey: toBase64(devicePublicKey),
+      salt: toBase64(salt),
+    });
+
     return {
       userId,
       deviceId: result.deviceId,
       credentialId: regResp.id,
-      encryptedDevicePrivateKey,
-      devicePublicKey: toBase64(devicePublicKey),
     };
   },
-  async removeDevice(deviceId: string) {
-    return await removeTrustedDevice(deviceId);
+  async removeDevice(deviceId: string, userId: string) {
+    await removeTrustedDevice(deviceId);
+    await idbDeviceStore.clearDeviceData(userId);
   },
+
+  async clearAllDeviceData() {
+    await idbDeviceStore.clearAllDeviceData();
+  },
+
+  async getDeviceData(userId: string) {
+    return await idbDeviceStore.getDeviceData(userId);
+  },
+
   async unlockWithDevice({
-    credentialId,
-    encryptedDevicePrivateKey,
-    encryptedCMK,
+    userId,
     deviceId,
+    encryptedCMK,
     devicePublicKey,
   }: {
-    credentialId: string;
-    encryptedDevicePrivateKey: string;
-    encryptedCMK: string;
+    userId: string;
     deviceId: string;
-    devicePublicKey: string; // base64
+    encryptedCMK: string;
+    devicePublicKey: string;
   }) {
+    const deviceData = await idbDeviceStore.getDeviceData(userId);
+    if (!deviceData) {
+      throw new Error('Device data not found');
+    }
+
     const challengeResp = await requestUnlockChallenge(deviceId);
     const opts = challengeResp.options;
     if (!opts.challenge || !opts.rpId) {
@@ -116,7 +148,7 @@ export const TrustedDevicesService = {
     const assertion = await startAuthentication({ optionsJSON: options });
 
     const unlockResp = await verifyUnlockAssertion({
-      credentialId,
+      credentialId: deviceData.credentialId,
       challengeId: challengeResp.challengeId,
       authenticatorData: assertion.response.authenticatorData,
       clientDataJSON: assertion.response.clientDataJSON,
@@ -124,13 +156,20 @@ export const TrustedDevicesService = {
       deviceId,
     });
 
-    const { unlockKey } = unlockResp;
-    if (!unlockKey) throw new Error('UnlockKey not returned');
+    const { unlockKey: serverNonce } = unlockResp;
+    if (!serverNonce) throw new Error('Server nonce not returned');
+
+    const fullUnlockKey = await this.deriveDeviceUnlockKey(
+      fromBase64(serverNonce),
+      fromBase64(deviceData.deviceSeed),
+      fromBase64(deviceData.salt)
+    );
 
     const devicePrivateKey = await EncryptionRegistry.get().decrypt(
-      EncryptedEnvelopeCodec.deserialize(encryptedDevicePrivateKey),
-      fromBase64(unlockKey)
+      EncryptedEnvelopeCodec.deserializeFromTLV(fromBase64(deviceData.encryptedDevicePrivateKey)),
+      fullUnlockKey
     );
+
     return await DeviceKeyManager.decryptWithDevicePrivateKey(
       fromBase64(encryptedCMK),
       fromBase64(devicePublicKey),
@@ -143,7 +182,6 @@ export const TrustedDevicesService = {
     deviceName,
     password,
     e2eeKeys,
-    setCredentials,
     fetchDevices,
     setModalOpen,
     setPassword,
@@ -153,7 +191,6 @@ export const TrustedDevicesService = {
     deviceName: string;
     password: string;
     e2eeKeys: { encCmkWithPassword: string; kdfMetadata: { salt: string } };
-    setCredentials: (creds: DeviceCredentials) => void;
     fetchDevices: () => void;
     setModalOpen: (open: boolean) => void;
     setPassword: (val: string) => void;
@@ -177,14 +214,12 @@ export const TrustedDevicesService = {
         toast.error('Failed to unlock your master key. Please check your password and try again.');
         return;
       }
-      const creds = await TrustedDevicesService.registerDevice({ userId, deviceName, cmk }); // ✅ ADD: Pass userId
-      setCredentials(creds);
+      await TrustedDevicesService.registerDevice({ userId, deviceName, cmk });
       fetchDevices();
       setModalOpen(false);
       setPassword('');
       setDeviceName('');
       toast.success('Device registered successfully!');
-      return creds;
     } catch (err: unknown) {
       let message = 'Failed to register device';
       if (err instanceof Error) {

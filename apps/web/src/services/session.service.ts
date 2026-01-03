@@ -9,6 +9,7 @@ import {
 } from '@agam-space/client';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { SessionUnlockManager } from './session-unlock-manager';
+import { TrustedDevicesService } from './trusted-devices.service';
 
 export const SessionService = {
   async bootstrap() {
@@ -53,14 +54,12 @@ export const SessionService = {
 };
 
 export function resetAllState() {
-  // Clear session-specific state
   useAuth.getState().clear();
   useE2eeKeys.getState().clear();
 
-  // Clear in-memory encryption keys
   ClientRegistry.getKeyManager().clearAll();
 
-  SessionUnlockManager.clearAutoUnlockData(true).catch(() => {
-    // Ignore errors
-  });
+  SessionUnlockManager.clearAutoUnlockData(true).catch(() => {});
+
+  TrustedDevicesService.clearAllDeviceData().catch(() => {});
 }
