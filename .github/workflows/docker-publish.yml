@@ -104,16 +104,24 @@ jobs:
             TAG_VERSION="${{ github.ref_name }}"
             VERSION="${TAG_VERSION#v}"
             
-            # Docker Hub tags
+            # Docker Hub tags (normal image)
             DOCKERHUB_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}"
             DOCKERHUB_TAGS="${DOCKERHUB_TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest"
             
-            # GitHub Container Registry tags
+            # GitHub Container Registry tags (normal image)
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}"
             GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest"
             
+            # Hardened image tags (only for releases)
+            DOCKERHUB_HARDENED_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}-hardened"
+            DOCKERHUB_HARDENED_TAGS="${DOCKERHUB_HARDENED_TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest-hardened"
+            
+            GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}-hardened"
+            GHCR_HARDENED_TAGS="${GHCR_HARDENED_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest-hardened"
+            
             # Build for both platforms on releases
             PLATFORMS="linux/amd64,linux/arm64"
+            BUILD_HARDENED="true"
           else
             # Branch push (main) - use 'dev' tag (overwrites each time)
             VERSION="dev-${SHORT_SHA}"
@@ -126,6 +134,7 @@ jobs:
             
             # Build for ARM64 only on main branch (faster builds)
             PLATFORMS="linux/arm64"
+            BUILD_HARDENED="false"
           fi
 
           # Combined tags
@@ -140,6 +149,12 @@ jobs:
           echo "commit=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
+          echo "build_hardened=${BUILD_HARDENED}" >> $GITHUB_OUTPUT
+
+          # Only output hardened tags if building hardened image
+          if [[ "${BUILD_HARDENED}" == "true" ]]; then
+            echo "hardened_tags=${DOCKERHUB_HARDENED_TAGS},${GHCR_HARDENED_TAGS}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -148,6 +163,23 @@ jobs:
           file: ./apps/api-server/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+            BUILD_COMMIT=${{ steps.meta.outputs.commit }}
+            BUILD_ID=${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: ${{ steps.meta.outputs.platforms }}
+
+      - name: Build and push Hardened Docker image
+        if: steps.meta.outputs.build_hardened == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/api-server/Dockerfile
+          target: runner-hardened
+          push: true
+          tags: ${{ steps.meta.outputs.hardened_tags }}
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
             BUILD_COMMIT=${{ steps.meta.outputs.commit }}
@@ -171,4 +203,8 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
       - name: Image digest
-        run: echo "Image pushed with tags:${{ steps.meta.outputs.tags }}"
+        run: |
+          echo "Normal image pushed with tags: ${{ steps.meta.outputs.tags }}"
+          if [[ "${{ steps.meta.outputs.build_hardened }}" == "true" ]]; then
+            echo "Hardened image pushed with tags: ${{ steps.meta.outputs.hardened_tags }}"
+          fi

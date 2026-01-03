@@ -81,6 +81,9 @@ WORKDIR /app
 
 COPY --from=deps /app/deploy/ /app/
 
+# Make public folder read-only (immutable static content)
+RUN chmod -R 555 /app/public
+
 VOLUME ["/data"]
 
 EXPOSE 3331
@@ -90,3 +93,43 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
 
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/main.js"]
+
+
+# --- 4. Hardened Runner Stage: Security-hardened production image ---
+FROM docker.io/hardened/node:22-alpine AS runner-hardened
+
+# Runtime doesn't need package managers - only node binary to execute dist/main.js
+RUN apk add --no-cache wget tini && \
+    rm -rf /usr/local/lib/node_modules/npm \
+           /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm \
+           /usr/local/bin/npx \
+           /usr/local/bin/yarn \
+           /usr/local/bin/yarnpkg \
+           /usr/local/bin/corepack
+
+ARG BUILD_ID
+ARG BUILD_COMMIT
+ARG APP_VERSION
+ENV BUILD_ID=${BUILD_ID}
+ENV BUILD_COMMIT=${BUILD_COMMIT}
+ENV APP_VERSION=${APP_VERSION}
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY --from=deps /app/deploy/ /app/
+
+# Make public folder read-only (immutable static content)
+RUN chmod -R 555 /app/public
+
+VOLUME ["/data"]
+
+EXPOSE 3331
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+  CMD wget -q --spider http://localhost:3331/api/v1/server/health || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "dist/main.js"]
+
