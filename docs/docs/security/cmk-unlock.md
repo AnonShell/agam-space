@@ -67,43 +67,81 @@ Windows Hello) that's quick and doesn't require accessing your password manager.
 **Registration (one-time):**
 
 1. Client generates device keypair (X25519 public/private keys)
-2. Client generates random unlock key
-3. Device private key encrypted with unlock key
-4. CMK encrypted with device public key
-5. WebAuthn credential created in device secure hardware
-6. Server stores: encrypted CMK, unlock key (plaintext), device public key
+2. Client generates random server nonce (16 bytes)
+3. Client generates random device seed (16 bytes)
+4. Client generates random salt (16 bytes)
+5. Unlock key derived using Argon2id from: server nonce + device seed + salt
+6. Device private key encrypted with derived unlock key
+7. CMK encrypted with device public key
+8. WebAuthn credential created in device secure hardware
+9. **Server stores:** Server nonce, encrypted CMK, device public key
+10. **Client stores in IndexedDB:** Encrypted device private key, device seed,
+    salt, device public key
 
 **Subsequent logins:**
 
 1. Enter login credentials (password or SSO)
 2. Biometric prompt (Touch ID, Face ID, fingerprint)
-3. WebAuthn validates against device secure hardware
-4. Server sends unlock key (only after WebAuthn proof)
-5. Unlock key decrypts device private key
-6. Device private key decrypts CMK
-7. CMK loaded into memory
+3. WebAuthn creates authentication signature
+4. Server verifies WebAuthn signature
+5. Server sends server nonce (only after successful verification)
+6. Client retrieves device seed + salt from IndexedDB
+7. Unlock key derived using Argon2id from: server nonce + device seed + salt
+8. Derived unlock key decrypts device private key
+9. Device private key decrypts CMK
+10. CMK loaded into memory
 
 **Security - Split-Key Model:**
 
-This uses a split-key approach where neither server nor client alone can decrypt
-the CMK:
+Uses a split-key approach where the **derived unlock key** is never persisted -
+it's computed on-demand from three stored components. Neither server breach nor
+client storage theft alone can decrypt the CMK:
 
-- **Server has:** Unlock key (plaintext) but NOT encrypted device private key
-- **Client has:** Encrypted device private key but NOT unlock key
-- **Server only sends unlock key after:** Valid login session + WebAuthn
-  authentication proof
+**Server stores:**
+
+- Server nonce (16 bytes, stored in database as `unlockKey`)
+- Encrypted CMK
+- Device public key
+
+**Client stores (IndexedDB, one device per browser):**
+
+- Encrypted device private key
+- Device seed (16 bytes)
+- Salt (16 bytes)
+- Device public key
+
+**Unlock key derivation:**
+
+```
+unlockKey = Argon2id(serverNonce + deviceSeed, salt)
+```
 
 **What this prevents:**
 
-- **Server breach:** Attacker gets unlock key but cannot decrypt CMK without
-  encrypted device private key (stored client-side only)
-- **Device theft:** Attacker gets encrypted device private key but cannot get
-  unlock key without biometric authentication
-- **Compromised session token:** Cannot retrieve unlock key without WebAuthn
-  proof from device secure hardware
+- **Server breach alone:** Attacker gets server nonce but cannot derive unlock
+  key without device seed and salt (stored client-side only)
+- **Client storage theft alone:** Attacker gets device seed, salt, and encrypted
+  device private key but cannot derive unlock key without server nonce (requires
+  WebAuthn authentication)
+- **Compromised session:** Cannot retrieve server nonce without WebAuthn proof
+  from device secure hardware
 
-**Both required:** Server access (valid session + unlock key) AND physical
-device (biometric authentication) to decrypt CMK.
+**Requirements for successful unlock:**
+
+1. Valid login session
+2. WebAuthn authentication (biometric or hardware key)
+3. Server nonce (released only after WebAuthn proof)
+4. Device seed + salt from client IndexedDB
+5. Derive unlock key using Argon2id
+6. Decrypt device private key
+7. Decrypt CMK with device private key
+
+**Device Registration:**
+
+- One trusted device per browser instance
+- Each device has unique server nonce, device seed, and salt
+- Multiple browsers/devices can be registered (e.g., laptop + phone + tablet)
+- Removing a device from the server also requires clearing client-side data
 
 ## 3. Auto-unlock on Page Reload (Optional)
 
