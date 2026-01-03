@@ -182,6 +182,7 @@ jobs:
 
       - name: Build and push Hardened Docker image
         if: steps.meta.outputs.build_hardened == 'true'
+        continue-on-error: true
         uses: docker/build-push-action@v5
         with:
           context: .
