@@ -96,7 +96,7 @@ CMD ["node", "dist/main.js"]
 
 
 # --- 4. Hardened Runner Stage: Security-hardened production image ---
-FROM docker.io/hardened/node:22-alpine AS runner-hardened
+FROM dhi.io/node:22-alpine3.23 AS runner-hardened
 
 # Runtime doesn't need package managers - only node binary to execute dist/main.js
 RUN apk add --no-cache wget tini && \
