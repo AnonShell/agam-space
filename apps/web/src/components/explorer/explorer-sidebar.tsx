@@ -1,10 +1,9 @@
-// components/layout/explorer-sidebar-base.tsx
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Folder, Trash2 } from "lucide-react";
-import { UserQuotaFooter } from '@/components/explorer/usage-quota-footer';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Folder, Trash2 } from 'lucide-react';
+import { StorageQuotaCard } from '@/components/explorer/storage-quota';
+import { ServerInfo } from '@/components/explorer/server-info';
 
 interface ExplorerSidebarBaseProps {
   onNavigate?: () => void;
@@ -14,10 +13,10 @@ export function ExplorerSidebarBase({ onNavigate }: ExplorerSidebarBaseProps) {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col h-full">
-      <nav className="space-y-1 text-sm">
+    <div className='flex flex-col h-full'>
+      <nav className='space-y-1 text-sm'>
         <Link
-          href="/explorer"
+          href='/explorer'
           onClick={onNavigate}
           className={cn(
             'flex items-center gap-2 px-3 py-2 rounded-md transition-colors',
@@ -26,12 +25,12 @@ export function ExplorerSidebarBase({ onNavigate }: ExplorerSidebarBaseProps) {
               : 'hover:bg-muted text-muted-foreground'
           )}
         >
-          <Folder className="w-4 h-4" />
+          <Folder className='w-4 h-4' />
           <span>My Files</span>
         </Link>
 
         <Link
-          href="/trash"
+          href='/trash'
           onClick={onNavigate}
           className={cn(
             'flex items-center gap-2 px-3 py-2 rounded-md transition-colors',
@@ -40,12 +39,13 @@ export function ExplorerSidebarBase({ onNavigate }: ExplorerSidebarBaseProps) {
               : 'hover:bg-muted text-muted-foreground'
           )}
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className='w-4 h-4' />
           <span>Trash</span>
         </Link>
       </nav>
-      <div className="mt-auto">
-        <UserQuotaFooter />
+      <div className='mt-auto space-y-3'>
+        <StorageQuotaCard />
+        <ServerInfo />
       </div>
     </div>
   );
