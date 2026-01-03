@@ -131,7 +131,11 @@ jobs:
           # Combined tags
           TAGS="${DOCKERHUB_TAGS},${GHCR_TAGS}"
 
+          # Tag for Trivy scan (first tag from DOCKERHUB_TAGS)
+          SCAN_TAG=$(echo "${DOCKERHUB_TAGS}" | cut -d',' -f1)
+
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "scan_tag=${SCAN_TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "commit=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
@@ -155,7 +159,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          image-ref: ${{ steps.meta.outputs.scan_tag }}
           format: 'sarif'
           output: 'trivy-results.sarif'
 
