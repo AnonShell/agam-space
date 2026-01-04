@@ -41,7 +41,7 @@ Typical installation flow:
 4. **Reverse Proxy** - Configure HTTPS (optional but recommended)
 5. **Backups** - Automate database and file backups
 6. **First User** - Create admin account
-7. **Secure** - Disable signups, set CORS
+7. **Secure** - Disable signups
 
 Detailed steps in each installation guide.
 

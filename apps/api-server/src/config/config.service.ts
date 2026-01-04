@@ -17,7 +17,6 @@ export class AppConfigService {
   getConfig(): AppConfig {
     return {
       server: this.configService.get('server'),
-      cors: this.configService.get('cors'),
       docs: this.configService.get('docs'),
       database: this.configService.get('database'),
       directories: this.configService.get('directories'),
@@ -47,13 +46,6 @@ export class AppConfigService {
    */
   getDirectories() {
     return this.configService.get('directories');
-  }
-
-  /**
-   * Get CORS configuration
-   */
-  getCors() {
-    return this.configService.get('cors');
   }
 
   /**

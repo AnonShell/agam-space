@@ -42,26 +42,6 @@ These must be set for Agam Space to run:
 | `DATABASE_MAX_CONNECTIONS`    | `database.maxConnections`    | `100`        | Maximum database connections      |
 | `DATABASE_CONNECTION_TIMEOUT` | `database.connectionTimeout` | `30000`      | Connection timeout (milliseconds) |
 
-## CORS Configuration
-
-| Environment Variable | Config File Property | Default | Description                              |
-| -------------------- | -------------------- | ------- | ---------------------------------------- |
-| `CORS_ORIGIN`        | `cors.origin`        | `*`     | Allowed origins (comma-separated or `*`) |
-| `CORS_CREDENTIALS`   | `cors.credentials`   | `true`  | Allow credentials in CORS requests       |
-
-:::warning Production CORS In production, set `CORS_ORIGIN` to your specific
-domain instead of `*`:
-
-```bash
-# Environment variable
-CORS_ORIGIN=https://files.yourdomain.com
-
-# Config file
-"cors": { "origin": "https://files.yourdomain.com" }
-```
-
-:::
-
 ## Account & User Management
 
 | Environment Variable         | Config File Property              | Default       | Description                                   |
@@ -214,10 +194,6 @@ DATABASE_SSL=false
 HTTP_PORT=3331
 HTTP_HOST=0.0.0.0
 NODE_ENV=production
-
-# CORS - restrict to your domain
-CORS_ORIGIN=https://files.yourdomain.com
-CORS_CREDENTIALS=true
 
 # Account - disable signups after creating your account
 ALLOW_NEW_SIGNUP=false

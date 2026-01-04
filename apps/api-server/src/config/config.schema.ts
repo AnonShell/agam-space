@@ -10,12 +10,6 @@ export const serverConfigSchema = z.object({
   apiPrefix: z.string().default('api/v1'),
 });
 
-// CORS configuration
-export const corsConfigSchema = z.object({
-  origin: z.string().default('*'),
-  credentials: z.boolean().default(true),
-});
-
 // Documentation configuration
 export const docsConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -101,7 +95,6 @@ export const webauthnConfigSchema = z
 export const configSchema = z.object({
   domain: domainConfigSchema.default({ domain: 'localhost' }),
   server: serverConfigSchema,
-  cors: corsConfigSchema,
   docs: docsConfigSchema,
   database: databaseConfigSchema,
   directories: directoryConfigSchema,
@@ -131,10 +124,6 @@ export const envMappings = {
   'server.host': 'HTTP_HOST',
   'server.nodeEnv': 'NODE_ENV',
   'server.apiPrefix': 'API_PREFIX',
-
-  // CORS
-  'cors.origin': 'CORS_ORIGIN',
-  'cors.credentials': 'CORS_CREDENTIALS',
 
   // Documentation
   'docs.enabled': 'DOCS_ENABLED',

@@ -7,7 +7,6 @@ import {
   APP_CONSTANTS,
   type AppConfig,
   configSchema,
-  corsConfigSchema,
   databaseConfigSchema,
   docsConfigSchema,
   fileConfigSchema,
@@ -225,7 +224,6 @@ class ConfigLoader {
   private getDefaultConfigFromSchema(): any {
     // Parse each schema section with empty object to get Zod defaults
     const serverDefaults = serverConfigSchema.partial().parse({});
-    const corsDefaults = corsConfigSchema.partial().parse({});
     const docsDefaults = docsConfigSchema.partial().parse({});
     const databaseDefaults = databaseConfigSchema.partial().parse({});
     const securityDefaults = securityConfigSchema.partial().parse({});
@@ -234,7 +232,6 @@ class ConfigLoader {
 
     return {
       server: serverDefaults,
-      cors: corsDefaults,
       docs: docsDefaults,
       database: databaseDefaults,
       security: securityDefaults,

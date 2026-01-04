@@ -60,7 +60,6 @@ services:
       DATABASE_NAME: agam_space
       HTTP_PORT: 3331
       ALLOW_NEW_SIGNUP: 'true'
-      CORS_ORIGIN: '*'
     volumes:
       - ./data/files:/data/files
     depends_on:

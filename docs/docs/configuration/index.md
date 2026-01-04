@@ -128,10 +128,6 @@ Create `/data/config/config.json`:
     "host": "0.0.0.0",
     "nodeEnv": "production"
   },
-  "cors": {
-    "origin": "https://files.yourdomain.com",
-    "credentials": true
-  },
   "database": {
     "host": "postgres",
     "port": 5432,
@@ -241,7 +237,6 @@ showing both environment variables and config file properties
 
 - **Server** - HTTP port, host, API prefix
 - **Database** - PostgreSQL connection settings
-- **CORS** - Cross-origin resource sharing
 - **Account** - User signup, storage quotas
 - **Files** - Upload limits, chunk size, trash cleanup
 - **Security** - Session timeout, max sessions
