@@ -51,7 +51,7 @@ jobs:
 
   build-and-push:
     name: Build & Push Docker Images
-    runs-on: ubuntu-latest
+    runs-on: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) && 'ubuntu-latest' || 'ubuntu-24.04-arm64' }}
     needs: [check-changes]
     # For workflow_run: Only build if CI passed AND relevant files changed
     # For tags: Always build (skip path check)
@@ -140,7 +140,7 @@ jobs:
             # GitHub Container Registry tags
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev"
             
-            # Build for ARM64 only on main branch (faster builds)
+            # Build for ARM64 on main branch (native ARM64 runner = fast builds)
             PLATFORMS="linux/arm64"
             BUILD_HARDENED="false"
           fi
@@ -199,6 +199,7 @@ jobs:
           platforms: ${{ steps.meta.outputs.platforms }}
 
       - name: Run Trivy vulnerability scanner
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ steps.meta.outputs.scan_tag }}
@@ -206,8 +207,8 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
         continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
