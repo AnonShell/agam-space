@@ -56,30 +56,28 @@ exploited, your keys can be compromised.
 
 ## Reducing (Not Eliminating) Trust
 
-**What we currently have:**
+**Security measures in place:**
 
 - **Open Source** - Code is publicly auditable on GitHub
 - **HTTPS Only** - Prevents network-level tampering
-
-**What I'm working on to improve this:**
-
-I will continue working on implementation security through measures like:
-
-- **Content Security Policy (CSP)** - Prevents XSS attacks by restricting which
-  scripts can execute; also limits what a compromised or malicious script can do
+- **Content Security Policy (CSP)** - Blocks unauthorized scripts and restricts
+  code execution
+- **Subresource Integrity (SRI)** - Verifies all static assets haven't been
+  tampered with
 - **Input Validation & Sanitization** - Prevents malicious code injection
-- **Subresource Integrity (SRI)** - Verifies external libraries haven't been
-  tampered with during delivery
-- **Code audits and reviews** - Independent security experts reviewing the code
-  for vulnerabilities
-- **Security-focused development** - Following OWASP guidelines and best
-  practices
+- **OWASP Guidelines** - Following security best practices
+- **Dependency Management** - Regular updates and vulnerability scanning
+
+**Future considerations:**
+
+- Professional security audits (if the project gains enough traction)
 
 **What these measures accomplish:**
 
-- **XSS vulnerabilities:** Can be eliminated with proper implementation
-- **Malicious server operator:** Can be mitigated (CSP/SRI make it harder) but
-  not fully prevented
+- **XSS vulnerabilities:** CSP blocks unauthorized script execution
+- **CDN/network tampering:** SRI detects and blocks modified files
+- **Malicious server operator:** CSP and SRI make attacks harder but cannot
+  fully prevent them
 
 A determined malicious server operator can still bypass these protections, but
 they significantly raise the bar.

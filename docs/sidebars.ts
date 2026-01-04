@@ -40,6 +40,7 @@ const sidebars: SidebarsConfig = {
         'security/trust-model',
         'security/authentication',
         'security/encryption',
+        'security/browser-security',
         'security/cmk-unlock',
         'security/recovery',
       ],
