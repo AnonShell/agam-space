@@ -4,9 +4,8 @@ import {
   EncryptedEnvelopeCodec,
   IdentityKeyManager,
   toBase64,
+  randomBytes,
 } from '@agam-space/core';
-
-import { randomBytes } from '@noble/ciphers/webcrypto';
 
 import { ARGON2ID_PRESETS, Argon2idOptions, deriveKeyFromSecret } from './crypto/argon2';
 import { EncryptionRegistry, EncryptionStrategy } from './encryption/encryption-strategy';
@@ -68,19 +67,6 @@ export class CmkManager {
       kdfOptions,
     };
   }
-
-  // async generateRecoveryKey(cmk: Uint8Array): Promise<{
-  //   recoveryKey: string;
-  //   encRecoveryWithCmk: string;
-  // }> {
-  //   const recoveryKey = randomBytes(32);
-  //
-  //   const encryptedRecovery = await this.encryptRecoveryWithCmk(recoveryKey, cmk);
-  //   return {
-  //     recoveryKey: encodeBase58(recoveryKey),
-  //     encRecoveryWithCmk: encryptedRecovery,
-  //   };
-  // }
 
   async deriveKeyFromPassword(
     password: string,

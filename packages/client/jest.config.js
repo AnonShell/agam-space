@@ -5,6 +5,7 @@ const config = {
   ...base,
   displayName: 'client',
   rootDir: '../..',
+  setupFilesAfterEnv: ['<rootDir>/packages/client/test/setup.ts'],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',

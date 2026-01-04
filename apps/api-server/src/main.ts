@@ -47,10 +47,10 @@ async function bootstrap() {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", 'https://cdn.jsdelivr.net'],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
         imgSrc: ["'self'", 'data:', 'blob:'],
         fontSrc: ["'self'", 'data:'],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
         workerSrc: ["'self'", 'blob:', 'https://cdn.jsdelivr.net'],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],

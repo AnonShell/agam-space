@@ -70,7 +70,6 @@ export function DownloadTray() {
           'completed items'
         );
         dismissalTimerRef.current = setTimeout(() => {
-          console.log('⏰ Dismissal timer fired - removing all completed downloads from tray');
           downloads.forEach(d => {
             if ((d.status === 'complete' || d.status === 'error') && !d.dismissed) {
               updateDownload(d.id, { dismissed: true });

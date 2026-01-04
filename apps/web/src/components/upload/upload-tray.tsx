@@ -53,8 +53,6 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
           'completed items'
         );
         dismissalTimerRef.current = setTimeout(() => {
-          console.log('⏰ Dismissal timer fired - removing all completed uploads from tray');
-          // Dismiss all completed/error uploads at once
           uploads.forEach(u => {
             if ((u.status === 'complete' || u.status === 'error') && !u.dismissed) {
               updateUpload(u.id, { dismissed: true });

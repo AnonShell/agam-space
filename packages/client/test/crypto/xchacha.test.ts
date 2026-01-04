@@ -1,15 +1,15 @@
-import { getSodium } from '@agam-space/core';
-import { randomBytes } from '@noble/ciphers/webcrypto';
+import { randomBytes, getSodium } from '@agam-space/core';
 import { XChaChaV1Strategy } from '../../src';
 
 describe('XChaChaV1', () => {
   const strategy = new XChaChaV1Strategy();
-  beforeAll(async () => {
-    await getSodium();
-  });
+  let testKey: Uint8Array;
+  let testData: Uint8Array;
 
-  const testKey = randomBytes(32);
-  const testData = new TextEncoder().encode('test message');
+  beforeEach(() => {
+    testKey = randomBytes(32);
+    testData = new TextEncoder().encode('test message');
+  });
 
   describe('encrypt', () => {
     it('should encrypt data', async () => {

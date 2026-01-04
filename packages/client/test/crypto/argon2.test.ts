@@ -1,10 +1,13 @@
-import { randomBytes } from '@noble/ciphers/webcrypto';
-
 import { deriveKeyFromSecret } from '../../src/crypto/argon2';
+import { randomBytes } from '@agam-space/core';
 
 describe('deriveKeyFromSecret', () => {
   const password = new TextEncoder().encode('test-password');
-  const salt = randomBytes(16);
+  let salt: Uint8Array;
+
+  beforeEach(() => {
+    salt = randomBytes(16);
+  });
 
   it('should derive a key with v1 parameters', async () => {
     const result = await deriveKeyFromSecret(password, salt);
