@@ -50,7 +50,7 @@ jobs:
           fi
 
   build-and-push:
-    name: Build & Push (${{ matrix.platform }})
+    name: Build & Push Docker Images
     needs: [check-changes]
     if: |
       always() &&
@@ -60,12 +60,6 @@ jobs:
          needs.check-changes.outputs.should_build == 'true') ||
         (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
       )
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: linux/arm64
-          - platform: linux/amd64
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -126,17 +120,13 @@ jobs:
             GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}-hardened"
             GHCR_HARDENED_TAGS="${GHCR_HARDENED_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest-hardened"
 
+            PLATFORMS="linux/amd64,linux/arm64"
             BUILD_HARDENED="true"
           else
-            # Dev builds - ARM64 only
-            if [[ "${{ matrix.platform }}" == "linux/amd64" ]]; then
-              echo "skip_build=true" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-            
             VERSION="dev-${SHORT_SHA}"
             DOCKERHUB_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev"
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev"
+            PLATFORMS="linux/arm64"
             BUILD_HARDENED="false"
           fi
 
@@ -148,7 +138,7 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "commit=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
-          echo "platform=${{ matrix.platform }}" >> $GITHUB_OUTPUT
+          echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
           echo "build_hardened=${BUILD_HARDENED}" >> $GITHUB_OUTPUT
 
           if [[ "${BUILD_HARDENED}" == "true" ]]; then
@@ -156,7 +146,6 @@ jobs:
           fi
 
       - name: Build and push Docker image
-        if: steps.meta.outputs.skip_build != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -170,10 +159,10 @@ jobs:
             BUILD_ID=${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: ${{ steps.meta.outputs.platform }}
+          platforms: ${{ steps.meta.outputs.platforms }}
 
       - name: Build and push Hardened Docker image
-        if: steps.meta.outputs.build_hardened == 'true' && steps.meta.outputs.skip_build != 'true'
+        if: steps.meta.outputs.build_hardened == 'true'
         continue-on-error: true
         uses: docker/build-push-action@v5
         with:
@@ -188,7 +177,7 @@ jobs:
             BUILD_ID=${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: ${{ steps.meta.outputs.platform }}
+          platforms: ${{ steps.meta.outputs.platforms }}
 
       - name: Run Trivy vulnerability scanner
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -199,7 +188,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && matrix.platform == 'linux/amd64'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
