@@ -8,18 +8,24 @@ RUN apt-get update && \
   npm install -g npm@11.7.0 pnpm && \
   rm -rf /var/lib/apt/lists/*
 
+# Copy package files first for better layer caching
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY --parents apps/*/package.json ./
+COPY --parents apps/web/scripts/ ./
+COPY --parents packages/*/package.json ./
+
+# Install dependencies (cached if package.json unchanged)
+RUN pnpm install --filter=api-server... && \
+    pnpm install --filter=web...
+
+# Copy all source code and config files
 COPY . .
 
-RUN find . -name '*.tsbuildinfo' -delete
-
-RUN pnpm install --filter=api-server...
-RUN pnpm install --filter=web...
-
-RUN pnpm build:packages
-
-RUN pnpm --filter=api-server exec pnpm build
-
-RUN pnpm --filter=web exec pnpm build
+# Build everything in one layer
+RUN find . -name '*.tsbuildinfo' -delete && \
+    pnpm build:packages && \
+    pnpm --filter=api-server exec pnpm build && \
+    pnpm --filter=web exec pnpm build:prod
 
 
 # --- 2. Deps Stage: Create clean deployable output ---
@@ -59,7 +65,6 @@ COPY --from=builder /app/apps/web/out ./deploy/public
 # --- 3. Hardened Runner Stage: Security-hardened production image ---
 FROM dhi.io/node:22-alpine3.23 AS runner-hardened
 
-# Runtime doesn't need package managers - only node binary to execute dist/main.js
 RUN apk add --no-cache wget tini && \
     rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
@@ -72,16 +77,16 @@ RUN apk add --no-cache wget tini && \
 ARG BUILD_ID
 ARG BUILD_COMMIT
 ARG APP_VERSION
-ENV BUILD_ID=${BUILD_ID}
-ENV BUILD_COMMIT=${BUILD_COMMIT}
-ENV APP_VERSION=${APP_VERSION}
-ENV NODE_ENV=production
+
+ENV BUILD_ID=${BUILD_ID} \
+    BUILD_COMMIT=${BUILD_COMMIT} \
+    APP_VERSION=${APP_VERSION} \
+    NODE_ENV=production
 
 WORKDIR /app
 
 COPY --from=deps /app/deploy/ /app/
 
-# Make public folder read-only (immutable static content)
 RUN chmod -R 555 /app/public
 
 VOLUME ["/data"]
@@ -98,7 +103,6 @@ CMD ["node", "dist/main.js"]
 # --- 4. Runner Stage: Minimal production image (DEFAULT) ---
 FROM node:22-alpine AS runner
 
-# Runtime doesn't need package managers - only node binary to execute dist/main.js
 RUN apk add --no-cache wget tini && \
     rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
@@ -111,16 +115,16 @@ RUN apk add --no-cache wget tini && \
 ARG BUILD_ID
 ARG BUILD_COMMIT
 ARG APP_VERSION
-ENV BUILD_ID=${BUILD_ID}
-ENV BUILD_COMMIT=${BUILD_COMMIT}
-ENV APP_VERSION=${APP_VERSION}
-ENV NODE_ENV=production
+
+ENV BUILD_ID=${BUILD_ID} \
+    BUILD_COMMIT=${BUILD_COMMIT} \
+    APP_VERSION=${APP_VERSION} \
+    NODE_ENV=production
 
 WORKDIR /app
 
 COPY --from=deps /app/deploy/ /app/
 
-# Make public folder read-only (immutable static content)
 RUN chmod -R 555 /app/public
 
 VOLUME ["/data"]

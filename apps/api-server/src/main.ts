@@ -20,7 +20,6 @@ async function bootstrap() {
     trustProxy: true,
   });
 
-  // Configure binary data handling
   fastifyAdapter
     .getInstance()
     .addContentTypeParser('application/octet-stream', (req, payload, done) => {
@@ -40,30 +39,56 @@ async function bootstrap() {
 
   await app.register(fastifyCookie as any, {} as FastifyCookieOptions);
 
+  const isHttpsEnabled = config.domain?.domain?.startsWith('https://') ?? false;
+
   await app.register(helmet, {
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      reportOnly: false,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        fontSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        workerSrc: ["'self'", 'blob:'],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+        ...(isHttpsEnabled && { upgradeInsecureRequests: [] }),
+      },
+    },
+    noSniff: true,
+    hsts: isHttpsEnabled
+      ? {
+          maxAge: 31536000,
+          includeSubDomains: true,
+          preload: true,
+        }
+      : false,
+    frameguard: {
+      action: 'deny',
+    },
+    hidePoweredBy: true,
+    dnsPrefetchControl: {
+      allow: false,
+    },
+    referrerPolicy: {
+      policy: 'strict-origin-when-cross-origin',
+    },
     crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: false,
   });
 
-  // Run database migrations
   await runMigrations(app);
 
-  const corsOrigin = config.cors.origin;
-  const resolvedOrigin =
-    !corsOrigin || corsOrigin === '*' || corsOrigin === 'true' ? true : corsOrigin;
-
-  app.enableCors({
-    origin: resolvedOrigin,
-    credentials: config.cors.credentials,
-  });
-
-  // API prefix (from config)
   app.setGlobalPrefix(configService.getApiPrefix());
 
-  // Setup static file serving and SPA fallback
   setupStaticAssets(app);
 
-  // Swagger setup (if enabled)
   if (configService.isDocsEnabled()) {
     patchNestJsSwagger();
 
@@ -90,7 +115,6 @@ async function bootstrap() {
     SwaggerModule.setup(config.docs.path, app, document);
   }
 
-  // Start server
   const port = configService.getPort();
   const host = configService.getHost();
 
@@ -106,7 +130,7 @@ async function bootstrap() {
 
 bootstrap().catch(error => {
   console.error('❌ Failed to start server:', error);
-  throw error; // Let the process manager handle the error
+  throw error;
 });
 
 process.on('uncaughtException', err => {
