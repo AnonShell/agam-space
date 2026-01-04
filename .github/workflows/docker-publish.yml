@@ -50,11 +50,8 @@ jobs:
           fi
 
   build-and-push:
-    name: Build & Push Docker Images
-    runs-on: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) && 'ubuntu-latest' || 'ubuntu-24.04-arm64' }}
+    name: Build & Push (${{ matrix.platform }})
     needs: [check-changes]
-    # For workflow_run: Only build if CI passed AND relevant files changed
-    # For tags: Always build (skip path check)
     if: |
       always() &&
       (
@@ -63,6 +60,13 @@ jobs:
          needs.check-changes.outputs.should_build == 'true') ||
         (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
       )
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/arm64
+          - platform: linux/amd64
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -103,52 +107,40 @@ jobs:
       - name: Extract metadata
         id: meta
         run: |
-          # Get short commit SHA
           SHORT_SHA=$(git rev-parse --short HEAD)
 
-          # Check if this is a tag or branch push
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # Tag push - use version from tag
             TAG_VERSION="${{ github.ref_name }}"
             VERSION="${TAG_VERSION#v}"
             
-            # Docker Hub tags (normal image)
+            # Multi-platform release - both ARM64 and AMD64
             DOCKERHUB_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}"
             DOCKERHUB_TAGS="${DOCKERHUB_TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest"
             
-            # GitHub Container Registry tags (normal image)
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}"
             GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest"
             
-            # Hardened image tags (only for releases)
             DOCKERHUB_HARDENED_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}-hardened"
             DOCKERHUB_HARDENED_TAGS="${DOCKERHUB_HARDENED_TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest-hardened"
 
             GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}-hardened"
             GHCR_HARDENED_TAGS="${GHCR_HARDENED_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest-hardened"
 
-            # Build for both platforms on releases
-            PLATFORMS="linux/amd64,linux/arm64"
             BUILD_HARDENED="true"
           else
-            # Branch push (main) - use 'dev' tag (overwrites each time)
+            # Dev builds - ARM64 only
+            if [[ "${{ matrix.platform }}" == "linux/amd64" ]]; then
+              echo "skip_build=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            
             VERSION="dev-${SHORT_SHA}"
-            
-            # Docker Hub tags
             DOCKERHUB_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev"
-            
-            # GitHub Container Registry tags
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev"
-            
-            # Build for ARM64 on main branch (native ARM64 runner = fast builds)
-            PLATFORMS="linux/arm64"
             BUILD_HARDENED="false"
           fi
 
-          # Combined tags
           TAGS="${DOCKERHUB_TAGS},${GHCR_TAGS}"
-
-          # Tag for Trivy scan (first tag from DOCKERHUB_TAGS)
           SCAN_TAG=$(echo "${DOCKERHUB_TAGS}" | cut -d',' -f1)
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
@@ -156,15 +148,15 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "commit=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
-          echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
+          echo "platform=${{ matrix.platform }}" >> $GITHUB_OUTPUT
           echo "build_hardened=${BUILD_HARDENED}" >> $GITHUB_OUTPUT
 
-          # Only output hardened tags if building hardened image
           if [[ "${BUILD_HARDENED}" == "true" ]]; then
             echo "hardened_tags=${DOCKERHUB_HARDENED_TAGS},${GHCR_HARDENED_TAGS}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and push Docker image
+        if: steps.meta.outputs.skip_build != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -178,10 +170,10 @@ jobs:
             BUILD_ID=${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: ${{ steps.meta.outputs.platforms }}
+          platforms: ${{ steps.meta.outputs.platform }}
 
       - name: Build and push Hardened Docker image
-        if: steps.meta.outputs.build_hardened == 'true'
+        if: steps.meta.outputs.build_hardened == 'true' && steps.meta.outputs.skip_build != 'true'
         continue-on-error: true
         uses: docker/build-push-action@v5
         with:
@@ -196,7 +188,7 @@ jobs:
             BUILD_ID=${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: ${{ steps.meta.outputs.platforms }}
+          platforms: ${{ steps.meta.outputs.platform }}
 
       - name: Run Trivy vulnerability scanner
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -207,7 +199,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && matrix.platform == 'linux/amd64'
         uses: github/codeql-action/upload-sarif@v4
         continue-on-error: true
         with:
