@@ -7,8 +7,12 @@ sidebar_position: 2
 Complete reference for all configuration options in Agam Space. Each option can
 be set via **environment variables** or **config file**.
 
-:::tip This page shows both configuration methods side-by-side. Use environment
-variables for Docker deployments, or config file for advanced setups. :::
+:::tip
+
+This page shows both configuration methods side-by-side. Use environment
+variables for Docker deployments, or config file for advanced setups.
+
+:::
 
 ## Required Variables
 
