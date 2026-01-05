@@ -1,4 +1,10 @@
-import { LoginResponse, LoginResponseSchema, User, UserSchema } from '@agam-space/shared-types';
+import {
+  LoginResponse,
+  LoginResponseSchema,
+  User,
+  UserSchema,
+  ChangeLoginPasswordRequest,
+} from '@agam-space/shared-types';
 import { ApiClientError } from './api-client';
 import { ClientRegistry } from '../init/client.registry';
 
@@ -49,4 +55,24 @@ export async function signupApi(username: string, email: string, password: strin
 
 export async function fetchCurrentUserApi(): Promise<User> {
   return await ClientRegistry.getApiClient().fetchAndParse('/v1/me', UserSchema);
+}
+
+export async function changeLoginPasswordApi(request: ChangeLoginPasswordRequest): Promise<void> {
+  try {
+    await ClientRegistry.getApiClient().fetchRaw('/v1/auth/change-login-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+  } catch (e) {
+    if (e instanceof ApiClientError) {
+      if (e.status === 401) {
+        throw new Error('Current password is incorrect');
+      }
+      if (e.status === 403) {
+        throw new Error('SSO users cannot change login password');
+      }
+    }
+    throw new Error('Failed to change password');
+  }
 }

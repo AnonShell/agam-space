@@ -164,6 +164,22 @@ users cannot access each other's files.
 - Restore deleted items
 - Empty trash manually
 
+## Admin Panel
+
+**User Management**
+
+- View all users with status and storage usage
+- Enable/disable user accounts
+- Delete users (7-day grace period, data deletion not implemented yet)
+
+**Quota Management**
+
+- Set per-user storage quotas
+- Unlimited storage option
+
+See [User Management](./configuration/user-management) for detailed admin
+features.
+
 ## Storage
 
 **Quotas**

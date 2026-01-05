@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/store/auth';
+import { AccountService } from '@/services/account.service';
+import { toast } from 'sonner';
 
 export function AccountSettingsSection() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -13,110 +15,159 @@ export function AccountSettingsSection() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const user = useAuth((s) => s.user);
+  const user = useAuth(s => s.user);
+
+  const isSSO = !!user?.oidcSubject;
 
   const handlePasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // TODO: call API to update password
-      console.log('Changing password...');
+      await AccountService.changeLoginPassword(currentPassword, newPassword);
+      toast.success('Login password changed successfully');
+      setShowPasswordForm(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to change password');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Account Settings</h2>
+    <div className='space-y-6'>
+      <h2 className='text-xl font-semibold'>Account Settings</h2>
 
-      {/* Account Info Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Account Info</CardTitle>
+          <CardTitle>Account Information</CardTitle>
+          <CardDescription>Your account details</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          <div className="grid grid-cols-[150px_1fr] gap-y-2 gap-x-4">
-            <span className="text-foreground font-medium">Username</span>
-            <span className="truncate">{user?.username}</span>
-            <span className="text-foreground font-medium">Email</span>
-            <span className="truncate">{user?.email}</span>
-            <span className="text-foreground font-medium">User ID</span>
-            <span className="truncate">{user?.id}</span>
-            <span className="text-foreground font-medium">Account Created</span>
-            <span className="truncate">{user?.createdAt ? new Date(user.createdAt).toLocaleString() : '-'}</span>
-            <span className="text-foreground font-medium">Last Login</span>
-            <span className="truncate">{user?.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : '-'}</span>
-            <span className="text-foreground font-medium">Status</span>
-            <span className="truncate">{user?.status || '-'}</span>
-            <span className="text-foreground font-medium">Role</span>
-            <span className="truncate">{user?.role || '-'}</span>
-            <span className="text-foreground font-medium">Email Verified</span>
-            <span className="truncate">{user?.isEmailVerified ? 'Yes' : 'No'}</span>
-            <span className="text-foreground font-medium">OIDC Provider</span>
-            <span className="truncate">{user?.oidcProvider || '-'}</span>
-            <span className="text-foreground font-medium">OIDC Subject</span>
-            <span className="truncate">{user?.oidcSubject || '-'}</span>
+        <CardContent>
+          <div className='space-y-3 text-sm'>
+            <div className='flex items-center'>
+              <span className='text-muted-foreground w-32'>Username</span>
+              <span className='font-medium'>{user?.username}</span>
+            </div>
+
+            {user?.email && (
+              <div className='flex items-center'>
+                <span className='text-muted-foreground w-32'>Email</span>
+                <div className='flex items-center gap-2'>
+                  <span className='font-medium'>{user.email}</span>
+                  {user.isEmailVerified && (
+                    <span className='text-sm bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-2.5 py-0.5 rounded font-medium'>
+                      Verified
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className='flex items-center'>
+              <span className='text-muted-foreground w-32'>Role</span>
+              <span className='font-medium capitalize'>{user?.role}</span>
+            </div>
+
+            <div className='flex items-center'>
+              <span className='text-muted-foreground w-32'>Login Method</span>
+              {isSSO ? (
+                <span className='text-sm bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2.5 py-0.5 rounded font-medium capitalize'>
+                  {user?.oidcProvider ? `${user.oidcProvider} Single Sign-On` : 'Single Sign-On'}
+                </span>
+              ) : (
+                <span className='text-sm bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 px-2.5 py-0.5 rounded font-medium'>
+                  Password
+                </span>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Change Password Card */}
-      {/*
-      <Card>
-        <CardHeader>
-          <CardTitle>Change Login Password</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!showPasswordForm ? (
-            <Button variant="outline" onClick={() => setShowPasswordForm(true)}>
-              Change Password
-            </Button>
-          ) : (
-            <form
-              className="space-y-4 max-w-md"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handlePasswordChange();
-              }}
-            >
-              <div className="space-y-2">
-                <Label htmlFor="current">Current Password</Label>
-                <Input
-                  id="current"
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new">New Password</Label>
-                <Input
-                  id="new"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm">Confirm New Password</Label>
-                <Input
-                  id="confirm"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
+      {!isSSO && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Login Password</CardTitle>
+            <CardDescription>
+              Change your account password (not the master password used for encryption).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            {!showPasswordForm ? (
+              <Button variant='outline' onClick={() => setShowPasswordForm(true)}>
+                Change Login Password
               </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
-      */}
+            ) : (
+              <form
+                className='space-y-4 max-w-md'
+                onSubmit={e => {
+                  e.preventDefault();
+                  handlePasswordChange();
+                }}
+              >
+                <div className='space-y-2'>
+                  <Label htmlFor='current'>Current Password</Label>
+                  <Input
+                    id='current'
+                    type='password'
+                    autoComplete='current-password'
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='new'>New Password</Label>
+                  <Input
+                    id='new'
+                    type='password'
+                    autoComplete='new-password'
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='confirm'>Confirm New Password</Label>
+                  <Input
+                    id='confirm'
+                    type='password'
+                    autoComplete='new-password'
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className='flex gap-2'>
+                  <Button type='submit' disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => setShowPasswordForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
