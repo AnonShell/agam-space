@@ -122,6 +122,7 @@ export default function E2eeSetupPage() {
                 <Input
                   id='password'
                   type='password'
+                  autoComplete='off'
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder='Enter a strong passphrase or password'
@@ -138,6 +139,7 @@ export default function E2eeSetupPage() {
                 <Input
                   id='confirm'
                   type='password'
+                  autoComplete='off'
                   value={confirm}
                   onChange={e => setConfirm(e.target.value)}
                   placeholder='Re-enter your passphrase or password'

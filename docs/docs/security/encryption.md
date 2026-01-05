@@ -99,7 +99,8 @@ XChaCha20-Poly1305, 5MB chunks
 **Storage:**
 
 - **Client-side:** In browser memory during session (cleared on logout)
-- **Optional:** Base64 encoded in sessionStorage for page reload convenience
+- **Client-side (Optional):** Encrypted in IndexedDB for auto-unlock (if enabled
+  in settings)
 - **Server-side:** Encrypted with password-derived key (server cannot decrypt)
 
 **Encrypted storage format:**
@@ -108,6 +109,16 @@ XChaCha20-Poly1305, 5MB chunks
 Password → Argon2id → Derived Key (256 bits)
 Derived Key → XChaCha20-Poly1305 → Encrypted CMK
 ```
+
+**Auto-unlock storage (optional):**
+
+```
+Server Nonce + Client Seed → Argon2id → Derived Key (256 bits)
+Derived Key → XChaCha20-Poly1305 → Encrypted CMK (stored in IndexedDB)
+```
+
+See [Auto-unlock](./cmk-unlock#3-auto-unlock-on-page-reload-optional) for
+details.
 
 Server stores only encrypted CMK. Without master password, cannot derive key to
 decrypt CMK.

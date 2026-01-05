@@ -142,19 +142,23 @@ Server stores only:
 3. Server issues session token
 4. Client prompts for master password
 5. Client derives CMK from master password (Argon2id)
-6. CMK stored in memory and sessionStorage (base64 encoded, never sent to server)
+6. CMK stored in memory (optionally encrypted in IndexedDB for auto-unlock)
 ```
 
-**Technical note:** CMK is persisted in sessionStorage (base64 encoded) for UX
-convenience across page reloads. However, the CMK alone is not sufficient to
-access user data - every API request requires a valid session token issued by
-the server. Server-side session validation ensures that even if the CMK is
-obtained from sessionStorage (via XSS or device compromise), an attacker cannot
-make API requests without a valid session. This follows the same security model
-as MEGA and other E2EE platforms.
+**Auto-unlock feature (optional):** If enabled in settings, the CMK is encrypted
+with a key derived from server nonce + client seed and stored in IndexedDB. This
+allows seamless unlock across page reloads and new tabs for 15 minutes (until
+server nonce rotates). The client seed is shared across tabs via
+BroadcastChannel for cross-tab sync. See
+[Auto-unlock](./security/cmk-unlock#3-auto-unlock-on-page-reload-optional) for
+security implications.
 
-See [Security](./security/#session-security) for security implications and
-trade-offs.
+**Two-layer protection:** Every API request requires a valid session token. Even
+if the CMK is obtained (via XSS or device compromise), an attacker cannot make
+API requests without a valid session. Both are required to access encrypted
+data.
+
+See [Security](./security/) for detailed security model and trade-offs.
 
 ### SSO/OIDC Flow
 

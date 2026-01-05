@@ -60,6 +60,7 @@ export default function SignupPage() {
               <Label htmlFor='username'>Username</Label>
               <Input
                 id='username'
+                autoComplete='username'
                 value={form.username}
                 onChange={e => setForm({ ...form, username: e.target.value })}
                 required
@@ -70,6 +71,7 @@ export default function SignupPage() {
               <Input
                 id='email'
                 type='email'
+                autoComplete='email'
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
               />
@@ -79,6 +81,7 @@ export default function SignupPage() {
               <Input
                 id='password'
                 type='password'
+                autoComplete='new-password'
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
                 required

@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,9 +31,8 @@ export function ResetPasswordModal({ open, onClose }: Props) {
   const { e2eeKeys, setE2eeKeys } = useE2eeKeys();
 
   const handleVerify = async () => {
-
     setLoading(true);
-    const keys = e2eeKeys || await fetchE2eeKeys();
+    const keys = e2eeKeys || (await fetchE2eeKeys());
     if (!keys) {
       setLoading(false);
       setError('User keys not found. Please set up E2EE keys first.');
@@ -76,61 +81,66 @@ export function ResetPasswordModal({ open, onClose }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => {
-      if (!v) {
-        resetState();
-        onClose();
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={v => {
+        if (!v) {
+          resetState();
+          onClose();
+        }
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Reset Master Password</DialogTitle>
         </DialogHeader>
 
         {step === 'verify' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="recoveryKey">Enter Recovery Key</Label>
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='recoveryKey'>Enter Recovery Key</Label>
               <Input
-                id="recoveryKey"
-                type="password"
-                autoComplete="off"
-                autoCorrect="off"
+                id='recoveryKey'
+                type='password'
+                autoComplete='off'
+                autoCorrect='off'
                 spellCheck={false}
                 value={recoveryKey}
-                onChange={(e) => {
+                onChange={e => {
                   setRecoveryKey(e.target.value);
                   setError(null);
                 }}
               />
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className='text-sm text-red-500'>{error}</p>}
             </div>
             <Button onClick={handleVerify}>Verify</Button>
           </div>
         )}
 
         {step === 'reset' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">New Master Password</Label>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='newPassword'>New Master Password</Label>
+              {error && <p className='text-sm text-red-500'>{error}</p>}
               <Input
-                id="newPassword"
-                type="password"
+                id='newPassword'
+                type='password'
+                autoComplete='off'
                 value={newPassword}
-                onChange={(e) => {
+                onChange={e => {
                   setNewPassword(e.target.value);
                   setError(null);
                 }}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='confirmPassword'>Confirm New Password</Label>
               <Input
-                id="confirmPassword"
-                type="password"
+                id='confirmPassword'
+                type='password'
+                autoComplete='off'
                 value={confirmPassword}
-                onChange={(e) => {
+                onChange={e => {
                   setConfirmPassword(e.target.value);
                   setError(null);
                 }}
@@ -141,10 +151,15 @@ export function ResetPasswordModal({ open, onClose }: Props) {
         )}
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => {
-            resetState();
-            onClose();
-          }}>Cancel</Button>
+          <Button
+            variant='ghost'
+            onClick={() => {
+              resetState();
+              onClose();
+            }}
+          >
+            Cancel
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

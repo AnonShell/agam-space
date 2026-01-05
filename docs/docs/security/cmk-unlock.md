@@ -25,10 +25,8 @@ Enter your master password every time to unlock the CMK.
 **When you'll need to enter it:**
 
 - First time after login
-- Every page reload (unless using sessionStorage option)
-
-This can feel repetitive if you're frequently reloading pages or switching
-between tabs.
+- Every page reload or new tab (unless auto-unlock is enabled)
+- After 15 minutes if auto-unlock is enabled (when server nonce rotates)
 
 **How it works:**
 
@@ -37,9 +35,10 @@ between tabs.
 3. Derived key decrypts CMK
 4. CMK loaded into memory
 
-**Security:** Most secure option. Master password never stored anywhere, CMK
-never persisted. The downside is needing constant access to your master
-password.
+**Security:** Most secure option. Master password never stored anywhere, only
+used to derive decryption keys in browser memory. The derived key is discarded
+immediately after decrypting the CMK. The downside is needing constant access to
+your master password.
 
 ## 2. Trusted Device Unlock (WebAuthn)
 
@@ -145,81 +144,92 @@ unlockKey = Argon2id(serverNonce + deviceSeed, salt)
 
 ## 3. Auto-unlock on Page Reload (Optional)
 
-**⚠️ If you need maximum security, keep this option disabled.**
-
-Avoid re-entering your password or biometric prompt when reloading the page
+Skip re-entering your master password when reloading or opening new tabs.
 (Disabled by default). You must explicitly enable this in Settings → Encryption
 → "Auto-unlock on page reload"
 
 **Why this exists:**
 
 Even with trusted devices, biometric prompts on every page reload can feel
-excessive. This feature lets you unlock once, then stays unlocked until you
-close the tab or the 15-minute window expires.
+excessive. This feature lets you unlock once, then stays unlocked across all
+tabs until you logout or after every 15 minutes when the server nonce rotates.
 
 **How it works:**
 
 After you unlock (with master password or trusted device):
 
-1. Client generates random seed (stored in sessionStorage, tab-scoped)
-2. Server issues random nonce (unique per login session, 15-minute TTL, cached
-   in memory)
+1. Client generates random seed (32 bytes, stored in sessionStorage)
+2. Server issues random nonce (32 bytes, unique per login session, rotates every
+   15 minutes)
 3. Encryption key derived from server nonce + client seed using Argon2id
 4. CMK encrypted using XChaCha20-Poly1305 with derived key
-5. Encrypted CMK stored in IndexedDB, namespaced by tab ID
+5. Encrypted CMK stored in IndexedDB
 
-**On page reload:**
+**On page reload or new tab:**
 
-1. Client retrieves seed from sessionStorage
-2. Client requests server nonce (strict server-side validation - only issued
-   with valid session)
-3. Derives decryption key from nonce + seed
-4. Decrypts CMK from IndexedDB
-5. CMK loaded into memory
+1. Client checks sessionStorage for seed
+   - If found: proceeds to step 4
+   - If not found: requests seed from other tabs via BroadcastChannel
+2. Other tabs respond with their seed (if they have one)
+3. Seed stored in sessionStorage for this tab
+4. Client requests server nonce (strict server-side validation)
+5. Derives decryption key from nonce + seed
+6. Decrypts CMK from IndexedDB
+7. CMK loaded into memory
+
+**Cross-tab sync:**
+
+When you open a new tab, the browser uses BroadcastChannel to request the client
+seed from existing tabs. This allows seamless auto-unlock across all tabs
+without re-authentication, as long as the 15-minute window hasn't expired.
 
 **Security model:**
 
-Split-key approach where **both** server and client components are required.
-Without either, the encrypted CMK is undecryptable:
+Split-key approach where **both** server and client components are required:
 
-- **Server:** Random nonce (unique per session, 15-minute TTL)
-- **Client:** Random seed in sessionStorage (cleared on tab close)
+- **Server:** Random nonce (unique per session, server rotates every 15 minutes)
+- **Client:** Random seed in sessionStorage (cleared on tab close, shared via
+  BroadcastChannel)
 - **IndexedDB:** Encrypted CMK
 
-**Why 15-minute limit:**
+**Why 15-minute rotation:**
 
-Server nonce expires after 15 minutes to limit the window of opportunity if
-session credentials are compromised. Even if an attacker steals your session
-cookie and encrypted CMK from IndexedDB, they only have 15 minutes before the
-nonce expires and the encrypted CMK becomes undecryptable. Your login session
+Server nonce automatically rotates every 15 minutes regardless of activity. When
+the nonce rotates, the old encrypted CMK becomes undecryptable, and you must
+unlock again with your master password or trusted device. Your login session
 remains active - you'll just need to unlock again.
 
 **What this protects against:**
 
 - **Stolen browser profile:** Encrypted CMK useless without server nonce
-  (requires valid session) and client seed (cleared on tab close)
-- **Time-limited exposure:** Server nonce expires after 15 minutes
+  (requires valid session) and client seed (cleared on browser close)
+- **Time-limited exposure:** Server nonce rotates every 15 minutes
 - **Session hijacking:** Session cookie is HttpOnly (JavaScript cannot read it),
   preventing client-side session theft
-- **Tab isolation:** Each tab has independent seed and encrypted CMK entry
+- **Cross-origin attacks:** BroadcastChannel is origin-scoped (only same-origin
+  tabs can communicate)
 
 **What this does NOT protect against:**
 
-- **XSS attacks:** Malicious JavaScript can access sessionStorage (client seed)
-  and make API calls (browser automatically sends HttpOnly cookie) to get server
-  nonce, then decrypt CMK from IndexedDB
-- **Browser extensions with network permissions:** Can access sessionStorage and
-  IndexedDB, and make API requests (browser sends HttpOnly cookie automatically)
-  to obtain server nonce
+- **XSS attacks:** Malicious JavaScript can access sessionStorage (client seed),
+  make API calls to get server nonce, then decrypt CMK from IndexedDB
+- **Browser extensions with permissions:** Can access sessionStorage, IndexedDB,
+  and make API requests to obtain server nonce
 
-**When auto-unlock fails:**
+**When auto-unlock expires:**
 
 You'll be prompted to unlock manually (no data loss) when:
 
-- Server nonce expires (after 15 minutes - login session remains active)
-- Tab closed (client seed lost)
-- Logout (all data wiped)
+- Server nonce rotates (every 15 minutes - login session remains active)
+- Browser closed (all sessionStorage cleared)
+- Logout (all data wiped, broadcasted to all tabs)
 - Session revoked on server
+
+**Logout sync:**
+
+When you logout in one tab, all other tabs are automatically logged out via
+BroadcastChannel. This ensures consistent state across all tabs and prevents
+orphaned sessions.
 
 **Security vs convenience:**
 

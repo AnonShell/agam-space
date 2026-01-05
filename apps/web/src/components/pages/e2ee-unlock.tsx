@@ -163,6 +163,7 @@ export default function E2eeUnlockPage() {
           <Input
             autoFocus
             type='password'
+            autoComplete='off'
             placeholder='Enter your master password'
             value={password}
             onChange={e => setPassword(e.target.value)}

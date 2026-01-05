@@ -25,7 +25,7 @@ export function RecoveryKeyModal({ open, onClose }: Props) {
   const handlePasswordSubmit = async () => {
     setLoading(true);
 
-    const keys = e2eeKeys || await fetchE2eeKeys();
+    const keys = e2eeKeys || (await fetchE2eeKeys());
     if (!keys) {
       setError('User keys not found. Please set up E2EE keys first.');
       setLoading(false);
@@ -59,33 +59,36 @@ export function RecoveryKeyModal({ open, onClose }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => {
-      if (!v) {
-        resetState();
-        onClose();
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={v => {
+        if (!v) {
+          resetState();
+          onClose();
+        }
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>View Recovery Key</DialogTitle>
         </DialogHeader>
 
         {step === 'password' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Enter Master Password</Label>
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='password'>Enter Master Password</Label>
               <Input
-                id="password"
-                type="password"
+                id='password'
+                type='password'
+                autoComplete='off'
                 value={password}
-                onChange={(e) => {
+                onChange={e => {
                   setPassword(e.target.value);
                   setError(null); // clear on change
                 }}
-                placeholder="••••••••"
+                placeholder='••••••••'
               />
-              {error && <p className="text-sm text-red-500">{error}</p>}
-
+              {error && <p className='text-sm text-red-500'>{error}</p>}
             </div>
             <Button onClick={handlePasswordSubmit} disabled={loading}>
               {loading ? 'Checking…' : 'Continue'}
@@ -94,26 +97,33 @@ export function RecoveryKeyModal({ open, onClose }: Props) {
         )}
 
         {step === 'reveal' && (
-          <div className="space-y-4">
-            <p className="text-sm text-yellow-600 font-medium">
-              ⚠️ Never share your recovery key. Store it in a secure location. If you lose it, you won’t be able to reset your password.
+          <div className='space-y-4'>
+            <p className='text-sm text-yellow-600 font-medium'>
+              ⚠️ Never share your recovery key. Store it in a secure location. If you lose it, you
+              won’t be able to reset your password.
             </p>
 
-            <div className="relative">
-            <pre className="rounded-md border bg-muted p-4 font-mono text-sm whitespace-pre-wrap break-words overflow-auto">
-              <span className="select-all">{recoveryKey}</span>
-            </pre>
+            <div className='relative'>
+              <pre className='rounded-md border bg-muted p-4 font-mono text-sm whitespace-pre-wrap break-words overflow-auto'>
+                <span className='select-all'>{recoveryKey}</span>
+              </pre>
               <Button
-                variant="outline"
-                size="sm"
+                variant='outline'
+                size='sm'
                 onClick={handleCopy}
-                className="absolute top-2 right-2"
+                className='absolute top-2 right-2'
               >
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
 
-            <Button size="sm" onClick={() => { resetState(); onClose(); }}>
+            <Button
+              size='sm'
+              onClick={() => {
+                resetState();
+                onClose();
+              }}
+            >
               Close
             </Button>
           </div>

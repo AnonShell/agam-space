@@ -11,6 +11,7 @@ import {
 } from '@agam-space/client';
 import { useDownloadStore } from '@/store/download-store';
 import { useUploadStore } from '@/store/upload-store';
+import { initCrossTabCommunication } from '@/services/cross-tab';
 
 let initialized = false;
 
@@ -49,6 +50,8 @@ export function initializeClient() {
   }
 
   getClientRegistry();
+
+  initCrossTabCommunication();
 }
 
 const uploadManagerCallbacks: UploadManagerCallbacks = {

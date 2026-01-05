@@ -44,6 +44,7 @@ export default function LoginPage() {
             <Input
               id='username'
               type='text'
+              autoComplete='username'
               value={form.username}
               onChange={e => setForm({ ...form, username: e.target.value })}
               required
@@ -54,6 +55,7 @@ export default function LoginPage() {
             <Input
               id='password'
               type='password'
+              autoComplete='current-password'
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               required

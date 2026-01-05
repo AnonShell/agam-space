@@ -86,9 +86,9 @@ export default function SettingsPage({ initialTab }: SettingsPageProps) {
                 <div className='flex-1'>
                   <h3 className='font-medium'>Auto-unlock on page reload</h3>
                   <p className='text-sm text-muted-foreground mt-1'>
-                    Avoid re-entering your master password when you reload the page. <br />
-                    Your key is still stored encrypted, works only in this tab, and automatically
-                    expires after 15 minutes or when you close the tab.
+                    Skip re-entering your master password when reloading or opening new tabs.
+                    <br />
+                    Auto-unlock for security, expires after every 15 minutes or when you log out.
                   </p>
                 </div>
                 <Switch

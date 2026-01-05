@@ -1,40 +1,60 @@
-import { toBase64, fromBase64, EncryptedEnvelopeCodec } from '@agam-space/core';
+import { EncryptedEnvelopeCodec, fromBase64, toBase64 } from '@agam-space/core';
 import {
-  fetchSessionCryptoMaterial,
   Argon2idVersion,
   deriveKeyFromSecret,
   EncryptionRegistry,
+  fetchSessionCryptoMaterial,
 } from '@agam-space/client';
 import { usePreferencesStore } from '@/store/preferences.store';
 import { idbSessionStore } from '@/storage/indexdb';
+import { ClientSeedSync } from '@/services/cross-tab';
 
 const CLIENT_SEED_KEY = 'agam_client_seed';
 const STATIC_SALT = new Uint8Array(16);
-const TAB_ID_KEY = 'agam_tab_id';
-
-function getOrCreateTabId(): string {
-  let tabId = sessionStorage.getItem(TAB_ID_KEY);
-  if (!tabId) {
-    tabId = crypto.randomUUID();
-    sessionStorage.setItem(TAB_ID_KEY, tabId);
-  }
-  return tabId;
-}
+const ENCRYPTED_CMK_KEY = 'session_enc_cmk';
 
 export class SessionUnlockManager {
-  private static getOrCreateClientSeed(): Uint8Array | null {
+  private static clientSeedPromise: Promise<Uint8Array | null> | null = null;
+
+  static getClientSeed(): Uint8Array | null {
     try {
       const stored = sessionStorage.getItem(CLIENT_SEED_KEY);
       if (stored) {
         return fromBase64(stored);
       }
-
-      const seed = crypto.getRandomValues(new Uint8Array(32));
-      sessionStorage.setItem(CLIENT_SEED_KEY, toBase64(seed));
-      return seed;
+      return null;
     } catch {
       return null;
     }
+  }
+
+  private static async getOrCreateClientSeed(): Promise<Uint8Array | null> {
+    if (this.clientSeedPromise) {
+      return this.clientSeedPromise;
+    }
+
+    this.clientSeedPromise = (async () => {
+      try {
+        let seed = SessionUnlockManager.getClientSeed();
+        if (seed) {
+          return seed;
+        }
+
+        seed = await ClientSeedSync.requestFromOtherTabs();
+        if (!seed) {
+          seed = crypto.getRandomValues(new Uint8Array(32));
+        }
+
+        sessionStorage.setItem(CLIENT_SEED_KEY, toBase64(seed));
+        return seed;
+      } catch {
+        return null;
+      } finally {
+        this.clientSeedPromise = null;
+      }
+    })();
+
+    return this.clientSeedPromise;
   }
 
   private static async deriveEncryptionKey(
@@ -56,7 +76,7 @@ export class SessionUnlockManager {
 
   private static async getDerivedSessionKey(): Promise<Uint8Array | null> {
     try {
-      const seed = SessionUnlockManager.getOrCreateClientSeed();
+      const seed = await SessionUnlockManager.getOrCreateClientSeed();
       if (!seed) return null;
 
       const material = await fetchSessionCryptoMaterial();
@@ -78,7 +98,7 @@ export class SessionUnlockManager {
 
     try {
       const material = await fetchSessionCryptoMaterial();
-      const seed = this.getOrCreateClientSeed();
+      const seed = await this.getOrCreateClientSeed();
       if (!seed || !material.nonce) return;
 
       const key = await this.deriveEncryptionKey(material.nonce, seed);
@@ -86,8 +106,7 @@ export class SessionUnlockManager {
 
       const envelope = await EncryptionRegistry.get().encrypt(cmk, key);
       const serialized = EncryptedEnvelopeCodec.serializeToTLV(envelope);
-      const tabId = getOrCreateTabId();
-      await idbSessionStore.storeEncryptedCMK(tabId, serialized);
+      await idbSessionStore.storeEncryptedCMK(ENCRYPTED_CMK_KEY, serialized);
     } catch {
       return;
     }
@@ -97,17 +116,17 @@ export class SessionUnlockManager {
     if (!SessionUnlockManager.isSessionAutoUnlockEnabled()) return null;
 
     try {
+      const combined = await idbSessionStore.getEncryptedCMK(ENCRYPTED_CMK_KEY);
+      if (!combined || combined.length < 24) {
+        return null;
+      }
+
       const sessionKey = await SessionUnlockManager.getDerivedSessionKey();
       if (!sessionKey) {
         await this.clearAutoUnlockData();
         return null;
       }
-      const tabId = getOrCreateTabId();
-      const combined = await idbSessionStore.getEncryptedCMK(tabId);
-      if (!combined || combined.length < 24) {
-        await this.clearAutoUnlockData();
-        return null;
-      }
+
       const envelope = EncryptedEnvelopeCodec.deserializeFromTLV(combined);
       return await EncryptionRegistry.get().decrypt(envelope, sessionKey);
     } catch {
@@ -116,21 +135,11 @@ export class SessionUnlockManager {
     }
   }
 
-  static async clearAutoUnlockData(clearAll: boolean = false): Promise<void> {
+  static async clearAutoUnlockData(): Promise<void> {
     if (typeof window === 'undefined') return;
     try {
       sessionStorage.removeItem(CLIENT_SEED_KEY);
-
-      if (clearAll) {
-        await idbSessionStore.clearAllEncryptedCMK();
-        return;
-      }
-
-      const tabId = sessionStorage.getItem(TAB_ID_KEY);
-      if (tabId) {
-        await idbSessionStore.clearEncryptedCMK(tabId);
-        sessionStorage.removeItem(TAB_ID_KEY);
-      }
+      await idbSessionStore.clearEncryptedCMK(ENCRYPTED_CMK_KEY);
     } catch {
       return;
     }

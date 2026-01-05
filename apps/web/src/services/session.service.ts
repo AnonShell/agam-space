@@ -10,6 +10,7 @@ import {
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { SessionUnlockManager } from './session-unlock-manager';
 import { TrustedDevicesService } from './trusted-devices.service';
+import { LogoutSync } from './cross-tab/logout-sync';
 
 export const SessionService = {
   async bootstrap() {
@@ -49,6 +50,7 @@ export const SessionService = {
       // Ignore logout API errors - still reset local state
     }
 
+    LogoutSync.broadcastLogout();
     resetAllState();
   },
 };
@@ -59,7 +61,7 @@ export function resetAllState() {
 
   ClientRegistry.getKeyManager().clearAll();
 
-  SessionUnlockManager.clearAutoUnlockData(true).catch(() => {});
+  SessionUnlockManager.clearAutoUnlockData().catch(() => {});
 
   TrustedDevicesService.clearAllDeviceData().catch(() => {});
 }
