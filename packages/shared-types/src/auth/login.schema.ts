@@ -28,3 +28,10 @@ export const NewUserSignupRequestSchema = UserSchema.pick({
 });
 
 export type NewSignupUserRequest = z.infer<typeof NewUserSignupRequestSchema>;
+
+export const ChangeLoginPasswordRequestSchema = z.object({
+  currentPassword: UserPasswordSchema,
+  newPassword: UserPasswordSchema,
+});
+
+export type ChangeLoginPasswordRequest = z.infer<typeof ChangeLoginPasswordRequestSchema>;

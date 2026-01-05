@@ -10,9 +10,10 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import {
+  ChangeLoginPasswordRequestDto,
   LoginResponseDto,
   LoginWithPasswordDto,
   LogoutResponseDto,
@@ -24,6 +25,8 @@ import { SsoService } from '@/modules/sso/sso.service';
 import { createHash } from 'crypto';
 import { clearAuthCookies, setAuthCookies } from '@/modules/auth/utils/cookies';
 import { AgamCookies } from '@/modules/auth/auth.models';
+import { AuthRequired, CurrentUser } from '../auth.decorator';
+import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -183,5 +186,43 @@ export class AuthController {
     // Default fallback
     this.logger.warn(`Unknown client type in SSO state: ${state.client}`);
     return res.status(400).send('Unknown client type');
+  }
+
+  @Post('change-login-password')
+  @HttpCode(HttpStatus.OK)
+  @AuthRequired()
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Change login password',
+    description: 'Change login password for non-SSO users.',
+  })
+  @ApiBody({ type: ChangeLoginPasswordRequestDto })
+  @Post('change-login-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @AuthRequired()
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Change login password',
+    description:
+      'Change login password for non-SSO users. This is separate from your master password used for encryption. Requires cryptographic challenge verification (signed with identity key) to prevent unauthorized changes even if session is compromised. SSO users cannot change login password as it is managed by their identity provider.',
+  })
+  @ApiBody({ type: ChangeLoginPasswordRequestDto })
+  @ApiResponse({
+    status: 204,
+    description: 'Login password changed successfully',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Current login password is incorrect',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'SSO users cannot change login password',
+  })
+  async changeLoginPassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() changeLoginPasswordDto: ChangeLoginPasswordRequestDto
+  ): Promise<void> {
+    await this.authService.changeLoginPassword(user.id, changeLoginPasswordDto);
   }
 }

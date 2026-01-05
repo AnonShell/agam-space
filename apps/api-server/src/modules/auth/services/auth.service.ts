@@ -1,6 +1,19 @@
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
-import { LoginResponse, User, UserRole, UserStatus } from '@agam-space/shared-types';
+import {
+  ChangeLoginPasswordRequest,
+  LoginResponse,
+  User,
+  UserRole,
+  UserStatus,
+} from '@agam-space/shared-types';
 import { AppConfigService } from '@/config/config.service';
 import { CreateUserData, UserService } from '../user.service';
 import { PasswordService } from './password.service';
@@ -51,7 +64,6 @@ export class AuthService {
 
     const { username, password, email } = request;
 
-    // Validate required fields
     if (!username || !password) {
       throw new BadRequestException('Username and password are required');
     }
@@ -60,7 +72,6 @@ export class AuthService {
       throw new BadRequestException('Password must be at least 8 characters');
     }
 
-    // Create user
     const userData: CreateUserData = {
       username,
       password,
@@ -79,7 +90,6 @@ export class AuthService {
   async login(request: LoginRequest): Promise<LoginResponse> {
     const { username, password, deviceFingerprint, userAgent, ipAddress } = request;
 
-    // Validate required fields
     if (!username || !password) {
       throw new BadRequestException('Username and password are required');
     }
@@ -222,5 +232,43 @@ export class AuthService {
     }
 
     return success;
+  }
+
+  async changeLoginPassword(userId: string, request: ChangeLoginPasswordRequest): Promise<void> {
+    const userInfo = await this.userService.findUserById(userId);
+    if (!userInfo) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (userInfo.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException(`Cannot change password. Account status: ${userInfo.status}`);
+    }
+
+    if (userInfo.oidcSubject) {
+      throw new ForbiddenException('SSO users cannot change login password');
+    }
+
+    const isValidPassword = await this.userService.verifyPassword(userId, request.currentPassword);
+    if (!isValidPassword) {
+      throw new UnauthorizedException('Current login password is incorrect');
+    }
+
+    await this.userService.updatePassword(userId, request.newPassword);
+
+    this.logger.log(`Login password changed successfully for user: ${userId}`);
+  }
+
+  async updateUserStatus(adminId: string, targetUserId: string, status: UserStatus): Promise<void> {
+    if (adminId === targetUserId) {
+      throw new ForbiddenException('Cannot modify your own account status');
+    }
+
+    await this.userService.updateUserStatus(targetUserId, status);
+
+    if (status === UserStatus.DISABLED || status === UserStatus.DELETED) {
+      await this.sessionService.deleteAllUserSessions(targetUserId);
+    }
+
+    this.logger.log(`User ${targetUserId} status changed to ${status} by admin ${adminId}`);
   }
 }

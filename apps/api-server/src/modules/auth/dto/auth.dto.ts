@@ -5,14 +5,12 @@ import {
   LoginResponseSchema,
   LoginWithPasswordRequestSchema,
   NewUserSignupRequestSchema,
+  ChangeLoginPasswordRequestSchema,
 } from '@agam-space/shared-types';
 import { UserRole } from '@agam-space/shared-types';
 
 export class NewUserSignupRequestDto extends createZodDto(NewUserSignupRequestSchema) {}
 
-/**
- * DTO for logout response
- */
 export class LogoutResponseDto {
   @ApiProperty({
     description: 'Whether logout was successful',
@@ -26,6 +24,8 @@ export class UserDto extends createZodDto(UserSchema) {}
 export class LoginWithPasswordDto extends createZodDto(LoginWithPasswordRequestSchema) {}
 
 export class LoginResponseDto extends createZodDto(LoginResponseSchema) {}
+
+export class ChangeLoginPasswordRequestDto extends createZodDto(ChangeLoginPasswordRequestSchema) {}
 
 export interface AuthenticatedUser {
   id: string;

@@ -3,6 +3,8 @@ export * from './crypto/crypto';
 
 export * from './user/user.schema';
 export * from './user/user.types';
+export * from './user/user-admin.schema';
+export * from './user/user-status.schema';
 
 export * from './folder.types';
 export * from './user-keys-setup.schema';
@@ -23,3 +25,4 @@ export * from './trash/trash.schema';
 
 // quota types
 export * from './quota/quota.schema';
+export * from './quota/quota-admin.schema';

@@ -27,9 +27,9 @@ export const users = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     lastLoginAt: timestamp('last_login_at'),
+    deletedAt: timestamp('deleted_at'),
 
-    // OIDC/SSO fields (optional)
-    oidcProvider: text('oidc_provider'), // 'google', 'github', etc.
+    oidcProvider: text('oidc_provider'),
     oidcSubject: text('oidc_subject'), // Provider's unique user ID
   },
   table => ({

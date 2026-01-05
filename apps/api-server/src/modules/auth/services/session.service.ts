@@ -212,6 +212,30 @@ export class SessionService {
     return false;
   }
 
+  async deleteAllUserSessions(userId: string): Promise<number> {
+    const userSessionsList = await this.db
+      .select({ id: userSessions.id })
+      .from(userSessions)
+      .where(eq(userSessions.userId, userId));
+
+    for (const session of userSessionsList) {
+      await this.cacheManager.del(this.getCacheKey(session.id));
+      await this.cacheManager.del(this.getEncNonceCacheKey(session.id));
+    }
+
+    const result = await this.db
+      .delete(userSessions)
+      .where(eq(userSessions.userId, userId))
+      .returning({ id: userSessions.id });
+
+    const deletedCount = result.length;
+    if (deletedCount > 0) {
+      this.logger.log(`Deleted ${deletedCount} sessions for user: ${userId}`);
+    }
+
+    return deletedCount;
+  }
+
   async cleanupExpiredSessions(): Promise<number> {
     const result = await this.db.delete(userSessions).where(sql`${userSessions.expiresAt} < NOW()`);
 

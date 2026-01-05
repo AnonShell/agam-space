@@ -123,6 +123,23 @@ export class QuotaService {
     return result?.updated ?? null;
   }
 
+  async updateUserQuota(userId: string, totalStorageQuota: number): Promise<UserQuota> {
+    const [updated] = await this.db
+      .update(userQuotaDBSchema)
+      .set({
+        totalStorageQuota,
+        updatedAt: new Date(),
+      })
+      .where(eq(userQuotaDBSchema.userId, userId))
+      .returning();
+
+    if (!updated) {
+      throw new Error(`Quota for user ${userId} not found`);
+    }
+
+    return UserQuotaSchema.parse(updated);
+  }
+
   private getDefaultQuota(): number {
     const quota = 0; // can be replaced with a config value
     return Number(quota);

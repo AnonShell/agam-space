@@ -5,16 +5,17 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { and, eq, or } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
 import { DATABASE_CONNECTION } from '../../database/database.providers';
-import { type NewUser, type UserDB, users } from '../../database/schema';
+import { type NewUser, type UserDB, users, userQuotaDBSchema } from '../../database/schema';
 
 import { UserRole } from './auth.models';
 import { PasswordService } from './services/password.service';
-import { User, UserSchema, UserStatus, UserStatusSchema } from '@agam-space/shared-types';
+import { User, UserSchema, UserStatus, UserWithQuota } from '@agam-space/shared-types';
 import { QuotaService } from '@/modules/quota/quota.service';
 import { AppConfigService } from '@/config/config.service';
 
@@ -45,9 +46,24 @@ export class UserService {
     private readonly configService: AppConfigService
   ) {}
 
-  async listUsers(): Promise<User[]> {
-    const usersList = await this.db.select().from(users);
-    return usersList.map(user => this.toUserDto(user));
+  async listUsers(): Promise<UserWithQuota[]> {
+    const usersWithQuota = await this.db
+      .select({
+        user: users,
+        quota: userQuotaDBSchema,
+      })
+      .from(users)
+      .leftJoin(userQuotaDBSchema, eq(users.id, userQuotaDBSchema.userId));
+
+    return usersWithQuota.map(({ user, quota }) => ({
+      ...this.toUserDto(user),
+      quota: quota
+        ? {
+            totalStorageQuota: quota.totalStorageQuota,
+            usedStorage: quota.usedStorage,
+          }
+        : null,
+    }));
   }
 
   async createUser(userData: CreateUserData, isSSO: boolean = false): Promise<User> {
@@ -158,6 +174,28 @@ export class UserService {
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
+  }
+
+  async updateUserStatus(userId: string, status: UserStatus): Promise<void> {
+    const user = await this.findUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.status === UserStatus.DELETED) {
+      throw new BadRequestException('Cannot modify a deleted user');
+    }
+
+    const updateData: any = {
+      status,
+      updatedAt: new Date(),
+    };
+
+    if (status === UserStatus.DELETED) {
+      updateData.deletedAt = new Date();
+    }
+
+    await this.db.update(users).set(updateData).where(eq(users.id, userId));
   }
 
   /**

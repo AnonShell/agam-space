@@ -12,10 +12,10 @@ const connectionUrl = `postgresql://${dbConfig.username}:${encodeURIComponent(db
 export default {
   schema: './src/database/schema/*',
   out: './migrations',
-  driver: 'pg',
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString: connectionUrl,
+    url: connectionUrl,
   },
-  verbose: false, // Reduce noise during migration generation
+  verbose: false,
   strict: true,
 } satisfies Config;
