@@ -65,14 +65,16 @@ COPY --from=builder /app/apps/web/out ./deploy/public
 # --- 3. Hardened Runner Stage: Security-hardened production image ---
 FROM dhi.io/node:22-alpine3.23 AS runner-hardened
 
-RUN apk add --no-cache wget tini && \
-    rm -rf /usr/local/lib/node_modules/npm \
+RUN apk update && apk add --no-cache wget tini
+
+RUN rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
            /usr/local/bin/npm \
            /usr/local/bin/npx \
            /usr/local/bin/yarn \
            /usr/local/bin/yarnpkg \
-           /usr/local/bin/corepack || true
+           /usr/local/bin/corepack \
+           2>/dev/null || true
 
 ARG BUILD_ID
 ARG BUILD_COMMIT
