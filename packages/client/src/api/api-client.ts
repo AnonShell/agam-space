@@ -7,27 +7,30 @@ type ApiClientConfig = {
 
 export class ApiClientError extends Error {
   status: number;
-  errorCode?: string;
-  errorMessage?: string;
+  code?: string;
+  details?: unknown;
   response: Response;
 
   constructor(
     message: string,
     status: number,
     response: Response,
-    details?: { errorCode?: string; errorMessage?: string }
+    errorData?: { code?: string; message?: string; details?: unknown }
   ) {
-    super(message);
+    super(errorData?.message || message);
     this.name = 'ApiClientError';
     this.status = status;
     this.response = response;
-
-    this.errorCode = details?.errorCode;
-    this.errorMessage = details?.errorMessage;
+    this.code = errorData?.code;
+    this.details = errorData?.details;
   }
 
   isStatus(status: number): boolean {
     return this.status === status;
+  }
+
+  isCode(code: string): boolean {
+    return this.code === code;
   }
 
   isNotFound(): boolean {
@@ -100,10 +103,22 @@ export class ApiClient {
     });
 
     if (!res.ok) {
+      let errorData: { code?: string; message?: string; details?: unknown } | undefined;
+
+      try {
+        const contentType = res.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          errorData = await res.clone().json();
+        }
+      } catch {
+        // Ignore parsing errors, use default message
+      }
+
       throw new ApiClientError(
         `API request failed: ${res.status} ${res.statusText}`,
         res.status,
-        res
+        res,
+        errorData
       );
     }
 

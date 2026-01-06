@@ -14,6 +14,7 @@ import { TrashModule } from './modules/trash/trash.module';
 import { SsoModule } from '@/modules/sso/sso.module';
 import { UserQuotaModule } from '@/modules/quota/quota.module';
 import { TrustedDevicesModule } from '@/modules/trusted-devices/trusted-devices.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -25,14 +26,16 @@ import { TrustedDevicesModule } from '@/modules/trusted-devices/trusted-devices.
 
     ScheduleModule.forRoot(),
 
-    // // Rate limiting module
-    // ThrottlerModule.forRoot([
-    //   {
-    //     name: 'short',
-    //     ttl: 30_000, // 30 seconds
-    //     limit: 100, // 100 requests per minute
-    //   },
-    // ]),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          name: 'default',
+          ttl: 60_000,
+          limit: 100,
+        },
+      ],
+      skipIf: () => false,
+    }),
 
     // Feature modules
     ServerInfoModule,
@@ -46,11 +49,6 @@ import { TrustedDevicesModule } from '@/modules/trusted-devices/trusted-devices.
     TrustedDevicesModule,
   ],
   providers: [
-    // Global rate limiting guard
-    // {
-    //   provide: APP_GUARD,
-    //   useClass: ThrottlerGuard,
-    // },
     {
       provide: APP_PIPE,
       useClass: ZodValidationPipe,

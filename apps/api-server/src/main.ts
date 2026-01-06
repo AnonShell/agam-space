@@ -9,7 +9,12 @@ import { patchNestJsSwagger } from 'nestjs-zod';
 
 import type { FastifyCookieOptions } from '@fastify/cookie';
 import fastifyCookie from '@fastify/cookie';
-import { AllExceptionsFilter } from '@/common/filters/all-exceptions.filter';
+import {
+  ZodValidationExceptionFilter,
+  HttpExceptionFilter,
+  AllExceptionsFilter,
+  ThrottlerExceptionFilter,
+} from '@/common/filters';
 import helmet from '@fastify/helmet';
 import { setupStaticAssets } from '@/common/setup-spa';
 
@@ -31,7 +36,12 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, fastifyAdapter);
 
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalFilters(
+    new AllExceptionsFilter(),
+    new HttpExceptionFilter(),
+    new ThrottlerExceptionFilter(),
+    new ZodValidationExceptionFilter()
+  );
 
   const configService = app.get(AppConfigService);
   const config = configService.getConfig();

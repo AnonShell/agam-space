@@ -9,9 +9,11 @@ import {
   Query,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { Throttle, ThrottlerGuard, SkipThrottle } from '@nestjs/throttler';
 import {
   ChangeLoginPasswordRequestDto,
   LoginResponseDto,
@@ -30,6 +32,7 @@ import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -38,11 +41,9 @@ export class AuthController {
     private readonly ssoService: SsoService
   ) {}
 
-  /**
-   * Create new user account (signup)
-   */
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { ttl: 3600_000, limit: 10 } })
   @ApiOperation({
     summary: 'User signup',
     description: 'Create a new user account. Login separately to get session token.',
@@ -72,6 +73,7 @@ export class AuthController {
 
   @Post('login/password')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { ttl: 900_000, limit: 15 } })
   @ApiOperation({
     summary: 'User login',
     description: 'Authenticate user credentials and return session token',
@@ -111,6 +113,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
+  @SkipThrottle()
   @ApiOperation({
     summary: 'User logout',
     description: 'Logout from current session and invalidate token',
@@ -142,6 +145,7 @@ export class AuthController {
   }
 
   @Get('/sso/oidc')
+  @SkipThrottle()
   async startOidc(@Query('client') clientType: string = 'browser', @Res() res: FastifyReply) {
     if (!this.ssoService.isEnabled()) return res.status(404).send();
 
@@ -156,6 +160,7 @@ export class AuthController {
   }
 
   @Get('/sso/oidc/callback')
+  @SkipThrottle()
   async callback(@Req() req: FastifyRequest, @Res() res: FastifyReply) {
     if (!this.ssoService.isEnabled()) return res.status(404).send();
 

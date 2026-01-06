@@ -85,16 +85,10 @@ export async function createNewFolder(name: string, parentId?: string): Promise<
     if (e instanceof ApiClientError) {
       if (e.status === 409) {
         const message = `Folder with name "${name}" already exists in this location.`;
-        throw new AlreadyExistsError(message, {
-          errorCode: 'FOLDER_ALREADY_EXISTS',
-          errorMessage: e.message,
-        });
+        throw new AlreadyExistsError(message, 'FOLDER_ALREADY_EXISTS');
       }
     }
 
-    throw new AppError(`Failed to create folder: ${e}`, {
-      errorCode: 'FOLDER_CREATION_FAILED',
-      errorMessage: 'Failed to create folder',
-    });
+    throw new AppError(`Failed to create folder: ${e}`, 'FOLDER_CREATION_FAILED');
   }
 }

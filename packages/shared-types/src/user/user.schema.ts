@@ -7,7 +7,7 @@ export const UserStatusSchema = z.nativeEnum(UserStatus);
 
 export const UserSchema = z.object({
   id: z.string().min(20).max(50),
-  username: z.string().min(1).max(50),
+  username: z.string().min(3).max(50),
   email: z.string().email().nullable().optional(),
   isEmailVerified: z.boolean().default(false),
   role: UserRoleSchema,

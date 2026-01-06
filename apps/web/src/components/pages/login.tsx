@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useServerConfigStore } from '@/store/server-config.store';
 import Link from 'next/link';
 import { SessionService } from '@/services/session.service';
+import { parseError } from '@/lib/error-utils';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,7 +27,8 @@ export default function LoginPage() {
 
       router.push('/explorer');
     } catch (err) {
-      setError((err as Error).message);
+      const { message } = parseError(err);
+      setError(message);
     }
   }
 

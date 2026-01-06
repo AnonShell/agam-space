@@ -1,30 +1,35 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
 import { FastifyReply, FastifyRequest } from 'fastify';
+import { ErrorCode, ErrorResponse } from './error-codes';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<FastifyReply>();
     const request = ctx.getRequest<FastifyRequest>();
 
-    const isHttpException = exception instanceof HttpException;
-    const status = isHttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+    const errorResponse = this.buildErrorResponse(exception, request.url);
 
-    const message = isHttpException
-      ? exception.getResponse()
-      : ((exception as Error)?.message ?? 'Internal Server Error');
+    this.logger.error(
+      `Unexpected error: [${request.method}] ${request.url}`,
+      exception instanceof Error ? exception.stack : exception
+    );
 
-    const error =
-      typeof message === 'string' ? message : (message as any).message || 'Unexpected error';
+    response.status(errorResponse.statusCode).send(errorResponse);
+  }
 
-    console.error(`[${request.method}] ${request.url}`, exception);
+  private buildErrorResponse(exception: unknown, path: string): ErrorResponse {
+    const errorMessage = exception instanceof Error ? exception.message : 'Internal Server Error';
 
-    response.status(status).send({
-      statusCode: status,
-      error,
-      path: request.url,
+    return {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      code: ErrorCode.INTERNAL_SERVER_ERROR,
+      message: errorMessage,
+      path,
       timestamp: new Date().toISOString(),
-    });
+    };
   }
 }

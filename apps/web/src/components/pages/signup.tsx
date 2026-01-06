@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { signupApi } from '@agam-space/client';
 import Link from 'next/link';
 import { useServerConfigStore } from '@/store/server-config.store';
+import { parseError } from '@/lib/error-utils';
 
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({ username: '', email: '', password: '' });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const config = useServerConfigStore(s => s.config);
@@ -20,6 +22,7 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
 
     try {
       await signupApi(form.username, form.email, form.password);
@@ -29,7 +32,17 @@ export default function SignupPage() {
         router.push('/login');
       }, 5000);
     } catch (err) {
-      setError((err as Error).message);
+      const { message, fieldErrors: validationErrors } = parseError(err);
+
+      if (validationErrors) {
+        const errorMap: Record<string, string> = {};
+        validationErrors.forEach(e => {
+          errorMap[e.field] = e.message;
+        });
+        setFieldErrors(errorMap);
+      } else {
+        setError(message);
+      }
     }
   }
 
@@ -65,6 +78,9 @@ export default function SignupPage() {
                 onChange={e => setForm({ ...form, username: e.target.value })}
                 required
               />
+              {fieldErrors.username && (
+                <p className='text-sm text-red-500'>{fieldErrors.username}</p>
+              )}
             </div>
             <div className='space-y-2'>
               <Label htmlFor='email'>Email (optional)</Label>
@@ -75,6 +91,7 @@ export default function SignupPage() {
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
               />
+              {fieldErrors.email && <p className='text-sm text-red-500'>{fieldErrors.email}</p>}
             </div>
             <div className='space-y-2'>
               <Label htmlFor='password'>Password</Label>
@@ -86,6 +103,9 @@ export default function SignupPage() {
                 onChange={e => setForm({ ...form, password: e.target.value })}
                 required
               />
+              {fieldErrors.password && (
+                <p className='text-sm text-red-500'>{fieldErrors.password}</p>
+              )}
             </div>
 
             <Button className='w-full' type='submit'>
