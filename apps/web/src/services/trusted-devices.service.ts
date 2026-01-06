@@ -253,7 +253,7 @@ export const TrustedDevicesService = {
         } else if (apiErr.isServerError()) {
           message = 'Server error occurred. Please try again later.';
         } else {
-          message = apiErr.errorMessage || apiErr.message;
+          message = apiErr.message;
         }
       }
       toast.error(message);
