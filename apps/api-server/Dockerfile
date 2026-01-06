@@ -72,7 +72,7 @@ RUN apk add --no-cache wget tini && \
            /usr/local/bin/npx \
            /usr/local/bin/yarn \
            /usr/local/bin/yarnpkg \
-           /usr/local/bin/corepack
+           /usr/local/bin/corepack || true
 
 ARG BUILD_ID
 ARG BUILD_COMMIT
