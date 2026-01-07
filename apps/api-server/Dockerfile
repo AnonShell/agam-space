@@ -65,17 +65,6 @@ COPY --from=builder /app/apps/web/out ./deploy/public
 # --- 3. Hardened Runner Stage: Security-hardened production image ---
 FROM dhi.io/node:22-alpine3.23 AS runner-hardened
 
-RUN apk update && apk add --no-cache wget tini
-
-RUN rm -rf /usr/local/lib/node_modules/npm \
-           /usr/local/lib/node_modules/corepack \
-           /usr/local/bin/npm \
-           /usr/local/bin/npx \
-           /usr/local/bin/yarn \
-           /usr/local/bin/yarnpkg \
-           /usr/local/bin/corepack \
-           2>/dev/null || true
-
 ARG BUILD_ID
 ARG BUILD_COMMIT
 ARG APP_VERSION
@@ -89,16 +78,15 @@ WORKDIR /app
 
 COPY --from=deps /app/deploy/ /app/
 
-RUN chmod -R 555 /app/public
+COPY --from=deps --chmod=555 /app/deploy/public /app/public
 
 VOLUME ["/data"]
 
 EXPOSE 3331
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-  CMD wget -q --spider http://localhost:3331/api/v1/server/health || exit 1
+  CMD ["node", "-e", "require('http').get('http://localhost:3331/api/v1/server/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>{process.exit(1)})"]
 
-ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/main.js"]
 
 
