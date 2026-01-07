@@ -10,7 +10,6 @@ export function isText(mime: string, filename?: string): boolean {
     'application/yaml',
     'application/x-yaml',
     'application/x-env',
-    'application/octet-stream', // fallback
   ];
 
   if (mime.startsWith('text/')) return true;

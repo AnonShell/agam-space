@@ -65,7 +65,7 @@ COPY --from=builder /app/apps/web/out ./deploy/public
 # --- 3. Runner Stage: Minimal production image ---
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache wget su-exec && \
+RUN apk add --no-cache wget su-exec tini && \
     rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
            /usr/local/bin/npm \
@@ -98,5 +98,5 @@ EXPOSE 3331
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD wget -q --spider http://localhost:3131/api/v1/server/health || exit 1
 
-ENTRYPOINT ["/usr/local/bin/init.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/init.sh"]
 CMD ["node", "dist/main.js"]

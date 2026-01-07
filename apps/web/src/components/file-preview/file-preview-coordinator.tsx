@@ -27,15 +27,8 @@ export function FilePreviewCoordinator({ fileEntry, data, onClose }: Props) {
         language={language}
         fileId={fileEntry.id}
         fileName={fileEntry.name}
-        onSave={async updated => {
-          const updatedBytes = new TextEncoder().encode(updated);
-          // const encryptedChunks = await encryptIntoChunks(updatedBytes, encryptionKey)
-          // await uploadChunks(fileId, encryptedChunks)
-          // console.log('saving updated text', {
-          //   fileId: fileEntry.id,
-          //   updatedBytes,
-          //   fileEntryName: fileEntry.name,
-          // });
+        onSave={async () => {
+          //TODO: implement save functionality
         }}
       />
     );
