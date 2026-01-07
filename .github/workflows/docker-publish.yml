@@ -126,8 +126,12 @@ jobs:
             VERSION="dev-${SHORT_SHA}"
             DOCKERHUB_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev"
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev"
-            PLATFORMS="linux/arm64"
-            BUILD_HARDENED="false"
+            
+            DOCKERHUB_HARDENED_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev-hardened"
+            GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev-hardened"
+            
+            PLATFORMS="linux/amd64,linux/arm64"
+            BUILD_HARDENED="true"
           fi
 
           TAGS="${DOCKERHUB_TAGS},${GHCR_TAGS}"

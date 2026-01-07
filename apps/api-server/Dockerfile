@@ -74,11 +74,17 @@ ENV BUILD_ID=${BUILD_ID} \
     APP_VERSION=${APP_VERSION} \
     NODE_ENV=production
 
+USER root
+
 WORKDIR /app
 
 COPY --from=deps /app/deploy/ /app/
 
 COPY --from=deps --chmod=555 /app/deploy/public /app/public
+
+COPY --chmod=755 ./apps/api-server/init.sh /usr/local/bin/init.sh
+
+COPY --from=alpine:3.23 /sbin/su-exec /sbin/su-exec
 
 VOLUME ["/data"]
 
@@ -87,13 +93,14 @@ EXPOSE 3331
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD ["node", "-e", "require('http').get('http://localhost:3331/api/v1/server/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>{process.exit(1)})"]
 
+ENTRYPOINT ["/usr/local/bin/init.sh"]
 CMD ["node", "dist/main.js"]
 
 
 # --- 4. Runner Stage: Minimal production image (DEFAULT) ---
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache wget tini && \
+RUN apk add --no-cache wget su-exec && \
     rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
            /usr/local/bin/npm \
@@ -117,6 +124,8 @@ COPY --from=deps /app/deploy/ /app/
 
 RUN chmod -R 555 /app/public
 
+COPY --chmod=755 ./apps/api-server/init.sh /usr/local/bin/init.sh
+
 VOLUME ["/data"]
 
 EXPOSE 3331
@@ -124,6 +133,5 @@ EXPOSE 3331
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD wget -q --spider http://localhost:3331/api/v1/server/health || exit 1
 
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/usr/local/bin/init.sh"]
 CMD ["node", "dist/main.js"]
-
