@@ -1,19 +1,25 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 
 export function RenameDialog({
-                               open,
-                               entryId,
-                               isFolder,
-                               currentName,
-                               onClose,
-                               onRename,
-                               checkNameExists,
-                             }: {
+  open,
+  entryId,
+  isFolder,
+  currentName,
+  onClose,
+  onRename,
+  checkNameExists,
+}: {
   open: boolean;
   entryId: string;
   isFolder: boolean;
@@ -35,7 +41,10 @@ export function RenameDialog({
     const trimmed = newName.trim();
     if (!trimmed) return setError('Name cannot be empty');
     if (trimmed === currentName) return onClose();
-    console.log(`checking if name exists for entryId: ${entryId}, isFolder: ${isFolder}, name: ${trimmed}`, checkNameExists(entryId, isFolder, trimmed));
+    console.log(
+      `checking if name exists for entryId: ${entryId}, isFolder: ${isFolder}, name: ${trimmed}`,
+      checkNameExists(entryId, isFolder, trimmed)
+    );
     if (checkNameExists(entryId, isFolder, trimmed)) return setError('Name already exists');
     onRename(entryId, isFolder, trimmed);
     onClose();
@@ -43,24 +52,26 @@ export function RenameDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className='bg-background'>
         <DialogHeader>
           <DialogTitle>Rename</DialogTitle>
         </DialogHeader>
         <Input
           value={newName}
-          onChange={(e) => {
+          onChange={e => {
             setNewName(e.target.value);
             setError('');
           }}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter') handleSubmit();
           }}
           autoFocus
         />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <DialogFooter className="pt-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+        {error && <p className='text-red-500 text-sm'>{error}</p>}
+        <DialogFooter className='pt-2'>
+          <Button variant='outline' onClick={onClose}>
+            Cancel
+          </Button>
           <Button onClick={handleSubmit}>Rename</Button>
         </DialogFooter>
       </DialogContent>

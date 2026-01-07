@@ -23,12 +23,12 @@ export function ImagePreview({ fileEntry, data }: Props) {
   if (!blobUrl) return null;
 
   return (
-    <div className='w-full h-full flex items-center justify-center overflow-auto'>
+    <div className='w-full h-full flex items-center justify-center pb-8'>
       <img
         src={blobUrl}
         alt={fileEntry.name}
         loading='lazy'
-        className='max-h-[80vh] max-w-full rounded shadow object-contain'
+        className='max-h-[85vh] max-w-[90vw] object-contain'
       />
     </div>
   );

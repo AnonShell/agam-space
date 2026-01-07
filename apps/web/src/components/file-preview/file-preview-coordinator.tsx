@@ -10,9 +10,10 @@ import { TextFileEditor } from './text-editor';
 type Props = {
   fileEntry: FileEntry;
   data: Uint8Array;
+  onClose?: () => void;
 };
 
-export function FilePreviewCoordinator({ fileEntry, data }: Props) {
+export function FilePreviewCoordinator({ fileEntry, data, onClose }: Props) {
   if (isImage(fileEntry.mime)) {
     return <ImagePreview data={data} fileEntry={fileEntry} />;
   }
@@ -30,11 +31,11 @@ export function FilePreviewCoordinator({ fileEntry, data }: Props) {
           const updatedBytes = new TextEncoder().encode(updated);
           // const encryptedChunks = await encryptIntoChunks(updatedBytes, encryptionKey)
           // await uploadChunks(fileId, encryptedChunks)
-          console.log('saving updated text', {
-            fileId: fileEntry.id,
-            updatedBytes,
-            fileEntryName: fileEntry.name,
-          });
+          // console.log('saving updated text', {
+          //   fileId: fileEntry.id,
+          //   updatedBytes,
+          //   fileEntryName: fileEntry.name,
+          // });
         }}
       />
     );
@@ -48,5 +49,5 @@ export function FilePreviewCoordinator({ fileEntry, data }: Props) {
   //   return <VideoPreview data={fileData} mimeType={mimeType} />
   // }
 
-  return <UnsupportedPreview fileEntry={fileEntry} />;
+  return <UnsupportedPreview fileEntry={fileEntry} onClose={onClose} />;
 }

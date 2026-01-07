@@ -68,7 +68,7 @@ export function RecoveryKeyModal({ open, onClose }: Props) {
         }
       }}
     >
-      <DialogContent>
+      <DialogContent className='bg-background'>
         <DialogHeader>
           <DialogTitle>View Recovery Key</DialogTitle>
         </DialogHeader>

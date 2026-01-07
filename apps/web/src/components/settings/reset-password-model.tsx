@@ -90,7 +90,7 @@ export function ResetPasswordModal({ open, onClose }: Props) {
         }
       }}
     >
-      <DialogContent>
+      <DialogContent className='bg-background'>
         <DialogHeader>
           <DialogTitle>Reset Master Password</DialogTitle>
         </DialogHeader>

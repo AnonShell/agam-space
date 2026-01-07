@@ -11,7 +11,6 @@ import {
   RefreshCw,
   SortAsc,
   Trash,
-  X,
 } from 'lucide-react';
 import {
   ClientRegistry,
@@ -36,11 +35,7 @@ import { FileUploadButton } from '@/components/upload/file-upload-button';
 import { useExplorerRefreshStore } from '@/store/explorer-refresh-store';
 import { FileDropZone } from '@/components/upload/file-drop-zone';
 import { useUploadStore } from '@/store/upload-store';
-import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { FilePreview } from '@/components/file-preview/file-preview';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { DownloadAction } from '@/components/download/download-action';
-import { formatBytes } from '@/utils/file';
+import { FilePreviewModal } from '@/components/file-preview/file-preview-modal';
 import { MoveDialog } from '@/components/explorer/move-dialog';
 import { ExplorerBreadcrumb } from '@/components/explorer/explorer-breadcrumb';
 import { WebUploadService } from '@/services/web-upload-files.service';
@@ -616,53 +611,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
           )}
         </main>
 
-        {/* File preview modal */}
-        <Dialog open={!!previewingFile} onOpenChange={() => setPreviewingFile(null)}>
-          <DialogContent
-            aria-describedby={undefined}
-            className='w-full max-w-[90vw] max-h-[90vh] p-0 overflow-hidden [&>button.absolute]:hidden'
-          >
-            <VisuallyHidden>
-              <DialogTitle>{previewingFile?.name ?? 'Preview file'}</DialogTitle>
-            </VisuallyHidden>
-
-            {/* Header */}
-            <div className='flex items-center justify-between px-4 py-3 border-b'>
-              <h2 className='text-base font-semibold truncate'>{previewingFile?.name}</h2>
-              <DialogClose asChild>
-                <button
-                  className='rounded p-1 text-muted-foreground hover:text-foreground'
-                  aria-label='Close'
-                >
-                  <X className='w-5 h-5' />
-                </button>
-              </DialogClose>
-            </div>
-
-            {/* Responsive content area */}
-            <div className='flex flex-col md:flex-row h-full max-h-[calc(90vh-3rem)]'>
-              {/* Preview */}
-              <div className='flex-1 overflow-auto p-4'>
-                {previewingFile && <FilePreview fileEntry={previewingFile} />}
-              </div>
-
-              {/* Info panel */}
-              <div className='w-full md:w-64 border-t md:border-t-0 md:border-l p-4 bg-muted/40 text-sm space-y-2'>
-                <div>
-                  <strong>Name:</strong> {previewingFile?.name}
-                </div>
-                <div>
-                  <strong>Type:</strong> {previewingFile?.mime}
-                </div>
-                <div>
-                  <strong>Size:</strong> {formatBytes(previewingFile?.size ?? 0)}
-                </div>
-                <DownloadAction fileEntry={previewingFile!} />
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <FilePreviewModal file={previewingFile} onClose={() => setPreviewingFile(null)} />
       </div>
+
       <MoveDialog
         open={moveDialogOpen}
         folderId={folderId}

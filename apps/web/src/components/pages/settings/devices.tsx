@@ -204,7 +204,7 @@ export default function TrustedDevicesPage() {
         </div>
       </div>
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent>
+        <DialogContent className='bg-background'>
           <DialogHeader>
             <DialogTitle>Register Trusted Device</DialogTitle>
           </DialogHeader>

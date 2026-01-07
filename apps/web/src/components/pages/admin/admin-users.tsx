@@ -272,7 +272,7 @@ export function AdminUserList() {
       </div>
 
       <Dialog open={quotaDialogOpen} onOpenChange={setQuotaDialogOpen}>
-        <DialogContent>
+        <DialogContent className='bg-background'>
           <DialogHeader>
             <DialogTitle>Edit User Quota</DialogTitle>
             <DialogDescription>Set the storage quota for this user.</DialogDescription>

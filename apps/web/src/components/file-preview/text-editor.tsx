@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 
 // Lazy load Monaco
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
@@ -37,26 +36,21 @@ export function TextFileEditor({ content, fileId, language = 'plaintext', onSave
   };
 
   return (
-    <div className='flex flex-col h-[90vh] w-full'>
-      {/* <div className="flex justify-end px-4 py-1 border-b bg-background">
-        <Button
-          onClick={handleSave}
-          disabled={saving || !isChanged}
-          className="w-auto h-8 text-sm"
-        >
-          {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
-        </Button>
-      </div> */}
-
+    <div className='flex flex-col h-full w-full max-h-[85vh] max-w-[90vw] rounded-lg overflow-hidden border border-border/50 mt-4 mb-8'>
       <div className='flex-1'>
         <MonacoEditor
           language={language}
           value={value}
           onChange={v => setValue(v ?? '')}
           theme='vs-dark'
-          options={{ minimap: { enabled: false }, fontSize: 14 }}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            readOnly: true,
+            scrollBeyondLastLine: false,
+          }}
           width='100%'
-          height='100%' // ✅ required
+          height='100%'
         />
       </div>
     </div>
