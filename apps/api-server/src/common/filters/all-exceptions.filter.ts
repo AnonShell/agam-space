@@ -21,13 +21,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     response.status(errorResponse.statusCode).send(errorResponse);
   }
 
-  private buildErrorResponse(exception: unknown, path: string): ErrorResponse {
-    const errorMessage = exception instanceof Error ? exception.message : 'Internal Server Error';
-
+  private buildErrorResponse(_exception: unknown, path: string): ErrorResponse {
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       code: ErrorCode.INTERNAL_SERVER_ERROR,
-      message: errorMessage,
+      message: 'Server encountered an unexpected error',
       path,
       timestamp: new Date().toISOString(),
     };

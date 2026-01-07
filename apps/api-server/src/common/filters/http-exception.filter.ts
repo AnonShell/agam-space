@@ -33,6 +33,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const timestamp = new Date().toISOString();
     const defaultCode = status >= 500 ? ErrorCode.INTERNAL_SERVER_ERROR : ErrorCode.BAD_REQUEST;
 
+    if (status >= 500) {
+      return {
+        statusCode: status,
+        code: defaultCode,
+        message: 'Server encountered an unexpected error',
+        path,
+        timestamp,
+      };
+    }
+
+    // For 4xx errors, include details for clients
     if (typeof exceptionResponse === 'string') {
       return {
         statusCode: status,

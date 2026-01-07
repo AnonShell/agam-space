@@ -90,14 +90,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Docker Hardened Images (dhi.io)
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: docker/login-action@v3
-        with:
-          registry: dhi.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Extract metadata
         id: meta
         run: |
@@ -113,25 +105,14 @@ jobs:
             
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}"
             GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest"
-            
-            DOCKERHUB_HARDENED_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}-hardened"
-            DOCKERHUB_HARDENED_TAGS="${DOCKERHUB_HARDENED_TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest-hardened"
-
-            GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}-hardened"
-            GHCR_HARDENED_TAGS="${GHCR_HARDENED_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest-hardened"
 
             PLATFORMS="linux/amd64,linux/arm64"
-            BUILD_HARDENED="true"
           else
             VERSION="dev-${SHORT_SHA}"
             DOCKERHUB_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev"
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev"
             
-            DOCKERHUB_HARDENED_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev-hardened"
-            GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev-hardened"
-            
             PLATFORMS="linux/amd64,linux/arm64"
-            BUILD_HARDENED="true"
           fi
 
           TAGS="${DOCKERHUB_TAGS},${GHCR_TAGS}"
@@ -143,11 +124,6 @@ jobs:
           echo "commit=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
-          echo "build_hardened=${BUILD_HARDENED}" >> $GITHUB_OUTPUT
-
-          if [[ "${BUILD_HARDENED}" == "true" ]]; then
-            echo "hardened_tags=${DOCKERHUB_HARDENED_TAGS},${GHCR_HARDENED_TAGS}" >> $GITHUB_OUTPUT
-          fi
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -157,24 +133,6 @@ jobs:
           target: runner
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            APP_VERSION=${{ steps.meta.outputs.version }}
-            BUILD_COMMIT=${{ steps.meta.outputs.commit }}
-            BUILD_ID=${{ github.run_number }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: ${{ steps.meta.outputs.platforms }}
-
-      - name: Build and push Hardened Docker image
-        if: steps.meta.outputs.build_hardened == 'true'
-        continue-on-error: true
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./apps/api-server/Dockerfile
-          target: runner-hardened
-          push: true
-          tags: ${{ steps.meta.outputs.hardened_tags }}
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
             BUILD_COMMIT=${{ steps.meta.outputs.commit }}
@@ -200,7 +158,4 @@ jobs:
 
       - name: Image digest
         run: |
-          echo "Normal image pushed with tags: ${{ steps.meta.outputs.tags }}"
-          if [[ "${{ steps.meta.outputs.build_hardened }}" == "true" ]]; then
-            echo "Hardened image pushed with tags: ${{ steps.meta.outputs.hardened_tags }}"
-          fi
+          echo "Image pushed with tags: ${{ steps.meta.outputs.tags }}"

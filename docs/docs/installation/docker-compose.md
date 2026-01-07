@@ -36,37 +36,14 @@ Use either registry in the `image:` field below.
 
 Multiple image tags are available:
 
-| Tag               | Description                                                              |
-| ----------------- | ------------------------------------------------------------------------ |
-| `latest`          | Latest stable release                                                    |
-| `v0.2.0`          | Specific version (example)                                               |
-| `v0.2.0-hardened` | Hardened variant of specific version                                     |
-| `dev`             | Development builds from main branch                                      |
-| `dev-hardened`    | Hardened variant of specific version Development builds from main branch |
+| Tag      | Description                                    |
+| -------- | ---------------------------------------------- |
+| `latest` | Latest stable release                          |
+| `v0.2.0` | Specific version (example)                     |
+| `dev`    | Development builds from main branch (unstable) |
 
 **Multi-arch support:** All images support both `amd64` and `arm64`
 architectures.
-
-### Hardened Image
-
-For enhanced security, hardened image variants are available (tags ending with
-`-hardened`).
-
-The hardened image is built using
-[Docker Hub Images (DHI)](https://www.docker.com/products/hardened-images) -
-official pre-hardened base images with:
-
-- Regular CVE fixes and security patches
-- Minimal base without shell access
-- Reduced attack surface
-- Only Node.js runtime and application code included
-
-:::note **Recommendation: Use the hardened image by default**
-
-Always use the **hardened image** (`-hardened` tag) for the best security. If
-you ever need to shell into the container for debugging, simply switch to the
-standard image tag - it works seamlessly without any other configuration
-changes. :::
 
 ### Configuration
 
@@ -101,7 +78,7 @@ services:
       HTTP_PORT: 3331
       ALLOW_NEW_SIGNUP: 'true'
     volumes:
-      - ./data/files:/data/files
+      - ./data:/data
     depends_on:
       - postgres
     restart: unless-stopped
@@ -185,24 +162,42 @@ Configure SSL certificates with your reverse proxy of choice.
 
 ## Storage Configuration
 
+### File Permissions
+
+Container runs as root by default.
+
+**Optional: Run as specific user**
+
+```yaml
+agam:
+  environment:
+    PUID: 1000 # Your user ID (run `id -u`)
+    PGID: 1000 # Your group ID (run `id -g`)
+```
+
+If PUID/PGID don't match your `/data` directory ownership, container fails with
+an error. Fix by changing directory ownership:
+
+```bash
+sudo chown -R 1000:1000 ./data
+```
+
 ### Default Storage
 
-Files stored in `./data/files/` by default.
+Files stored in `/data/files/` (maps to `./data/files/` on host).
+
+Other directories:
+
+- `/data/config` - Configuration
+- `/data/logs` - Logs
+- `/data/cache` - Cache
 
 ### Custom Storage Path
 
-To use a different location:
-
 ```yaml
-volumes:
-  - /mnt/storage/agam:/data/files
-```
-
-Create directory with correct permissions:
-
-```bash
-mkdir -p /mnt/storage/agam
-chown -R 1000:1000 /mnt/storage/agam
+agam:
+  volumes:
+    - /mnt/storage/agam:/data
 ```
 
 ## Updates
