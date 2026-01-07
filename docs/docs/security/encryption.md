@@ -68,22 +68,41 @@ crypto.
 
 Your master password is the root of trust. All encryption keys derive from it.
 
-```
-Master Password (user-chosen, never stored)
-    ↓
-    Argon2id Key Derivation
-    ↓
-Cryptographic Master Key (CMK)
-32 bytes, random, encrypted at rest
-    ↓
-Folder Keys (one per folder)
-32 bytes each, random, encrypted with parent folder key or CMK for root
-    ↓
-File Encryption Keys (FEK - one per file)
-32 bytes each, random, encrypted with folder key
-    ↓
-Encrypted File Chunks
-XChaCha20-Poly1305, 5MB chunks
+```mermaid
+flowchart TD
+   subgraph Derivation["Derivation"]
+    MP["Master Password<br/>(user-chosen, never stored)"]
+    KDF["Argon2id KDF<br/>(CPU & GPU resistant)"]
+    KEK["KEK<br/>(derived, ephemeral)"]
+
+    MP --> KDF --> KEK
+  end
+
+  subgraph Recovery["Recovery"]
+    RK["Recovery Key<br/>(high-entropy, user-stored)"]
+  end
+
+  subgraph Master_Key["Master Key"]
+    CMK["Cryptographic Master Key (CMK)<br/>32 bytes random<br/>(encrypted at rest)"]
+  end
+
+  subgraph Identity["Identity & Authentication"]
+    IDK["Ed25519 Identity Key<br/>(derived from CMK)<br/>used for signing"]
+  end
+
+  subgraph Hierarchy["Key Hierarchy"]
+    FK["Folder Keys<br/>(one per folder)<br/>random 32 bytes"]
+    FEK["File Encryption Keys (FEK)<br/>one per file<br/>random 32 bytes"]
+    FC["File Chunks<br/>(XChaCha20-Poly1305<br/> 5MB chunks)"]
+
+    FK -->|wraps| FEK -->|encrypts| FC
+  end
+
+  KEK -->|wraps / unwraps| CMK
+  RK -->|wraps / unwraps| CMK
+
+  CMK -->|wraps| FK
+  CMK -->|derives| IDK
 ```
 
 ### Master Password
@@ -123,6 +142,51 @@ details.
 Server stores only encrypted CMK. Without master password, cannot derive key to
 decrypt CMK.
 
+### Recovery Key
+
+High-entropy backup key to restore CMK access if master password is forgotten.
+
+**Generation:** Random 32 bytes (256 bits), Base58 encoded
+
+**Storage:**
+
+- **Client-side:** Displayed once during setup (user must save offline). Can be
+  retrieved later from settings by unlocking with master password.
+- **Server-side:** Two encrypted copies:
+  - CMK encrypted with Recovery Key (enables recovery)
+  - Recovery Key encrypted with CMK (enables retrieval from settings)
+
+**Encryption format:**
+
+```
+Recovery Key → XChaCha20-Poly1305 → Encrypted CMK
+CMK → XChaCha20-Poly1305 → Encrypted Recovery Key
+```
+
+**Usage:** Alternative CMK unlock without Argon2id derivation. Store securely
+offline (password manager or printed). Losing both master password and recovery
+key means permanent data loss.
+
+### Identity Key
+
+Ed25519 keypair derived from CMK for cryptographic signatures.
+
+**Derivation:**
+
+```
+CMK → BLAKE3 ("agam-space-identity-key-v1") → Ed25519 seed → Keypair
+```
+
+**Storage:**
+
+- **Public key:** 32 bytes, stored on server (base64)
+- **Private key:** 32 bytes, derived on-demand from CMK (never stored)
+- Deterministic: Same CMK always produces same keypair
+
+**Usage:** Proves CMK possession for critical operations (changing master
+password, etc). Client signs payload + timestamp with private key. Server
+verifies using public key. Time-bound challenges prevent replay attacks.
+
 ### Folder Keys
 
 Each folder gets a random 32-byte encryption key.
@@ -150,6 +214,34 @@ Each file gets a random 256-bit key, encrypted with its folder key.
 ## Encryption Process
 
 ### File Upload
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant Server
+
+    User->>Browser: Select file
+    Browser->>Browser: Generate random FEK (32 bytes)
+    Browser->>Browser: Encrypt FEK with folder key
+    Browser->>Browser: Encrypt metadata (filename, MIME type)
+    Browser->>Server: Create file entry (encrypted FEK + metadata)
+    Server->>Browser: File ID
+
+    Browser->>Browser: Split file into 5MB chunks
+
+    loop For each chunk
+        Browser->>Browser: Generate random nonce (24 bytes)
+        Browser->>Browser: Encrypt chunk (XChaCha20-Poly1305)
+        Browser->>Browser: Serialize to TLV binary
+        Browser->>Browser: Compute BLAKE3 checksum
+        Browser->>Server: Upload encrypted chunk + checksum
+    end
+
+    Browser->>Server: Mark upload complete
+
+    Note over Server: Server never sees:<br/>File content, filename,<br/>MIME type, or FEK
+```
 
 **Step-by-step:**
 
@@ -187,6 +279,34 @@ Each file gets a random 256-bit key, encrypted with its folder key.
 **Server never sees:** File content, filename, MIME type, or FEK in plaintext.
 
 ### File Download
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant Server
+
+    User->>Browser: Request file
+    Browser->>Server: Fetch file metadata
+    Server->>Browser: Encrypted FEK + metadata + chunk count
+
+    Browser->>Browser: Decrypt folder key (using parent/CMK)
+    Browser->>Browser: Decrypt FEK (using folder key)
+    Browser->>Browser: Decrypt metadata (filename, MIME)
+
+    loop For each chunk
+        Browser->>Server: Fetch encrypted chunk
+        Server->>Browser: Encrypted chunk
+        Browser->>Browser: Deserialize TLV to envelope
+        Browser->>Browser: Decrypt chunk (using FEK)
+    end
+
+    Browser->>Browser: Reassemble chunks into file
+    Browser->>User: Download decrypted file
+    Browser->>Browser: Clear decrypted data from memory
+
+    Note over Browser: All decryption happens<br/>in browser memory
+```
 
 **Step-by-step:**
 

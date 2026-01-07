@@ -32,6 +32,46 @@ Use either registry in the `image:` field below.
 
 :::
 
+### Docker Tags
+
+Multiple image tags are available:
+
+| Tag               | Description                                                              |
+| ----------------- | ------------------------------------------------------------------------ |
+| `latest`          | Latest stable release                                                    |
+| `v0.2.0`          | Specific version (example)                                               |
+| `v0.2.0-hardened` | Hardened variant of specific version                                     |
+| `dev`             | Development builds from main branch                                      |
+| `dev-hardened`    | Hardened variant of specific version Development builds from main branch |
+
+**Multi-arch support:** All images support both `amd64` and `arm64`
+architectures.
+
+### Hardened Image
+
+For enhanced security, hardened image variants are available (tags ending with
+`-hardened`).
+
+The hardened image is built using
+[Docker Hub Images (DHI)](https://www.docker.com/products/hardened-images) -
+official pre-hardened base images with:
+
+- Regular CVE fixes and security patches
+- Minimal base without shell access
+- Reduced attack surface
+- Only Node.js runtime and application code included
+
+:::note **Recommendation: Use the hardened image by default**
+
+Always use the **hardened image** (`-hardened` tag) for the best security. If
+you ever need to shell into the container for debugging, simply switch to the
+standard image tag - it works seamlessly without any other configuration
+changes. :::
+
+### Configuration
+
+Create `docker-compose.yml` with the following content:
+
 ```yaml
 version: '3.8'
 

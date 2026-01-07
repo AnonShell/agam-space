@@ -65,6 +65,63 @@ Windows Hello) that's quick and doesn't require accessing your password manager.
 
 **Registration (one-time):**
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant WebAuthn
+    participant Server
+
+    User->>Browser: Register trusted device
+    Browser->>User: Prompt for master password
+    User->>Browser: Enter master password
+
+    Browser->>Browser: Generate device keypair (X25519)
+    Browser->>Browser: Generate server nonce (16 bytes)
+    Browser->>Browser: Generate device seed (16 bytes)
+    Browser->>Browser: Generate salt (16 bytes)
+    Browser->>Browser: Derive unlock key (Argon2id)
+    Browser->>Browser: Encrypt device private key
+    Browser->>Browser: Encrypt CMK with device public key
+
+    Browser->>WebAuthn: Create WebAuthn credential
+    WebAuthn->>Browser: Credential created
+
+    Browser->>Server: Send server nonce, encrypted CMK, device public key
+    Server->>Server: Store server nonce, encrypted CMK, public key
+
+    Browser->>Browser: Store in IndexedDB:<br/>encrypted private key, device seed,<br/>salt, public key
+```
+
+**Subsequent logins:**
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant WebAuthn
+    participant Server
+
+    User->>Browser: Login (password/SSO)
+    Browser->>User: Biometric prompt
+    User->>WebAuthn: Biometric authentication
+    WebAuthn->>Browser: Authentication signature
+
+    Browser->>Server: WebAuthn signature
+    Server->>Server: Verify signature
+    Server->>Browser: Send server nonce
+
+    Browser->>Browser: Retrieve device seed + salt (IndexedDB)
+    Browser->>Browser: Derive unlock key (Argon2id)
+    Browser->>Browser: Decrypt device private key
+    Browser->>Browser: Decrypt CMK with private key
+    Browser->>Browser: Load CMK into memory
+
+    Note over Browser,Server: Split-key model:<br/>Server nonce + Client seed/salt
+```
+
+**Registration (one-time):**
+
 1. Client generates device keypair (X25519 public/private keys)
 2. Client generates random server nonce (16 bytes)
 3. Client generates random device seed (16 bytes)
@@ -155,6 +212,55 @@ excessive. This feature lets you unlock once, then stays unlocked across all
 tabs until you logout or after every 15 minutes when the server nonce rotates.
 
 **How it works:**
+
+After you unlock (with master password or trusted device):
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant SessionStorage
+    participant Server
+    participant IndexedDB
+
+    Note over Browser: Initial unlock completed
+
+    Browser->>Browser: Generate random client seed (32 bytes)
+    Browser->>SessionStorage: Store client seed
+    Browser->>Server: Request server nonce
+    Server->>Browser: Send server nonce (rotates every 15 min)
+
+    Browser->>Browser: Derive key (Argon2id)<br/>from nonce + seed
+    Browser->>Browser: Encrypt CMK with derived key
+    Browser->>IndexedDB: Store encrypted CMK
+```
+
+**On page reload or new tab:**
+
+```mermaid
+sequenceDiagram
+    participant NewTab
+    participant OtherTabs
+    participant SessionStorage
+    participant Server
+    participant IndexedDB
+
+    NewTab->>SessionStorage: Check for client seed
+    alt Seed not found
+        NewTab->>OtherTabs: Request seed (BroadcastChannel)
+        OtherTabs->>NewTab: Send client seed
+        NewTab->>SessionStorage: Store seed
+    end
+
+    NewTab->>Server: Request server nonce
+    Server->>NewTab: Send current nonce
+
+    NewTab->>NewTab: Derive key (Argon2id)<br/>from nonce + seed
+    NewTab->>IndexedDB: Fetch encrypted CMK
+    NewTab->>NewTab: Decrypt CMK with derived key
+    NewTab->>NewTab: Load CMK into memory
+
+    Note over NewTab,IndexedDB: Split-key model:<br/>Server nonce + Client seed
+```
 
 After you unlock (with master password or trusted device):
 
