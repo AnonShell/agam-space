@@ -60,5 +60,10 @@
     "node": ">=22.0.0",
     "pnpm": ">=10.x"
   },
+  "pnpm": {
+    "overrides": {
+      "qs": ">=6.14.1"
+    }
+  },
   "license": "AGPL-3.0-or-later"
 }
