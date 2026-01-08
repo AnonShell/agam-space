@@ -1,6 +1,7 @@
 import { useAccessBootstrap } from '@/hooks/useAccessBootstrap';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
+import { PageLoader } from '@/components/page-loader';
 
 export default function SettingsRoute() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function SettingsRoute() {
     }
   }, [status, router]);
 
-  if (status !== 'ready') return null;
+  if (status === 'loading') return <PageLoader />;
 
   return null; // Will redirect
 }

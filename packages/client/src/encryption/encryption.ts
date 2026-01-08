@@ -1,6 +1,6 @@
 import { EncryptedEnvelopeCodec } from '@agam-space/core';
 import { EncryptionRegistry } from './encryption-strategy';
-import { AppError, DecryptionError } from '../errors';
+import { DecryptionError } from '../errors';
 
 export async function decryptEnvelope(dataEncrypted: string, key: Uint8Array): Promise<Uint8Array> {
   try {

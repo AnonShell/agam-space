@@ -49,6 +49,16 @@ export class ContentTreeV2Store {
     }
   }
 
+  getFolderItemIds(folderId: string): string[] | null {
+    const itemIds = this.childrenByFolder.get(folderId);
+    return itemIds ? Array.from(itemIds) : null;
+  }
+
+  setFolderItemIds(folderId: string, itemIds: string[]) {
+    this.childrenByFolder.set(folderId, new Set(itemIds));
+    this.markAccess(folderId);
+  }
+
   getItem(itemId: string): ContentEntry | undefined {
     return this.itemsById.get(itemId);
   }
@@ -115,16 +125,32 @@ export class ContentTreeV2Store {
 
       case 'date-modified':
         return (a, b) => {
-          const aDate = (a as any).modifiedAt ?? 0;
-          const bDate = (b as any).modifiedAt ?? 0;
-          return (new Date(aDate).getTime() - new Date(bDate).getTime()) * dir;
+          const aDate = a.updatedAt
+            ? a.updatedAt instanceof Date
+              ? a.updatedAt.getTime()
+              : new Date(a.updatedAt).getTime()
+            : 0;
+          const bDate = b.updatedAt
+            ? b.updatedAt instanceof Date
+              ? b.updatedAt.getTime()
+              : new Date(b.updatedAt).getTime()
+            : 0;
+          return (aDate - bDate) * dir;
         };
 
       case 'date-created':
         return (a, b) => {
-          const aDate = (a as any).modifiedAt ?? 0;
-          const bDate = (b as any).modifiedAt ?? 0;
-          return (new Date(aDate).getTime() - new Date(bDate).getTime()) * dir;
+          const aDate = a.createdAt
+            ? a.createdAt instanceof Date
+              ? a.createdAt.getTime()
+              : new Date(a.createdAt).getTime()
+            : 0;
+          const bDate = b.createdAt
+            ? b.createdAt instanceof Date
+              ? b.createdAt.getTime()
+              : new Date(b.createdAt).getTime()
+            : 0;
+          return (aDate - bDate) * dir;
         };
 
       default:

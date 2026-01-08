@@ -2,16 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  ArrowRightLeft,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  LayoutGrid,
-  RefreshCw,
-  SortAsc,
-  Trash,
-} from 'lucide-react';
+import { ArrowRightLeft, Download, LayoutGrid, RefreshCw, SortAsc, Trash } from 'lucide-react';
 import {
   ClientRegistry,
   ContentEntry,
@@ -49,6 +40,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePreferencesStore } from '@/store/preferences.store';
+import type { SortKey } from '@agam-space/client';
+
+function mapSortKey(uiSortKey: 'name' | 'size' | 'modified' | 'created'): SortKey {
+  if (uiSortKey === 'modified') return 'date-modified';
+  if (uiSortKey === 'created') return 'date-created';
+  return uiSortKey;
+}
 
 type ExplorerState = {
   entries: ContentEntry[];
@@ -80,6 +78,7 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
   const setExplorerView = usePreferencesStore(s => s.setExplorerView);
   const setExplorerSortBy = usePreferencesStore(s => s.setExplorerSortBy);
   const setExplorerSortDir = usePreferencesStore(s => s.setExplorerSortDir);
+  const setExplorerGroupFolders = usePreferencesStore(s => s.setExplorerGroupFolders);
 
   function toggleSelection(id: string) {
     setSelectedIds(prev => {
@@ -99,10 +98,27 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
 
   const loadFolderState = useCallback(
     async (folderId: string) => {
-      const result = await contentTreeManager.getOrFetch(folderId);
+      const sortParams = {
+        key: mapSortKey(explorerPrefs.sortBy),
+        direction: explorerPrefs.sortDir,
+      };
+      console.log(
+        '[ExplorerPage] Loading folder with sort:',
+        sortParams,
+        'groupFolders:',
+        explorerPrefs.groupFolders
+      );
+
+      const result = await contentTreeManager.getOrFetch(
+        folderId,
+        sortParams,
+        explorerPrefs.groupFolders
+      );
+      console.log('[ExplorerPage] Loaded entries:', result?.entries.length, 'items');
+
       setExplorerState(result);
     },
-    [contentTreeManager]
+    [contentTreeManager, explorerPrefs.sortBy, explorerPrefs.sortDir, explorerPrefs.groupFolders]
   );
 
   const refresh = useCallback(
@@ -211,6 +227,19 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
 
     return () => unsub();
   }, [folderId, refresh]);
+
+  useEffect(() => {
+    if (explorerState?.entries) {
+      console.log(
+        '[ExplorerPage] State updated, first 3 entries:',
+        explorerState.entries.slice(0, 3).map(e => ({
+          name: e.name,
+          updatedAt: e.updatedAt,
+          createdAt: e.createdAt,
+        }))
+      );
+    }
+  }, [explorerState]);
 
   const { entries: contentEntries } = explorerState ?? {};
 
@@ -394,71 +423,127 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
             ) : (
               <>
                 {/* General controls */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='h-8 inline-flex items-center gap-2 leading-none'
-                      title='Sort'
+                {/* Sort dropdown - only show in grid view, list view uses column headers */}
+                {explorerPrefs.view === 'grid' && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='h-8 inline-flex items-center gap-2 leading-none'
+                        title='Sort'
+                      >
+                        <SortAsc className='w-4 h-4 mr-1 shrink-0' />
+                        <span className='text-sm'>
+                          {explorerPrefs.sortBy === 'name'
+                            ? 'Name'
+                            : explorerPrefs.sortBy === 'size'
+                              ? 'Size'
+                              : explorerPrefs.sortBy === 'modified'
+                                ? 'Modified'
+                                : 'Created'}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent
+                      align='end'
+                      sideOffset={6}
+                      className='z-50 w-48 rounded-md border bg-white dark:bg-zinc-900 text-black dark:text-white shadow-md'
                     >
-                      <SortAsc className='w-4 h-4 mr-1 shrink-0' />
-                      <span className='text-sm'>
-                        {explorerPrefs.sortBy === 'name'
-                          ? 'Name'
-                          : explorerPrefs.sortBy === 'size'
-                            ? 'Size'
-                            : 'Modified'}
-                      </span>
-                    </Button>
-                  </DropdownMenuTrigger>
+                      {/* Sort By Section */}
+                      <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>
+                        Sort by
+                      </div>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerSortBy('name')}
+                        className={explorerPrefs.sortBy === 'name' ? 'bg-accent' : ''}
+                      >
+                        Name
+                        {explorerPrefs.sortBy === 'name' && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerSortBy('size')}
+                        className={explorerPrefs.sortBy === 'size' ? 'bg-accent' : ''}
+                      >
+                        Size
+                        {explorerPrefs.sortBy === 'size' && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerSortBy('modified')}
+                        className={explorerPrefs.sortBy === 'modified' ? 'bg-accent' : ''}
+                      >
+                        Modified
+                        {explorerPrefs.sortBy === 'modified' && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerSortBy('created')}
+                        className={explorerPrefs.sortBy === 'created' ? 'bg-accent' : ''}
+                      >
+                        Created
+                        {explorerPrefs.sortBy === 'created' && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
 
-                  <DropdownMenuContent
-                    align='end'
-                    sideOffset={6}
-                    className='z-50 w-44 rounded-md border bg-popover text-popover-foreground shadow-md'
-                  >
-                    <DropdownMenuItem onClick={() => setExplorerSortBy('name')}>
-                      Name{' '}
-                      {explorerPrefs.sortBy === 'name'
-                        ? explorerPrefs.sortDir === 'asc'
-                          ? '↑'
-                          : '↓'
-                        : ''}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setExplorerSortBy('size')}>
-                      Size{' '}
-                      {explorerPrefs.sortBy === 'size'
-                        ? explorerPrefs.sortDir === 'asc'
-                          ? '↑'
-                          : '↓'
-                        : ''}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setExplorerSortBy('updatedAt')}>
-                      Modified{' '}
-                      {explorerPrefs.sortBy === 'updatedAt'
-                        ? explorerPrefs.sortDir === 'asc'
-                          ? '↑'
-                          : '↓'
-                        : ''}
-                    </DropdownMenuItem>
+                      <DropdownMenuSeparator />
 
-                    <DropdownMenuSeparator />
+                      {/* Sort Direction Section */}
+                      <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>
+                        Sort direction
+                      </div>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerSortDir('asc')}
+                        className={explorerPrefs.sortDir === 'asc' ? 'bg-accent' : ''}
+                      >
+                        A → Z
+                        {explorerPrefs.sortDir === 'asc' && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerSortDir('desc')}
+                        className={explorerPrefs.sortDir === 'desc' ? 'bg-accent' : ''}
+                      >
+                        Z → A
+                        {explorerPrefs.sortDir === 'desc' && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={() =>
-                        setExplorerSortDir(explorerPrefs.sortDir === 'asc' ? 'desc' : 'asc')
-                      }
-                    >
-                      Direction: {explorerPrefs.sortDir === 'asc' ? 'Asc' : 'Desc'}
-                      {explorerPrefs.sortDir === 'asc' ? (
-                        <ChevronUp className='w-4 h-4 ml-auto' />
-                      ) : (
-                        <ChevronDown className='w-4 h-4 ml-auto' />
-                      )}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      <DropdownMenuSeparator />
+
+                      {/* Group Folders Section */}
+                      <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>
+                        Display
+                      </div>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerGroupFolders(true)}
+                        className={explorerPrefs.groupFolders ? 'bg-accent' : ''}
+                      >
+                        Folders first
+                        {explorerPrefs.groupFolders && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setExplorerGroupFolders(false)}
+                        className={!explorerPrefs.groupFolders ? 'bg-accent' : ''}
+                      >
+                        Mix folders & files
+                        {!explorerPrefs.groupFolders && (
+                          <span className='ml-auto text-primary'>✓</span>
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
                 <Button variant='ghost' size='icon' onClick={() => refresh()} title='Refresh'>
                   <RefreshCw className='w-5 h-5' />
@@ -495,117 +580,142 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
           ) : explorerPrefs.view === 'grid' ? (
             <div className='p-4 space-y-2'>
               <div className='grid [grid-template-columns:repeat(auto-fill,minmax(200px,1fr))] gap-4'>
-                {contentEntries
-                  ?.filter(f => f.isFolder)
-                  .map((folder, index) => (
-                    <ExplorerItem
-                      key={folder.id}
-                      entry={folder}
-                      view='grid'
-                      href={`/explorer/${folder.id}`}
-                      selected={selectedIds.has(folder.id)}
-                      multiSelect
-                      onClick={e => handleItemClick(e, folder.id, index)}
-                      onTrash={() => handleTrash(folder.id, true)}
-                      checkIfNameExists={checkIfNameExists}
-                      onRename={handleRename}
-                      onMove={entry => {
-                        selectedIds.add(entry.id);
-                        setSelectedEntries(getSelectedEntries());
-                        setMoveDialogOpen(true);
-                      }}
-                    />
-                  ))}
-                {contentEntries
-                  ?.filter(f => !f.isFolder)
-                  .map((file, index) => (
-                    <ExplorerItem
-                      key={file.id}
-                      entry={file}
-                      view='grid'
-                      selected={selectedIds.has(file.id)}
-                      onDoubleClick={() => {
-                        if (!file.isFolder) setPreviewingFile(file);
-                      }}
-                      multiSelect
-                      onClick={e =>
-                        handleItemClick(e, file.id, explorerState?.folders.length + index)
-                      }
-                      onTrash={() => handleTrash(file.id, false)}
-                      checkIfNameExists={checkIfNameExists}
-                      onRename={handleRename}
-                      onMove={entry => {
-                        selectedIds.add(entry.id);
-                        setSelectedEntries(getSelectedEntries());
-                        setMoveDialogOpen(true);
-                      }}
-                    />
-                  ))}
+                {contentEntries?.map((entry, index) => (
+                  <ExplorerItem
+                    key={entry.id}
+                    entry={entry}
+                    view='grid'
+                    href={entry.isFolder ? `/explorer/${entry.id}` : undefined}
+                    selected={selectedIds.has(entry.id)}
+                    multiSelect
+                    onClick={e => handleItemClick(e, entry.id, index)}
+                    onDoubleClick={
+                      !entry.isFolder ? () => setPreviewingFile(entry as FileEntry) : undefined
+                    }
+                    onTrash={() => handleTrash(entry.id, entry.isFolder)}
+                    checkIfNameExists={checkIfNameExists}
+                    onRename={handleRename}
+                    onMove={item => {
+                      selectedIds.add(item.id);
+                      setSelectedEntries(getSelectedEntries());
+                      setMoveDialogOpen(true);
+                    }}
+                    onRecomputeSize={
+                      entry.isFolder
+                        ? async folder => {
+                            // TODO: Implement folder size recomputation
+                            console.log('Recompute size for folder:', folder.id);
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
               </div>
             </div>
           ) : (
             <>
               {/* ✅ list view header row */}
-              <div className='flex items-center h-9 px-4 text-sm text-muted-foreground font-medium border-b bg-muted/40'>
+              <div className='flex items-center h-12 px-4 pr-8 text-sm text-muted-foreground font-medium border-b bg-muted/40'>
                 <div className='w-5' />
-                <div className='flex-1 pl-2'>Name</div>
-                <div className='w-32 text-right'>Size</div>
-                <div className='w-48 text-right'>Modified</div>
+
+                {/* Name column - sortable */}
+                <button
+                  className='flex-1 min-w-0 pl-2 text-left hover:text-foreground transition-colors flex items-center gap-1'
+                  onClick={() => {
+                    if (explorerPrefs.sortBy === 'name') {
+                      setExplorerSortDir(explorerPrefs.sortDir === 'asc' ? 'desc' : 'asc');
+                    } else {
+                      setExplorerSortBy('name');
+                      setExplorerSortDir('asc');
+                    }
+                  }}
+                >
+                  Name
+                  {explorerPrefs.sortBy === 'name' && (
+                    <span className='text-xs'>{explorerPrefs.sortDir === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </button>
+
+                {/* Size column - sortable */}
+                <button
+                  className='w-24 sm:w-32 md:w-40 lg:w-48 xl:w-56 text-right pr-6 hover:text-foreground transition-colors flex items-center justify-end gap-1'
+                  onClick={() => {
+                    if (explorerPrefs.sortBy === 'size') {
+                      setExplorerSortDir(explorerPrefs.sortDir === 'asc' ? 'desc' : 'asc');
+                    } else {
+                      setExplorerSortBy('size');
+                      setExplorerSortDir('asc');
+                    }
+                  }}
+                >
+                  Size
+                  {explorerPrefs.sortBy === 'size' && (
+                    <span className='text-xs'>{explorerPrefs.sortDir === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </button>
+
+                {/* Modified column - sortable */}
+                <button
+                  className='hidden sm:flex sm:w-40 md:w-52 lg:w-64 xl:w-72 text-right pr-6 hover:text-foreground transition-colors items-center justify-end gap-1'
+                  onClick={() => {
+                    if (explorerPrefs.sortBy === 'modified') {
+                      setExplorerSortDir(explorerPrefs.sortDir === 'asc' ? 'desc' : 'asc');
+                    } else {
+                      setExplorerSortBy('modified');
+                      setExplorerSortDir('asc');
+                    }
+                  }}
+                >
+                  Modified
+                  {explorerPrefs.sortBy === 'modified' && (
+                    <span className='text-xs'>{explorerPrefs.sortDir === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </button>
+
+                {/* Actions column - not sortable */}
+                <div className='w-12 sm:w-16 md:w-20 lg:w-24 text-center'></div>
               </div>
 
-              {/* ✅ list view items */}
+              {/* list view items */}
               <div className='divide-y'>
-                {contentEntries
-                  ?.filter(f => f.isFolder)
-                  .map((folder, index) => (
-                    <ExplorerItem
-                      key={folder.id}
-                      entry={folder}
-                      view='list'
-                      href={`/explorer/${folder.id}`}
-                      selected={selectedIds.has(folder.id)}
-                      multiSelect
-                      onClick={e => handleItemClick(e, folder.id, index)}
-                      onTrash={() => handleTrash(folder.id, true)}
-                      onContextOpen={() => {
-                        selectedIds.add(folder.id);
-                        setSelectedEntries(getSelectedEntries());
-                      }}
-                      onContextClose={() => {
-                        selectedIds.delete(folder.id);
-                        setSelectedEntries(getSelectedEntries());
-                      }}
-                      checkIfNameExists={checkIfNameExists}
-                      onRename={handleRename}
-                      onMove={entry => {
-                        selectedIds.add(entry.id);
-                        setSelectedEntries(getSelectedEntries());
-                        setMoveDialogOpen(true);
-                      }}
-                    />
-                  ))}
-                {contentEntries
-                  ?.filter(f => !f.isFolder)
-                  .map((file, index) => (
-                    <ExplorerItem
-                      key={file.id}
-                      entry={file}
-                      view='list'
-                      selected={selectedIds.has(file.id)}
-                      multiSelect
-                      onClick={e =>
-                        handleItemClick(e, file.id, explorerState?.folders.length + index)
-                      }
-                      onTrash={() => handleTrash(file.id, false)}
-                      checkIfNameExists={checkIfNameExists}
-                      onRename={handleRename}
-                      onMove={entry => {
-                        selectedIds.add(entry.id);
-                        setSelectedEntries(getSelectedEntries());
-                        setMoveDialogOpen(true);
-                      }}
-                    />
-                  ))}
+                {contentEntries?.map((entry, index) => (
+                  <ExplorerItem
+                    key={entry.id}
+                    entry={entry}
+                    view='list'
+                    href={entry.isFolder ? `/explorer/${entry.id}` : undefined}
+                    selected={selectedIds.has(entry.id)}
+                    multiSelect
+                    onClick={e => handleItemClick(e, entry.id, index)}
+                    onDoubleClick={
+                      !entry.isFolder ? () => setPreviewingFile(entry as FileEntry) : undefined
+                    }
+                    onTrash={() => handleTrash(entry.id, entry.isFolder)}
+                    onContextOpen={() => {
+                      selectedIds.add(entry.id);
+                      setSelectedEntries(getSelectedEntries());
+                    }}
+                    onContextClose={() => {
+                      selectedIds.delete(entry.id);
+                      setSelectedEntries(getSelectedEntries());
+                    }}
+                    checkIfNameExists={checkIfNameExists}
+                    onRename={handleRename}
+                    onMove={item => {
+                      selectedIds.add(item.id);
+                      setSelectedEntries(getSelectedEntries());
+                      setMoveDialogOpen(true);
+                    }}
+                    onRecomputeSize={
+                      entry.isFolder
+                        ? async folder => {
+                            // TODO: Implement folder size recomputation
+                            console.log('Recompute size for folder:', folder.id);
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
               </div>
             </>
           )}

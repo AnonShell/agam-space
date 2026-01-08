@@ -1,13 +1,7 @@
-import {
-  ContentTreeV2Store,
-  ContentTreeViewModel,
-  Sort,
-  SortDirection,
-  SortKey,
-} from './content-tree-v2.store';
+import { ContentTreeV2Store, ContentTreeViewModel, Sort } from './content-tree-v2.store';
 import { decryptFolder, fetchFolderContents, getFolderInfo } from '../folder-contents';
 import { isFolderIdRoot } from '@agam-space/shared-types';
-import { ContentEntry, contentTreeStore, FileEntry, FolderEntry } from '../../content-tree.store';
+import { ContentEntry, FileEntry, FolderEntry } from '../../content-tree.store';
 import { fetchFolderAncestorsApi } from '../../api';
 
 type ExplorerState = {
@@ -31,65 +25,82 @@ export class ContentTreeManager {
       key: 'name',
       direction: 'asc',
     },
-    page = 0
+    groupFolders: boolean = true
   ): Promise<ExplorerState | null> {
-    const sortKey = `${sort.key}:${sort.direction}:${page}`;
+    console.log(
+      `[ContentTreeManager] getOrFetch - folder: "${folderId}", sort: ${sort.key}:${sort.direction}, groupFolders: ${groupFolders}`
+    );
+
     const folderInfo = await this.getFolderInfo(folderId);
 
-    let viewModel = this.store.getView(folderId, sortKey);
-    if (viewModel) {
-      return this.buildExplorerState(viewModel, folderInfo, sortKey, page);
+    // Check if we have cached items for this folder
+    const cachedItemIds = this.store.getFolderItemIds(folderId);
+
+    if (cachedItemIds && cachedItemIds.length > 0) {
+      console.log(
+        `[ContentTreeManager] Cache HIT - ${cachedItemIds.length} items, sorting on-demand...`
+      );
+      const items = this.store.getAllItems(cachedItemIds);
+      return this.buildExplorerState(items, folderInfo, sort, groupFolders);
     }
 
+    // Cache miss - fetch from API
+    console.log(`[ContentTreeManager] Cache MISS - fetching from API...`);
     const { folders, files } = await fetchFolderContents(folderId);
-    for (const item of [...folders, ...files]) {
+    const allItems = [...folders, ...files];
+
+    // Store items in cache
+    for (const item of allItems) {
       this.store.upsertItem(item);
     }
 
-    const sorted = [...folders, ...files].sort(
-      ContentTreeV2Store.applySort(sort.key, sort.direction)
+    // Store the list of item IDs for this folder (unsorted - we'll sort on demand)
+    this.store.setFolderItemIds(
+      folderId,
+      allItems.map(item => item.id)
     );
-    const pageItems = [...new Set(sorted.map(item => item.id))];
 
-    viewModel = {
-      pages: new Map([[0, pageItems]]),
-      isLoading: false,
-      hasMore: false, // Assuming no pagination for simplicity
-      lastFetchedAt: Date.now(),
-    };
-
-    this.store.setView(folderId, sortKey, viewModel);
-    return this.buildExplorerState(viewModel, folderInfo, sortKey, page);
+    return this.buildExplorerState(allItems, folderInfo, sort, groupFolders);
   }
 
   buildExplorerState(
-    viewModel: ContentTreeViewModel,
+    items: ContentEntry[],
     currentParent: FolderEntry,
-    sortKey: string,
-    pageNo: number = 0
-  ): ExplorerState | null {
-    if (!viewModel || !viewModel.pages.has(pageNo)) {
-      return null;
+    sort: Sort,
+    groupFolders: boolean = true
+  ): ExplorerState {
+    const sortFn = ContentTreeV2Store.applySort(sort.key, sort.direction);
+
+    let sortedEntries: ContentEntry[];
+    let folders: FolderEntry[];
+    let files: FileEntry[];
+
+    if (groupFolders) {
+      // Folders first, then files (each group sorted independently)
+      folders = items.filter(f => f.isFolder) as FolderEntry[];
+      files = items.filter(f => !f.isFolder) as FileEntry[];
+
+      folders.sort(sortFn);
+      files.sort(sortFn);
+
+      sortedEntries = [...folders, ...files];
+    } else {
+      // Mix folders and files together, sorted by the same criteria
+      sortedEntries = [...items].sort(sortFn);
+      folders = sortedEntries.filter(f => f.isFolder) as FolderEntry[];
+      files = sortedEntries.filter(f => !f.isFolder) as FileEntry[];
     }
-
-    const pageItems = [...new Set(viewModel.pages.get(pageNo) || [])];
-    const entries = this.getItems(pageItems);
-
-    const [key, direction] = sortKey.split(':') as [SortKey, SortDirection];
-
-    const folders = entries.filter(f => f.isFolder) as FolderEntry[];
-    folders.sort(ContentTreeV2Store.applySort(key, direction));
-
-    const files = entries.filter(f => !f.isFolder) as FileEntry[];
-    files.sort(ContentTreeV2Store.applySort(key, direction));
-
-    const sortedEntries = [...folders, ...files];
 
     return {
       entries: sortedEntries,
       folders,
       files,
-      viewModel,
+      viewModel: {
+        pages: new Map(), // Deprecated - kept for compatibility
+        isLoading: false,
+        hasMore: false,
+        lastFetchedAt: Date.now(),
+      },
       currentParent,
     };
   }
@@ -98,25 +109,15 @@ export class ContentTreeManager {
     return this.store.getAllItems(ids);
   }
 
-  addItem(
-    item: ContentEntry,
-    currentParentId: string,
-    sort: Sort = {
-      key: 'name',
-      direction: 'asc',
-    },
-    page = 0
-  ) {
+  addItem(item: ContentEntry, currentParentId: string) {
+    // Add item to the store
     this.store.upsertItem(item);
 
-    const sortKey = `${sort.key}:${sort.direction}:${page}`;
-    const viewModel = this.store.getView(currentParentId, sortKey);
-    if (viewModel && viewModel.pages.has(page)) {
-      const pageItems = viewModel.pages.get(page)! || [];
-      pageItems.unshift(item.id);
-      viewModel.pages.set(page, [...new Set(pageItems)]);
-
-      this.store.setView(currentParentId, sortKey, viewModel);
+    // Add item ID to the folder's item list (if folder is cached)
+    const existingIds = this.store.getFolderItemIds(currentParentId);
+    if (existingIds) {
+      const updatedIds = [item.id, ...existingIds.filter(id => id !== item.id)];
+      this.store.setFolderItemIds(currentParentId, updatedIds);
     }
   }
 

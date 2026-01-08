@@ -106,19 +106,32 @@ jobs:
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}"
             GHCR_TAGS="${GHCR_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest"
 
+            # Hardened image tags
+            DOCKERHUB_HARDENED_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${VERSION}-hardened"
+            DOCKERHUB_HARDENED_TAGS="${DOCKERHUB_HARDENED_TAGS},${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:latest-hardened"
+            
+            GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:${VERSION}-hardened"
+            GHCR_HARDENED_TAGS="${GHCR_HARDENED_TAGS},ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:latest-hardened"
+
             PLATFORMS="linux/amd64,linux/arm64"
           else
             VERSION="dev-${SHORT_SHA}"
             DOCKERHUB_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev"
             GHCR_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev"
             
+            # Hardened image tags for dev
+            DOCKERHUB_HARDENED_TAGS="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:dev-hardened"
+            GHCR_HARDENED_TAGS="ghcr.io/${{ github.repository_owner }}/${IMAGE_NAME}:dev-hardened"
+            
             PLATFORMS="linux/amd64,linux/arm64"
           fi
 
           TAGS="${DOCKERHUB_TAGS},${GHCR_TAGS}"
+          HARDENED_TAGS="${DOCKERHUB_HARDENED_TAGS},${GHCR_HARDENED_TAGS}"
           SCAN_TAG=$(echo "${DOCKERHUB_TAGS}" | cut -d',' -f1)
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "hardened_tags=${HARDENED_TAGS}" >> $GITHUB_OUTPUT
           echo "scan_tag=${SCAN_TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "commit=${SHORT_SHA}" >> $GITHUB_OUTPUT
@@ -133,6 +146,22 @@ jobs:
           target: runner
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            APP_VERSION=${{ steps.meta.outputs.version }}
+            BUILD_COMMIT=${{ steps.meta.outputs.commit }}
+            BUILD_ID=${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: ${{ steps.meta.outputs.platforms }}
+
+      - name: Build and push Hardened Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/api-server/Dockerfile
+          target: runner-hardened
+          push: true
+          tags: ${{ steps.meta.outputs.hardened_tags }}
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
             BUILD_COMMIT=${{ steps.meta.outputs.commit }}
@@ -158,4 +187,5 @@ jobs:
 
       - name: Image digest
         run: |
-          echo "Image pushed with tags: ${{ steps.meta.outputs.tags }}"
+          echo "Normal image pushed with tags: ${{ steps.meta.outputs.tags }}"
+          echo "Hardened image pushed with tags: ${{ steps.meta.outputs.hardened_tags }}"

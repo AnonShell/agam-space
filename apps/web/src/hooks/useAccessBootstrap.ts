@@ -50,25 +50,37 @@ export function useAccessBootstrap(
   }, [appBootstrapped, bootstrapped, setBootstrapped]);
 
   useEffect(() => {
-    if (!bootstrapped) return;
-
+    // For public mode, we can be ready immediately
     if (mode === 'public') {
-      return setStatus('ready');
+      setStatus('ready');
+      return;
     }
 
+    // Wait for bootstrap to complete for protected routes
+    if (!bootstrapped) {
+      setStatus('loading');
+      return;
+    }
+
+    // Bootstrap complete, now check auth state
     if (!isLoggedIn) {
       resetAllState();
       redirectWithQuery(router, '/login', pathname);
-      return setStatus('redirecting');
+      setStatus('redirecting');
+      return;
     }
 
+    // User is logged in - for 'loggedIn' mode, we're ready
     if (mode === 'loggedIn') {
-      return setStatus('ready');
+      setStatus('ready');
+      return;
     }
 
+    // For 'unlocked' mode, check E2EE setup
     if (!e2eeKeys) {
       redirectWithQuery(router, '/e2ee/setup', pathname);
-      return setStatus('redirecting');
+      setStatus('redirecting');
+      return;
     }
 
     async function checkUnlockStatus() {
