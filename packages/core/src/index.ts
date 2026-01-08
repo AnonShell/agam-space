@@ -7,4 +7,5 @@ export * from './utils/schema-helper';
 export * from './utils/sodium-loader';
 
 export * from './identity-key';
+export * from './device-key';
 export * from './cmk-challenge';
