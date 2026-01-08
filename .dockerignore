@@ -29,12 +29,30 @@ __tests__
 .local
 .tmp
 **/*.tsbuildinfo
+
+# Documentation
+docs/
+docs-private/
+README*
+CHANGELOG*
+LICENSE*
+
+# CI/CD
+.github/
+.husky/
+
 # IDE
 .idea
 .vscode
 *.swp
 *.swo
+.cursor/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*.yml

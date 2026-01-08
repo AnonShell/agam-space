@@ -16,7 +16,10 @@ COPY --parents packages/*/package.json ./
 RUN pnpm install --filter=api-server... && \
     pnpm install --filter=web...
 
-COPY . .
+COPY packages/ ./packages/
+COPY apps/api-server/ ./apps/api-server/
+COPY apps/web/ ./apps/web/
+COPY tsconfig*.json ./
 
 RUN find . -name '*.tsbuildinfo' -delete && \
     pnpm build:packages && \
@@ -53,6 +56,21 @@ COPY --from=builder /app/packages/core/dist ./packages/core/dist
 COPY --from=builder /app/apps/api-server/dist ./apps/api-server/dist
 
 RUN pnpm deploy deploy/ --prod --filter=api-server --legacy
+
+# Remove unnecessary files from node_modules to reduce image size
+RUN cd deploy && \
+    # Remove documentation and metadata \
+    find node_modules -type f -name '*.md' -delete && \
+    find node_modules -type f -name 'LICENSE*' -delete && \
+    find node_modules -type f -name 'CHANGELOG*' -delete && \
+    find node_modules -type f -name 'README*' -delete && \
+    # Remove test directories \
+    find node_modules -type d -name '__tests__' -exec rm -rf {} + 2>/dev/null || true && \
+    find node_modules -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true && \
+    find node_modules -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true && \
+    find node_modules -type d -name 'docs' -exec rm -rf {} + 2>/dev/null || true && \
+    find node_modules -type d -name 'examples' -exec rm -rf {} + 2>/dev/null || true && \
+
 
 COPY ./apps/api-server/migrations/ ./deploy/dist/migrations/
 COPY --from=builder /app/apps/web/out ./deploy/public
