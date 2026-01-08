@@ -69,7 +69,7 @@ RUN cd deploy && \
     find node_modules -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true && \
     find node_modules -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true && \
     find node_modules -type d -name 'docs' -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name 'examples' -exec rm -rf {} + 2>/dev/null || true && \
+    find node_modules -type d -name 'examples' -exec rm -rf {} + 2>/dev/null || true
 
 
 COPY ./apps/api-server/migrations/ ./deploy/dist/migrations/
