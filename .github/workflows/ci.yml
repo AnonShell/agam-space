@@ -134,3 +134,19 @@ jobs:
             BUILD_ID=${{ github.run_number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Test Hardened Docker build (don't push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/api-server/Dockerfile
+          target: runner-hardened
+          push: false
+          tags: agam-space:test-hardened
+          platforms: linux/amd64
+          build-args: |
+            APP_VERSION=test
+            BUILD_COMMIT=${{ github.sha }}
+            BUILD_ID=${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
