@@ -8,20 +8,16 @@ RUN apt-get update && \
   npm install -g npm@11.7.0 pnpm && \
   rm -rf /var/lib/apt/lists/*
 
-# Copy package files first for better layer caching
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY --parents apps/*/package.json ./
 COPY --parents apps/web/scripts/ ./
 COPY --parents packages/*/package.json ./
 
-# Install dependencies (cached if package.json unchanged)
 RUN pnpm install --filter=api-server... && \
     pnpm install --filter=web...
 
-# Copy all source code and config files
 COPY . .
 
-# Build everything in one layer
 RUN find . -name '*.tsbuildinfo' -delete && \
     pnpm build:packages && \
     pnpm --filter=api-server exec pnpm build && \
@@ -62,10 +58,44 @@ COPY ./apps/api-server/migrations/ ./deploy/dist/migrations/
 COPY --from=builder /app/apps/web/out ./deploy/public
 
 
-# --- 3. Runner Stage: Minimal production image ---
+# --- 3. Hardened Runner Stage: Security-hardened production image ---
+FROM dhi.io/node:22-alpine3.23 AS runner-hardened
+
+ARG BUILD_ID
+ARG BUILD_COMMIT
+ARG APP_VERSION
+
+ENV BUILD_ID=${BUILD_ID} \
+    BUILD_COMMIT=${BUILD_COMMIT} \
+    APP_VERSION=${APP_VERSION} \
+    NODE_ENV=production
+
+WORKDIR /app
+
+COPY --from=deps /app/deploy/ /app/
+
+# /app is read-only
+RUN chmod -R a=rX /app
+
+# Run as non-root user (UID 65532 = "nobody" user, exists everywhere)
+# Users can override with: docker run --user $(id -u):$(id -g)
+USER 65532:65532
+
+VOLUME ["/data"]
+
+EXPOSE 3331
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3331/api/v1/server/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+
+CMD ["node", "dist/main.js"]
+
+
+# --- 4. Runner Stage: Minimal production image (DEFAULT) ---
 FROM node:22-alpine AS runner
 
-RUN apk add --no-cache wget su-exec tini && \
+RUN apk add --no-cache tini && \
     rm -rf /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
            /usr/local/bin/npm \
@@ -87,16 +117,20 @@ WORKDIR /app
 
 COPY --from=deps /app/deploy/ /app/
 
-RUN chmod -R 555 /app/public
+# /app is read-only
+RUN chmod -R a=rX /app
 
-COPY --chmod=755 ./apps/api-server/init.sh /usr/local/bin/init.sh
+# Run as non-root user (UID 65532 = "nobody" user, exists everywhere)
+# Users can override with: docker run --user $(id -u):$(id -g)
+USER 65532:65532
 
 VOLUME ["/data"]
 
 EXPOSE 3331
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-  CMD wget -q --spider http://localhost:3131/api/v1/server/health || exit 1
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3331/api/v1/server/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
-ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/init.sh"]
+# Use tini as PID 1 for proper signal handling and zombie reaping
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/main.js"]

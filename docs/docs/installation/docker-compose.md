@@ -36,14 +36,44 @@ Use either registry in the `image:` field below.
 
 Multiple image tags are available:
 
-| Tag      | Description                                    |
-| -------- | ---------------------------------------------- |
-| `latest` | Latest stable release                          |
-| `v0.2.0` | Specific version (example)                     |
-| `dev`    | Development builds from main branch (unstable) |
+| Tag               | Description                              |
+| ----------------- | ---------------------------------------- |
+| `latest`          | Latest stable release (Alpine-based)     |
+| `latest-hardened` | Latest stable release (Hardened variant) |
+| `v0.2.0`          | Specific version (Alpine-based)          |
+| `v0.2.0-hardened` | Specific version (Hardened variant)      |
+| `dev`             | Development builds from main branch      |
+| `dev-hardened`    | Development builds (Hardened variant)    |
 
 **Multi-arch support:** All images support both `amd64` and `arm64`
 architectures.
+
+### Hardened images
+
+Hardened images use
+[Docker Hub Images (DHI)](https://www.docker.com/products/hardened-images) with
+minimal attack surface and no shell access. Use `-hardened` tags for maximum
+security.
+
+**Key Differences:**
+
+| Aspect           | Normal (`latest`)               | Hardened (`latest-hardened`)       |
+| ---------------- | ------------------------------- | ---------------------------------- |
+| Base image       | `node:22-alpine`                | `dhi.io/node:22-alpine3.23`        |
+| Shell access     | ✅ Available (`docker exec sh`) | ❌ No shell (maximum security)     |
+| Init system      | Tini (signal handling)          | Direct Node.js execution           |
+| Debugging        | ✅ Easy (can inspect files)     | ⚠️ Limited (no interactive access) |
+| Security         | ✅ Good (minimal Alpine)        | ✅✅ Maximum (hardened base)       |
+| Size             | Slightly larger                 | Minimal                            |
+| Runtime behavior | Identical                       | Identical                          |
+
+**Which to choose?**
+
+- **Normal image**: Recommended for most users - easier to debug and
+  troubleshoot
+- **Hardened image**: Use in production when maximum security is required
+
+Both images support the same features and configuration options.
 
 ### Configuration
 
@@ -67,6 +97,9 @@ services:
 
   agam:
     image: agamspace/agam-space:latest
+    # Run as your user for easier file management (recommended)
+    # Find your UID/GID with: id -u && id -g
+    user: '1000:1000'
     ports:
       - '3331:3331'
     environment:
@@ -108,6 +141,72 @@ docker-compose up -d
 ```
 
 Access at `http://localhost:3331`
+
+## File Permissions
+
+Agam Space runs as a non-root user for security. The **recommended approach** is
+to run as your own user ID for easier file management.
+
+### Default Approach: Use Your User ID (Recommended)
+
+The provided `docker-compose.yml` includes the `user:` field set to `1000:1000`.
+Update this to match your system user:
+
+```yaml
+services:
+  agam:
+    image: agamspace/agam-space:latest
+    user: '1000:1000' # Replace with your UID:GID
+    volumes:
+      - ./data:/data
+```
+
+Find your UID/GID:
+
+```bash
+id -u  # Your UID
+id -g  # Your GID
+```
+
+**Benefits:**
+
+- ✅ Files on host are owned by your user
+- ✅ Easy to browse/edit files directly on host
+- ✅ No permission issues when backing up or moving files
+
+### Alternative: Use Default UID 65532
+
+If you prefer maximum security or multi-user systems, you can remove the `user:`
+field to use the default (UID 65532), then change ownership of the data
+directory:
+
+```yaml
+services:
+  agam:
+    image: agamspace/agam-space:latest
+    # No user field - runs as 65532:65532
+    volumes:
+      - ./data:/data
+```
+
+Change ownership:
+
+```bash
+sudo chown -R 65532:65532 ./data
+```
+
+:::tip
+
+**Which option to choose?**
+
+- **Your user (1000:1000)**: ✅ **Recommended** - Easier file management, works
+  great for single-user systems
+- **Default UID (65532)**: Better isolation on multi-user systems, slightly more
+  secure
+
+For most self-hosted setups, **using your user ID is the best choice**.
+
+:::
 
 ## Environment Variables
 
@@ -159,46 +258,6 @@ server {
 ```
 
 Configure SSL certificates with your reverse proxy of choice.
-
-## Storage Configuration
-
-### File Permissions
-
-Container runs as root by default.
-
-**Optional: Run as specific user**
-
-```yaml
-agam:
-  environment:
-    PUID: 1000 # Your user ID (run `id -u`)
-    PGID: 1000 # Your group ID (run `id -g`)
-```
-
-If PUID/PGID don't match your `/data` directory ownership, container fails with
-an error. Fix by changing directory ownership:
-
-```bash
-sudo chown -R 1000:1000 ./data
-```
-
-### Default Storage
-
-Files stored in `/data/files/` (maps to `./data/files/` on host).
-
-Other directories:
-
-- `/data/config` - Configuration
-- `/data/logs` - Logs
-- `/data/cache` - Cache
-
-### Custom Storage Path
-
-```yaml
-agam:
-  volumes:
-    - /mnt/storage/agam:/data
-```
 
 ## Updates
 

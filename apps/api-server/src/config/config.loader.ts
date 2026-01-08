@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -94,28 +94,43 @@ class ConfigLoader {
     } else {
       // Priority 2: Try default Docker path
       const dockerDataDir = '/data';
-      try {
-        // Check if we can access/create the Docker path
-        if (existsSync(dockerDataDir) || this.canCreateDirectory(dockerDataDir)) {
-          resolvedDataDir = dockerDataDir;
-          console.log(`✅ DATA_DIR (default): ${resolvedDataDir}`);
-        } else {
-          throw new Error('Cannot access default Docker path');
-        }
-      } catch (err) {
-        // Priority 3: Fail with helpful message
+
+      // This catches Docker permission issues early with helpful error messages
+      if (!this.canCreateAndWriteToDirectory(dockerDataDir)) {
+        console.error('');
+        console.error('❌ DATA_DIR validation failed!');
+        console.error(`   Cannot write to ${dockerDataDir}`);
+        console.error('');
         console.error(
-          `❌ DATA_DIR resolution failed! - ${err instanceof Error ? err.message : err}`
+          'The application requires write access to /data for storing encrypted file chunks.'
         );
-        console.error(
-          `   Neither DATA_DIR environment variable is set nor ${dockerDataDir} is available`
-        );
-        console.error('   Solutions:');
-        console.error('   - Set DATA_DIR environment variable (e.g., DATA_DIR=./local/data)');
-        console.error(`   - Mount a volume to ${dockerDataDir} in Docker`);
-        console.error(`   - Ensure ${dockerDataDir} directory exists and is writable`);
-        process.exit(1);
+        console.error('');
+        console.error('Solutions:');
+        console.error('  1. Ensure /data volume is mounted:');
+        console.error('     docker run -v /path/to/data:/data ...');
+        console.error('');
+        console.error('  2. Run container with your user ID:');
+        console.error('     docker run --user $(id -u):$(id -g) ...');
+        console.error('');
+        console.error('  3. OR change ownership on host:');
+        console.error('     sudo chown -R 65532:65532 /path/to/data');
+        console.error('');
+        console.error('  4. Docker Compose: Add user field:');
+        console.error('     services:');
+        console.error('       agam:');
+        console.error('         user: "1000:1000"');
+        console.error('');
+
+        // Force immediate exit - use setImmediate to ensure logs are flushed
+        // This prevents NestJS module loader from catching and suppressing the exit
+        setImmediate(() => process.exit(1));
+
+        // Also throw to stop execution immediately
+        throw new Error('DATA_DIR validation failed - insufficient permissions');
       }
+
+      resolvedDataDir = dockerDataDir;
+      console.log(`✅ DATA_DIR (default): ${resolvedDataDir}`);
     }
 
     // Store the resolved DATA_DIR for later use
@@ -131,13 +146,31 @@ class ConfigLoader {
   }
 
   /**
-   * Check if we can create a directory (used for Docker path validation)
+   * Ensure directory exists and test write permissions
+   * Returns true only if we can both create the directory and write to it
    */
-  private canCreateDirectory(path: string): boolean {
+  private canCreateAndWriteToDirectory(path: string): boolean {
     try {
-      mkdirSync(path, { recursive: true });
-      return true;
+      // Create directory if it doesn't exist
+      if (!existsSync(path)) {
+        mkdirSync(path, { recursive: true });
+      }
+
+      // Always test write permissions by creating and deleting a temp file
+      // This validates even if directory already existed
+      const testFile = join(path, '.write-test-' + Date.now());
+      try {
+        writeFileSync(testFile, 'test');
+        unlinkSync(testFile);
+        return true;
+      } catch (writeErr) {
+        console.error(
+          `   Directory exists but is not writable: ${writeErr instanceof Error ? writeErr.message : writeErr}`
+        );
+        return false;
+      }
     } catch {
+      // Could not create directory or test write
       return false;
     }
   }
