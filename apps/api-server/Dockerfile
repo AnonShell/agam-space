@@ -90,10 +90,8 @@ ENV BUILD_ID=${BUILD_ID} \
 
 WORKDIR /app
 
-COPY --from=deps /app/deploy/ /app/
-
-# /app is read-only
-RUN chmod -R a=rX /app
+# Copy with read-only permissions (hardened images enforce read-only filesystem)
+COPY --from=deps --chmod=555 /app/deploy/ /app/
 
 # Run as non-root user (UID 65532 = "nobody" user, exists everywhere)
 # Users can override with: docker run --user $(id -u):$(id -g)
@@ -133,7 +131,7 @@ ENV BUILD_ID=${BUILD_ID} \
 
 WORKDIR /app
 
-COPY --from=deps /app/deploy/ /app/
+COPY --from=deps --chmod=555 /app/deploy/ /app/
 
 # /app is read-only
 RUN chmod -R a=rX /app
