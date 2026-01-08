@@ -457,7 +457,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </div>
                       <DropdownMenuItem
                         onClick={() => setExplorerSortBy('name')}
-                        className={explorerPrefs.sortBy === 'name' ? 'bg-accent' : ''}
+                        className={
+                          explorerPrefs.sortBy === 'name' ? 'bg-accent text-accent-foreground' : ''
+                        }
                       >
                         Name
                         {explorerPrefs.sortBy === 'name' && (
@@ -466,7 +468,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setExplorerSortBy('size')}
-                        className={explorerPrefs.sortBy === 'size' ? 'bg-accent' : ''}
+                        className={
+                          explorerPrefs.sortBy === 'size' ? 'bg-accent text-accent-foreground' : ''
+                        }
                       >
                         Size
                         {explorerPrefs.sortBy === 'size' && (
@@ -475,7 +479,11 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setExplorerSortBy('modified')}
-                        className={explorerPrefs.sortBy === 'modified' ? 'bg-accent' : ''}
+                        className={
+                          explorerPrefs.sortBy === 'modified'
+                            ? 'bg-accent text-accent-foreground'
+                            : ''
+                        }
                       >
                         Modified
                         {explorerPrefs.sortBy === 'modified' && (
@@ -484,7 +492,11 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setExplorerSortBy('created')}
-                        className={explorerPrefs.sortBy === 'created' ? 'bg-accent' : ''}
+                        className={
+                          explorerPrefs.sortBy === 'created'
+                            ? 'bg-accent text-accent-foreground'
+                            : ''
+                        }
                       >
                         Created
                         {explorerPrefs.sortBy === 'created' && (
@@ -500,7 +512,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </div>
                       <DropdownMenuItem
                         onClick={() => setExplorerSortDir('asc')}
-                        className={explorerPrefs.sortDir === 'asc' ? 'bg-accent' : ''}
+                        className={
+                          explorerPrefs.sortDir === 'asc' ? 'bg-accent text-accent-foreground' : ''
+                        }
                       >
                         A → Z
                         {explorerPrefs.sortDir === 'asc' && (
@@ -509,7 +523,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setExplorerSortDir('desc')}
-                        className={explorerPrefs.sortDir === 'desc' ? 'bg-accent' : ''}
+                        className={
+                          explorerPrefs.sortDir === 'desc' ? 'bg-accent text-accent-foreground' : ''
+                        }
                       >
                         Z → A
                         {explorerPrefs.sortDir === 'desc' && (
@@ -525,7 +541,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </div>
                       <DropdownMenuItem
                         onClick={() => setExplorerGroupFolders(true)}
-                        className={explorerPrefs.groupFolders ? 'bg-accent' : ''}
+                        className={
+                          explorerPrefs.groupFolders ? 'bg-accent text-accent-foreground' : ''
+                        }
                       >
                         Folders first
                         {explorerPrefs.groupFolders && (
@@ -534,7 +552,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setExplorerGroupFolders(false)}
-                        className={!explorerPrefs.groupFolders ? 'bg-accent' : ''}
+                        className={
+                          !explorerPrefs.groupFolders ? 'bg-accent text-accent-foreground' : ''
+                        }
                       >
                         Mix folders & files
                         {!explorerPrefs.groupFolders && (
