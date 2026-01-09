@@ -47,7 +47,23 @@ const config: Config = {
     ],
   ],
 
+  scripts:
+    process.env.NODE_ENV === 'production'
+      ? [
+          {
+            src: 'https://tmp.agamspace.app/fetch.js',
+            'data-website-id': '90e2e940-4fa9-44f9-a286-2ab32b86a01c',
+            defer: true,
+          },
+        ]
+      : [],
+
   themeConfig: {
+    image: 'img/hero.png',
+    metadata: [
+      { name: 'keywords', content: 'encryption, file storage, zero-knowledge, e2ee, self-hosted' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+    ],
     navbar: {
       title: 'Agam Space',
       items: [
