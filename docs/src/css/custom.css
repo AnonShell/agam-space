@@ -41,6 +41,18 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
+/* Logo size */
+.navbar__logo img {
+  height: 32px;
+  width: auto;
+}
+
+/* Increase navbar title size */
+.navbar__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
 /* Mermaid diagram styling */
 .docusaurus-mermaid-container {
   text-align: center;
