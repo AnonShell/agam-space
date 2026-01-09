@@ -70,47 +70,21 @@ Looking at self-hosted options, true E2EE is surprisingly limited. Nextcloud has
 E2EE but with known gaps. Most solutions rely on disk encryption, which only
 protects against physical theft - not server compromise or admin access.
 
-Ente Photos showed me this works great for photos - people can actually trust
-their homelab admin because the encryption makes it impossible to peek. I wanted
-the same for general files.
-
-With over a decade in software development and a strong interest in application
-security, I built what I was looking for - a proper zero-knowledge file storage
-system where the math guarantees privacy, not just trust.
+Agam Space solves this with proper zero-knowledge encryption - where
+cryptography guarantees privacy, not trust. The server admin literally cannot
+access your files, even if they wanted to.
 
 ## Features
 
-**Zero-Knowledge Encryption:**
+- Zero-knowledge end-to-end encryption (XChaCha20-Poly1305)
+- WebAuthn biometric unlock (Touch ID, Face ID, Windows Hello)
+- File upload and management
+- File previews (PDF, images, text)
+- SSO support (Authelia, Authentik, Keycloak, PocketID)
+- Per-user storage quotas
+- 30-day trash bin
 
-- Master password never leaves your device
-- All encryption happens in your browser (client-side)
-- Server stores only encrypted blobs it cannot decrypt
-- File names, folder names, and metadata all encrypted
-- XChaCha20-Poly1305 authenticated encryption with 256-bit keys
-- Argon2id key derivation (memory-hard, GPU-resistant)
-- Each file gets unique encryption key derived from folder key hierarchy
-- Even the server admin cannot access your data
-- Recovery key for emergency access (save it securely!)
-
-**Authentication:**
-
-- Email/password login (separate from master password)
-- Optional SSO (Authelia, Authentik, Keycloak, Google, GitHub)
-- WebAuthn biometric unlock on trusted devices (Touch ID, Face ID, Windows
-  Hello)
-
-**File Management:**
-
-- Upload via drag-and-drop or file picker
-- Folder organization (nested folders supported)
-- File preview (PDF, images, text)
-- 30-day trash bin with restore
-
-**Storage:**
-
-- Per-user quotas (default 10GB)
-- Chunk-based uploads
-- Local filesystem storage
+**See [Features](https://docs.agamspace.app/features) for complete list.**
 
 ## Screenshots
 
@@ -146,26 +120,15 @@ system where the math guarantees privacy, not just trust.
 
 </details>
 
-## Tech Stack
+## Quick Start
 
-**Docker (Recommended):**
+**Docker Compose (Recommended):**
 
 ```bash
-# Pull from Docker Hub
+# Pull the image
 docker pull agamspace/agam-space:latest
 
-# Or from GitHub Container Registry
-docker pull ghcr.io/agam-space/agam-space:latest
-```
-
-**Docker Compose:**
-
-Install with Docker Compose:
-
-```bash
-mkdir agam-space && cd agam-space
-
-# Create docker-compose.yml (see docs for full config)
+# Get docker-compose.yml
 curl -o docker-compose.yml https://raw.githubusercontent.com/agam-space/agam-space/main/apps/api-server/docker-compose.yaml
 
 # Start containers
@@ -174,8 +137,8 @@ docker-compose up -d
 
 Access at http://localhost:3331
 
-For production setup with HTTPS, see the
-[Installation Guide](https://docs.agamspace.app/installation/docker-compose).
+**For production setup with HTTPS, reverse proxy, and more:**  
+👉 [Installation Guide](https://docs.agamspace.app/installation/docker-compose)
 
 ## Tech Stack
 
@@ -245,56 +208,26 @@ pnpm format
 
 ## Security
 
-**How it works:**
+All encryption happens client-side in your browser. The server stores only
+encrypted blobs and cannot decrypt your data.
 
-1. Master password derives Cryptographic Master Key (CMK)
-2. CMK encrypts folder keys
-3. Folder keys encrypt file keys
-4. File keys encrypt file chunks
-5. Everything encrypted before upload
+**Read the full security model:**
+[Security Documentation](https://docs.agamspace.app/security)
 
-**Server sees:**
-
-- Encrypted binary blobs
-- File sizes and timestamps
-- Folder structure (but not names)
-
-**Server cannot see:**
-
-- File contents
-- File names
-- Folder names
-- Master password or encryption keys
-
-**Not audited** - Personal project for learning. Use at your own risk.
+**Not professionally audited** - Use at your own risk.
 
 ## Roadmap
 
-**Current focus: Stability & Testing**
+**Current focus:** Bug fixes & improvements
 
-The project is currently in beta. Before adding major features, the focus is on
-stability and reliability.
+Possible features under consideration:
 
-### Short-term
+- File sharing between users
+- Public links with expiry
+- S3 backend support
+- Encrypted tags and search
 
-- **Comprehensive test suite** - Unit, integration, and E2E tests for critical
-  paths
-- **Bug fixes** - Address issues reported by early users
-- **Documentation improvements** - Better guides and troubleshooting
-
-### Next focus
-
-- **File sharing** - Share files/folders with other users
-- **Public links** - Share via link with optional expiry
-- **Local search** - Search files and folders
-- **Encrypted tags** - Organize and search files by tags
-- **S3 backend support** - Use object storage instead of local disk
-
-**No timeline commitments.** Features built as time permits. Priorities may
-shift based on user feedback.
-
-See [Features](./docs/docs/features.md#planned-features) in documentation for
-detailed feature list.
+**See [Roadmap](https://docs.agamspace.app/features/roadmap) for details.**
 
 ## CI/CD
 

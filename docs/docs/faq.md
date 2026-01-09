@@ -207,16 +207,9 @@ patterns. Scratching my own itch.
 
 ### What's next?
 
-Check the [GitHub roadmap](https://github.com/agam-space/agam-space/issues).
-Rough priorities:
+See the [Roadmap](./features/roadmap) for possible features under consideration.
 
-1. File sharing
-2. Mobile apps
-3. S3 backend
-4. File versioning
-5. Search
-
-No timeline. Personal project, built when I have time.
+No timeline commitments. Features built as time permits.
 
 ## Troubleshooting
 

@@ -3,7 +3,22 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   docs: [
     'intro',
-    'features',
+    {
+      type: 'category',
+      label: 'Features',
+      link: {
+        type: 'doc',
+        id: 'features',
+      },
+      items: [
+        'features/encryption',
+        'features/account',
+        'features/file-management',
+        'features/admin',
+        'features/deployment',
+        'features/roadmap',
+      ],
+    },
     'quick-start',
     {
       type: 'category',
