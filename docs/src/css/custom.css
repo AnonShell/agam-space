@@ -49,8 +49,9 @@
 
 /* Increase navbar title size */
 .navbar__title {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 600;
+  color: #0CB3CF;
 }
 
 /* Mermaid diagram styling */

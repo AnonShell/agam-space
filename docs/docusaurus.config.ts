@@ -66,10 +66,10 @@ const config: Config = {
     ],
     navbar: {
       title: 'Agam Space',
-      logo: {
-        alt: 'Agam Space Logo',
-        src: 'img/logo.svg',
-      },
+      // logo: {
+      //   alt: 'Agam Space Logo',
+      //   src: 'img/logo.svg',
+      // },
       items: [
         {
           href: 'https://github.com/agam-space/agam-space',
