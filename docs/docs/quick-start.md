@@ -124,6 +124,17 @@ Files are stored in `./files/` directory. Back this up regularly.
 
 Database is in `./postgres-data/`.
 
+## Default limits
+
+Agam Space has sensible defaults. You can customize these if needed:
+
+- **Max file size:** 1 GB per file
+- **User storage quota:** 10 GB per user
+- **Chunk size:** 8 MB (for uploads)
+
+To change these, see
+[Configuration Reference](./configuration/configuration-reference).
+
 ## Next steps
 
 📖 **[Installation guide](./installation)** - Production setup with HTTPS and
