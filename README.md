@@ -3,8 +3,8 @@
 > Self-hosted, **zero-knowledge**, end-to-end encrypted file storage
 
 [![CI](https://github.com/agam-space/agam-space/actions/workflows/ci.yml/badge.svg)](https://github.com/agam-space/agam-space/actions/workflows/ci.yml)
-[![Docker](https://img.shields.io/docker/v/agamspace/agam-space?label=docker&sort=semver)](https://hub.docker.com/r/agamspace/agam-space)
 [![Release](https://img.shields.io/github/v/release/agam-space/agam-space?include_prereleases&label=version)](https://github.com/agam-space/agam-space/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/agamspace/agam-space)](https://hub.docker.com/r/agamspace/agam-space)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
 ![Agam Space Dashboard](./docs/static/img/hero.png)
