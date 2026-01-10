@@ -7,9 +7,17 @@ class MyDocument extends Document {
   }
 
   render() {
+    const version = process.env.NEXT_PUBLIC_APP_VERSION || 'dev';
+    const commit = process.env.NEXT_PUBLIC_BUILD_COMMIT || 'unknown';
+
     return (
       <Html lang='en'>
         <Head>
+          {/* Build metadata for integrity verification */}
+          <meta name='agam-version' content={version} />
+          <meta name='agam-commit' content={commit} />
+
+          {/* Favicons */}
           <link rel='icon' href='/favicon.ico' />
           <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
           <link rel='icon' type='image/png' sizes='32x32' href='/favicon-32x32.png' />

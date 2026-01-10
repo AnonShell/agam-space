@@ -146,6 +146,7 @@ jobs:
           echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
+        id: docker_build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -160,6 +161,48 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ steps.meta.outputs.platforms }}
+
+      - name: Extract integrity manifest from Docker image
+        if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+        run: |
+          echo "⏳ Waiting for multi-platform manifest to be available..."
+          sleep 10
+
+          # Pull the AMD64 image explicitly
+          echo "📥 Pulling AMD64 image: ${{ steps.meta.outputs.scan_tag }}"
+          docker pull --platform linux/amd64 ${{ steps.meta.outputs.scan_tag }}
+
+          # Create temporary container
+          CONTAINER_ID=$(docker create ${{ steps.meta.outputs.scan_tag }})
+          echo "📦 Created container: ${CONTAINER_ID}"
+
+          # Extract manifest
+          docker cp ${CONTAINER_ID}:/app/public/integrity-manifest.json ./integrity-manifest.json
+
+          # Cleanup
+          docker rm ${CONTAINER_ID}
+
+          # Verify manifest exists and is valid
+          if [ ! -f integrity-manifest.json ]; then
+            echo "❌ Error: integrity-manifest.json not found in image"
+            exit 1
+          fi
+
+          if ! jq empty integrity-manifest.json 2>/dev/null; then
+            echo "❌ Error: integrity-manifest.json is not valid JSON"
+            exit 1
+          fi
+
+          echo "✅ Extracted integrity manifest from Docker image"
+          jq -r '.manifestHash' integrity-manifest.json | head -c 20
+
+      - name: Upload integrity manifest as artifact
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+        uses: actions/upload-artifact@v4
+        with:
+          name: integrity-manifest
+          path: ./integrity-manifest.json
+          retention-days: 90
 
       - name: Build and push Hardened Docker image
         uses: docker/build-push-action@v5

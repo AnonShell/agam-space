@@ -21,6 +21,12 @@ COPY apps/api-server/ ./apps/api-server/
 COPY apps/web/ ./apps/web/
 COPY tsconfig*.json ./
 
+ARG APP_VERSION
+ARG BUILD_COMMIT
+
+ENV NEXT_PUBLIC_APP_VERSION=${APP_VERSION} \
+    NEXT_PUBLIC_BUILD_COMMIT=${BUILD_COMMIT}
+
 RUN find . -name '*.tsbuildinfo' -delete && \
     pnpm build:packages && \
     pnpm --filter=api-server exec pnpm build && \
