@@ -62,6 +62,15 @@ export class FilesService {
   async createFile(userId: string, data: CreateFile): Promise<FileDto> {
     const parentId = isFolderIdRoot(data.parentId) ? null : data.parentId;
 
+    const chunkSize = this.appConfigService.getConfig().files.chunkSize;
+    const maxFileSize = this.appConfigService.getConfig().files.maxFileSize;
+    const estimatedSize = data.chunkCount * chunkSize;
+
+    // Check estimated size against max file size + one chunk buffer to allow for rounding errors
+    if (estimatedSize > maxFileSize + chunkSize) {
+      throw new ConflictException(`File size exceeds maximum limit of ${maxFileSize} bytes`);
+    }
+
     // Check for duplicate name at same level
     const hasExisting = await this.hasFileWithNameHash(userId, parentId, data.nameHash);
     if (hasExisting) {

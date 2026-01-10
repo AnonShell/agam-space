@@ -25,8 +25,6 @@ export interface FileUploadOptions {
 }
 
 export class FileManager {
-  private readonly DEFAULT_CHUNK_SIZE = 1024 * 1024; // 1MB
-
   /**
    * Generate a random 256-bit file encryption key (FEK)
    */

@@ -70,7 +70,7 @@ These must be set for Agam Space to run:
 | `LOG_DIR`                     | `directories.logDir`             | `${DATA_DIR}/logs`   | Logs directory                          |
 | `CACHE_DIR`                   | `directories.cacheDir`           | `${DATA_DIR}/cache`  | Cache directory                         |
 | `MAX_FILE_SIZE`               | `files.maxFileSize`              | `1000000000`         | Max file size in bytes (1GB)            |
-| `CHUNK_SIZE`                  | `files.chunkSize`                | `8388608`            | Chunk size for file uploads (8MB)       |
+| `CHUNK_SIZE`                  | `files.chunkSize`                | `8000000`            | Chunk size for file uploads (8MB)       |
 | `TRASH_CLEANUP_INTERVAL_DAYS` | `files.trashCleanupIntervalDays` | `7`                  | Days before auto-deleting trashed files |
 
 ## Security Configuration

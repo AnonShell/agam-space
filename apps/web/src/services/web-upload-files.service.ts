@@ -58,14 +58,20 @@ export const WebUploadService = {
 
       const item = ClientRegistry.getUploadManager().enqueue(reader, folderId);
 
+      if (!item) {
+        // Shouldn't happen anymore, but handle gracefully
+        return;
+      }
+
       useUploadStore.getState().addUpload({
         id: item.id,
         fileName: metadata.name,
         parentFolderId: folderId,
-        status: 'pending',
+        status: item.status,
         progress: 0,
         uploadedBytes: 0,
         totalBytes: metadata.size,
+        error: item.error,
       });
     });
   },

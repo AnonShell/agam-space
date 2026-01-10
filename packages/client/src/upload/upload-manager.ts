@@ -16,6 +16,7 @@ import { ulid } from 'ulid';
 import { isFolderIdRoot } from '@agam-space/shared-types';
 import { contentTreeStore, FileEntry } from '../content-tree.store';
 import { BoundedQueue } from '../utils/bounded-queue';
+import { formatBytes } from '../utils/format';
 
 export interface UploadProgress {
   percent: number; // rounded %
@@ -30,8 +31,9 @@ export interface UploadManagerCallbacks {
 }
 
 export interface UploadConfig {
-  concurrency: number; // max concurrent uploads
-  chunkSize: number; // size of each chunk in bytes (default: 4
+  concurrency: number;
+  chunkSize: number;
+  maxFileSize: number;
 }
 
 interface EncryptedChunk {
@@ -53,7 +55,8 @@ export class UploadManager {
   constructor(
     private readonly config: UploadConfig = {
       concurrency: 2,
-      chunkSize: 8 * 1024 * 1024, // default chunk size 4MB
+      chunkSize: 8_000_000, // default chunk size 8MB (decimal)
+      maxFileSize: 1_000_000_000, // default 1GB
     },
     private readonly callbacks?: UploadManagerCallbacks,
     workerPool?: UploadWorkerPool
@@ -62,7 +65,31 @@ export class UploadManager {
     this.workerPool = workerPool || new MainThreadUploadWorkerPool();
   }
 
-  enqueue(reader: AbstractFileReader, parentFolderId: string | null): UploadItem {
+  enqueue(reader: AbstractFileReader, parentFolderId: string | null): UploadItem | null {
+    const fileMetadata = reader.getMetadata();
+    const fileSize = reader.size;
+
+    // Client-side validation: Check file size before upload
+    if (this.config.maxFileSize && fileSize > this.config.maxFileSize) {
+      const errorMessage = `File size (${formatBytes(fileSize)}) exceeds maximum limit of ${formatBytes(this.config.maxFileSize)}`;
+
+      // Create an error item so it shows up in the upload tray
+      const errorItem: UploadItem = {
+        id: ulid(),
+        fileMetadata,
+        fileReader: reader,
+        parentId: parentFolderId,
+        status: 'error',
+        error: errorMessage,
+        progress: 0,
+      };
+
+      // Notify via callback so the UI can show the error
+      this.callbacks?.onError?.(errorItem.id, errorMessage);
+
+      return errorItem;
+    }
+
     const item: UploadItem = {
       id: ulid(),
       // fileMetadata: {} as any,
@@ -107,9 +134,9 @@ export class UploadManager {
         );
       } catch (e: any) {
         if (e instanceof ApiClientError && (e as ApiClientError).isConflict()) {
-          // Handle conflict error (e.g. file already exists)
+          // Handle conflict error (e.g. file already exists, file size limit, quota exceeded)
           item.status = 'error';
-          item.error = 'File already exists';
+          item.error = e.message || 'File already exists';
           this.callbacks?.onError?.(item.id, item.error!);
         } else {
           console.error(`Error processing upload item ${item.id}:`, e);

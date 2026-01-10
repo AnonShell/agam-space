@@ -12,6 +12,8 @@ import {
 import { useDownloadStore } from '@/store/download-store';
 import { useUploadStore } from '@/store/upload-store';
 import { initCrossTabCommunication } from '@/services/cross-tab';
+import { useServerConfigStore } from '@/store/server-config.store';
+import { toast } from 'sonner';
 
 let initialized = false;
 
@@ -38,11 +40,14 @@ export function initializeClient() {
   }
 
   if (!ClientRegistry.hasUploadManager()) {
+    const serverConfig = useServerConfigStore.getState().config;
+
     ClientRegistry.setUploadManager(
       new UploadManager(
         {
-          concurrency: 2,
-          chunkSize: 8 * 1024 * 1024,
+          concurrency: serverConfig?.upload?.maxConcurrency || 2,
+          chunkSize: serverConfig?.upload?.chunkSize || 8_000_000, // 8 MB (decimal)
+          maxFileSize: serverConfig?.upload?.maxFileSize || 1_000_000_000,
         },
         uploadManagerCallbacks
       )
@@ -67,6 +72,12 @@ const uploadManagerCallbacks: UploadManagerCallbacks = {
   },
   onError: (id, error) => {
     console.error(`[bootstrap] UploadManager error for ${id}:`, error);
+    // Don't show toast for file size validation errors - they show in upload tray
+    // Only show toast for unexpected errors during upload
+    const isFileSizeError = error.includes('exceeds maximum limit');
+    if (!isFileSizeError) {
+      toast.error(error);
+    }
     useUploadStore.getState().updateStatus(id, 'error');
     useUploadStore.getState().setError(id, error);
   },

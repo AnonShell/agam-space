@@ -4,7 +4,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, Logger } fr
 import { and, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 
-import { FileChunk, fileChunks, NewFileChunk } from '@/database';
+import { FileChunk, fileChunks, NewFileChunk, files } from '@/database';
 
 import { DATABASE_CONNECTION } from '@/database';
 import { StorageService } from '@/modules/storage/storage.service';
@@ -59,6 +59,9 @@ export class FileChunkService {
     };
 
     const [fileChunk] = await this.db.insert(fileChunks).values(newChunk).returning();
+
+    // Update the parent file's updatedAt timestamp to prevent premature cleanup
+    await this.db.update(files).set({ updatedAt: new Date() }).where(eq(files.id, fileId));
 
     this.logger.log(`File chunk saved: ${fileChunk.fileId} - ${fileChunk.index}`);
 

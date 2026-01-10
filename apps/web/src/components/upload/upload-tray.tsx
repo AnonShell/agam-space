@@ -10,6 +10,7 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
   const uploads = useUploadStore(s => s.uploads);
   const updateUpload = useUploadStore(s => s.updateUpload);
   const removeUpload = useUploadStore(s => s.removeUpload);
+  const clearCompletedAndFailed = useUploadStore(s => s.clearCompletedAndFailed);
 
   const dismissalTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -34,10 +35,7 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
 
   const visible = [...visibleInProgress, ...errors, ...recentCompleted];
 
-  // Smart dismissal: immediately hide completed items when more uploads are in progress,
-  // only show them briefly at the end when all are done
   useEffect(() => {
-    // If there are still uploads in progress, clear any pending timer
     if (hasInProgress) {
       if (dismissalTimerRef.current) {
         clearTimeout(dismissalTimerRef.current);
@@ -134,15 +132,28 @@ export function UploadTray({ onAllUploadsComplete }: { onAllUploadsComplete?: ()
 
   if (visible.length === 0) return null;
 
+  const hasCompletedOrFailed = uploads.some(u => u.status === 'complete' || u.status === 'error');
+
   return (
     <div className='fixed bottom-4 right-4 z-50 w-full max-w-md rounded-xl bg-card text-card-foreground shadow-lg border border-border p-4 space-y-3'>
       <h4 className='text-sm font-semibold flex justify-between items-center'>
         <span>Uploads</span>
-        {inProgress.length > 0 && (
-          <span className='text-xs font-normal text-muted-foreground'>
-            {inProgress.length} in progress
-          </span>
-        )}
+        <div className='flex items-center gap-2'>
+          {inProgress.length > 0 && (
+            <span className='text-xs font-normal text-muted-foreground'>
+              {inProgress.length} in progress
+            </span>
+          )}
+          {hasCompletedOrFailed && (
+            <button
+              onClick={clearCompletedAndFailed}
+              className='text-xs font-normal text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-accent'
+              title='Clear completed and failed uploads'
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </h4>
       {visible.map(item => (
         <div

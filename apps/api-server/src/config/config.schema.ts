@@ -44,8 +44,8 @@ export const fileConfigSchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(32 * 1024 * 1024)
-    .default(8 * 1024 * 1024), // 8MB default chunk size
+    .max(32_000_000) // 32 MB max (decimal)
+    .default(8_000_000), // 8MB default chunk size (decimal)
   uploadConcurrency: z.coerce.number().int().min(1).max(10).default(2), // Max concurrent uploads
   // maxFileMetadataSize: z.coerce.number().int().min(1).max(10_000).default(1000), // Max file metadata size in bytes
 

@@ -24,6 +24,7 @@ interface UploadState {
   updateUpload: (id: string, updates: Partial<UploadUIItem>) => void;
   removeUpload: (id: string) => void;
   clearUploads: () => void;
+  clearCompletedAndFailed: () => void;
 }
 
 export const useUploadStore = create<UploadState>(set => ({
@@ -71,4 +72,9 @@ export const useUploadStore = create<UploadState>(set => ({
     })),
 
   clearUploads: () => set({ uploads: [] }),
+
+  clearCompletedAndFailed: () =>
+    set(state => ({
+      uploads: state.uploads.filter(item => item.status !== 'complete' && item.status !== 'error'),
+    })),
 }));
