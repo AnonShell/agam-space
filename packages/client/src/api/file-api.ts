@@ -17,9 +17,13 @@ export async function createNewFileApi(file: CreateFile) {
   });
 }
 
-export async function completeFileUploadApi(fileId: string) {
+export async function completeFileUploadApi(fileId: string, checksum: string) {
   return ClientRegistry.getApiClient().fetchAndParse(`/v1/files/${fileId}/complete`, FileSchema, {
     method: 'PUT',
+    body: JSON.stringify({ checksum }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 }
 

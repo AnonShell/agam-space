@@ -29,6 +29,13 @@
       "when": 1767618474219,
       "tag": "0003_add_deleted_at_to_users",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1768056100474,
+      "tag": "0004_aberrant_alex_wilder",
+      "breakpoints": true
     }
   ]
 }

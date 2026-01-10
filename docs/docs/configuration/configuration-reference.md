@@ -162,8 +162,12 @@ Config file:
 }
 ```
 
-:::info WebAuthn is used for biometric unlock (Touch ID, Face ID, Windows Hello)
-on trusted devices. Not required for basic functionality. :::
+:::info
+
+WebAuthn is used for biometric unlock (Touch ID, Face ID, Windows Hello) on
+trusted devices. Not required for basic functionality.
+
+:::
 
 ## Complete Examples
 

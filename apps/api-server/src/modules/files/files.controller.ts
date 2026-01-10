@@ -28,7 +28,7 @@ import {
   UpdateFileDto,
 } from './dto/files.dto';
 import { FilesService } from './files.service';
-import { FileUploadStatusDto } from '@/modules/files/dto/upload.dto';
+import { CompleteFileUploadDto, FileUploadStatusDto } from '@/modules/files/dto/upload.dto';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { File } from '@agam-space/shared-types';
 import { FileDto } from '@/modules/folders/dto/folder-content.dto';
@@ -57,12 +57,14 @@ export class FilesController {
   @Put(':fileId/complete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Complete file upload' })
+  @ApiBody({ type: CompleteFileUploadDto })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'File upload completed' })
   async completeFileUpload(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('fileId') fileId: string
+    @Param('fileId') fileId: string,
+    @Body() dto: CompleteFileUploadDto
   ): Promise<FileDto> {
-    return this.filesService.markFileAsComplete(user.id, fileId);
+    return this.filesService.markFileAsComplete(user.id, fileId, dto.checksum);
   }
 
   @Get(':id')

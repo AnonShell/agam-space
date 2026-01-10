@@ -19,6 +19,7 @@ import { CreateFile, File, FileSchema, UpdateFile } from '@agam-space/shared-typ
 import { FileDto, isValidFolderAndNotRoot } from '@/modules/folders/dto/folder-content.dto';
 import { QuotaService } from '@/modules/quota/quota.service';
 import { DrizzleTransaction } from '@/database/database.providers';
+import { Blake3Hasher } from '@napi-rs/blake-hash';
 
 @Injectable()
 export class FilesService {
@@ -96,7 +97,11 @@ export class FilesService {
     }
   }
 
-  async markFileAsComplete(userId: string, fileId: string): Promise<FileDto> {
+  async markFileAsComplete(
+    userId: string,
+    fileId: string,
+    clientChecksum: string
+  ): Promise<FileDto> {
     const file = await this.getFileEntity(userId, fileId);
 
     if (!file) {
@@ -117,11 +122,24 @@ export class FilesService {
     }
 
     if (approxSize > this.appConfigService.getConfig().files.maxFileSize) {
-      // mark file as deleted
-      await this.markFilesAsDeleted([file.id]);
       throw new ConflictException(
         `File size exceeds maximum limit of ${this.appConfigService.getConfig().files.maxFileSize} bytes`
       );
+    }
+
+    // Compute file-level checksum from chunk checksums
+    const hasher = new Blake3Hasher();
+    for (const chunk of chunks) {
+      hasher.update(chunk.checksum);
+    }
+    const computedChecksum = hasher.digest('hex');
+
+    // Verify client checksum (required)
+    if (clientChecksum !== computedChecksum) {
+      this.logger.error(
+        `File integrity check failed for ${fileId}: client=${clientChecksum}, server=${computedChecksum}`
+      );
+      throw new ConflictException('File integrity check failed - checksum mismatch');
     }
 
     const updatedFileEntity = await this.db.transaction(async tx => {
@@ -132,7 +150,7 @@ export class FilesService {
 
       const updatedFile = await this.updateFileProps(
         fileId,
-        { status: 'complete', approxSize },
+        { status: 'complete', approxSize, checksum: computedChecksum },
         tx
       );
 

@@ -38,6 +38,9 @@ export const files = pgTable('files', {
   // File size in bytes
   approxSize: bigint('approx_size', { mode: 'number' }).notNull().default(0),
 
+  // File-level checksum
+  checksum: text('checksum'),
+
   // Audit timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

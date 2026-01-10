@@ -220,7 +220,7 @@ export class UploadManager {
       `All ${item.fileReq!.chunkCount} chunks uploaded successfully, checksum: ${fileChecksum}`
     );
 
-    await completeFileUploadApi(fileResponse.id);
+    await completeFileUploadApi(fileResponse.id, fileChecksum);
     console.log('✅ File uploaded successfully');
 
     item.status = 'complete';
@@ -240,14 +240,12 @@ export class UploadManager {
     item.fileId = fileResponse.id;
     console.log(`File created with ID: ${fileResponse.id}`);
 
-    // const fileHasher = blake3.create();
-
-    await this.uploadFilePipelined(item, fileKey);
+    const fileChecksum = await this.uploadFilePipelined(item, fileKey);
     console.log(`All ${item.fileReq!.chunkCount} chunks uploaded successfully`);
 
     const t1 = performance.now();
 
-    await completeFileUploadApi(fileResponse.id);
+    await completeFileUploadApi(fileResponse.id, fileChecksum);
     console.log('✅ File uploaded successfully, took : ', (t1 - t0).toFixed(2), 'ms');
 
     item.status = 'complete';
@@ -257,11 +255,12 @@ export class UploadManager {
     contentTreeStore.updateEntry(this.toFileEntry(item));
   }
 
-  private async uploadFilePipelined(item: UploadItem, fileKey: Uint8Array) {
+  private async uploadFilePipelined(item: UploadItem, fileKey: Uint8Array): Promise<string> {
     const queue = new BoundedQueue<EncryptedChunk>(this.QUEUE_CAPACITY);
     const fileReader = item.fileReader;
 
-    const fileHasher = blake3.create();
+    // Store chunk checksums in order for file-level checksum computation
+    const chunkChecksums: string[] = new Array(item.fileReq!.chunkCount);
     let uploadedChunks = 0;
     const totalBytes = item.fileReader.size;
     let uploadedBytes = 0;
@@ -280,6 +279,9 @@ export class UploadManager {
           chunkItem.data,
           chunkItem.checksum
         );
+
+        // Store checksum at correct index
+        chunkChecksums[chunkItem.index] = chunkItem.checksum;
 
         uploadedChunks++;
         uploadedBytes += chunkItem.data.length;
@@ -317,6 +319,16 @@ export class UploadManager {
     queue.signalPushComplete();
 
     await Promise.all(uploadTasks);
+
+    // Compute file-level checksum from chunk checksums
+    const fileHasher = blake3.create();
+    for (const chunkChecksum of chunkChecksums) {
+      fileHasher.update(chunkChecksum);
+    }
+    const fileChecksum = toHex(fileHasher.digest());
+
+    console.log(`File checksum computed: ${fileChecksum}`);
+    return fileChecksum;
   }
 
   toFileEntry(item: UploadItem): FileEntry {
