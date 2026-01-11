@@ -12,6 +12,7 @@ type ExplorerPrefs = {
 
 type SecurityPrefs = {
   sessionAutoUnlock: boolean;
+  clearDeviceDataOnLogout: boolean;
 };
 
 type Preferences = {
@@ -26,11 +27,12 @@ type Actions = {
   setExplorerGroupFolders: (v: boolean) => void;
   setExplorerPrefs: (p: Partial<ExplorerPrefs>) => void;
   setSessionAutoUnlock: (enabled: boolean) => void;
+  setClearDeviceDataOnLogout: (enabled: boolean) => void;
 };
 
 const DEFAULT_PREFS: Preferences = {
   explorer: { view: 'grid', sortBy: 'name', sortDir: 'asc', groupFolders: true },
-  security: { sessionAutoUnlock: false },
+  security: { sessionAutoUnlock: false, clearDeviceDataOnLogout: false },
 };
 
 export const usePreferencesStore = create<Preferences & Actions>()(
@@ -45,10 +47,12 @@ export const usePreferencesStore = create<Preferences & Actions>()(
       setExplorerPrefs: p => set(s => ({ explorer: { ...s.explorer, ...p } })),
       setSessionAutoUnlock: sessionAutoUnlock =>
         set(s => ({ security: { ...s.security, sessionAutoUnlock } })),
+      setClearDeviceDataOnLogout: clearDeviceDataOnLogout =>
+        set(s => ({ security: { ...s.security, clearDeviceDataOnLogout } })),
     }),
     {
       name: 'preferences',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       partialize: s => ({ explorer: s.explorer, security: s.security }),
       migrate: (persistedState: any, version: number) => {
@@ -58,14 +62,23 @@ export const usePreferencesStore = create<Preferences & Actions>()(
             ...persistedState,
             explorer: {
               ...persistedState.explorer,
-              groupFolders: true, // Add default value for new property
+              groupFolders: true,
+            },
+          };
+        }
+        // Migrate from v2 to v3: add clearDeviceDataOnLogout property
+        if (version === 2) {
+          return {
+            ...persistedState,
+            security: {
+              ...persistedState.security,
+              clearDeviceDataOnLogout: false,
             },
           };
         }
         return persistedState;
       },
       merge: (persistedState, currentState) => {
-        // Merge persisted state with defaults to ensure new properties exist
         const persisted = persistedState as Partial<Preferences>;
         return {
           ...currentState,

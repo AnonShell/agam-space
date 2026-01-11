@@ -20,6 +20,7 @@ import {
 import { DeviceKeyManager, EncryptedEnvelopeCodec, fromBase64, toBase64 } from '@agam-space/core';
 import { toast } from 'sonner';
 import { idbDeviceStore } from '@/storage/indexdb';
+import { randomBytes } from '@agam-space/core';
 
 export const TrustedDevicesService = {
   async fetchDevices() {
@@ -51,9 +52,9 @@ export const TrustedDevicesService = {
     const { publicKey: devicePublicKey, privateKey: devicePrivateKey } =
       await DeviceKeyManager.generateDeviceKeyPair();
 
-    const serverNonce = crypto.getRandomValues(new Uint8Array(16));
-    const deviceSeed = crypto.getRandomValues(new Uint8Array(16));
-    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const serverNonce = randomBytes(32);
+    const deviceSeed = randomBytes(32);
+    const salt = randomBytes(16);
 
     const unlockKey = await this.deriveDeviceUnlockKey(serverNonce, deviceSeed, salt);
 
@@ -105,6 +106,22 @@ export const TrustedDevicesService = {
 
   async clearAllDeviceData() {
     await idbDeviceStore.clearAllDeviceData();
+  },
+
+  async checkAndClearDeviceDataOnLogout(userId: string, clearPreference: boolean) {
+    if (!clearPreference || !userId) {
+      return;
+    }
+
+    try {
+      const deviceData = await idbDeviceStore.getDeviceData(userId);
+      if (deviceData?.deviceId) {
+        await removeTrustedDevice(deviceData.deviceId);
+      }
+      await idbDeviceStore.clearDeviceData(userId);
+    } catch {
+      // Ignore errors during logout cleanup
+    }
   },
 
   async getDeviceData(userId: string) {

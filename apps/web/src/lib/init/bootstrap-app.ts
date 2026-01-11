@@ -24,6 +24,6 @@ export async function bootstrapApp() {
       console.warn('[init] Failed to bootstrap session:', error);
     }
   } else {
-    resetAllState();
+    await resetAllState();
   }
 }

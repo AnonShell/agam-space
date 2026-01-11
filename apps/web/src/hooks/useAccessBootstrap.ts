@@ -64,7 +64,7 @@ export function useAccessBootstrap(
 
     // Bootstrap complete, now check auth state
     if (!isLoggedIn) {
-      resetAllState();
+      resetAllState().catch(() => {});
       redirectWithQuery(router, '/login', pathname);
       setStatus('redirecting');
       return;

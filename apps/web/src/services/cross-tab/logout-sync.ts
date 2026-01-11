@@ -21,8 +21,8 @@ export const LogoutSync = {
         duration: 2000,
       });
 
-      setTimeout(() => {
-        resetAllState();
+      setTimeout(async () => {
+        await resetAllState();
         window.location.href = '/login';
       }, 3000);
     });

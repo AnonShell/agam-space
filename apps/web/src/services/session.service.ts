@@ -1,4 +1,5 @@
 import { useAuth } from '@/store/auth';
+import { usePreferencesStore } from '@/store/preferences.store';
 import {
   ApiClientError,
   ClientRegistry,
@@ -44,6 +45,14 @@ export const SessionService = {
   },
 
   async logout() {
+    const userId = useAuth.getState().user?.id;
+    const { clearDeviceDataOnLogout } = usePreferencesStore.getState().security;
+
+    // Clear device data BEFORE logout API call (while still authenticated)
+    if (userId) {
+      await TrustedDevicesService.checkAndClearDeviceDataOnLogout(userId, clearDeviceDataOnLogout);
+    }
+
     try {
       await logoutApi();
     } catch {
@@ -51,17 +60,15 @@ export const SessionService = {
     }
 
     LogoutSync.broadcastLogout();
-    resetAllState();
+    await resetAllState();
   },
 };
 
-export function resetAllState() {
+export async function resetAllState() {
   useAuth.getState().clear();
   useE2eeKeys.getState().clear();
 
   ClientRegistry.getKeyManager().clearAll();
 
   SessionUnlockManager.clearAutoUnlockData().catch(() => {});
-
-  TrustedDevicesService.clearAllDeviceData().catch(() => {});
 }
