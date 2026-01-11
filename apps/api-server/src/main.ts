@@ -97,7 +97,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix(configService.getApiPrefix());
 
-  setupStaticAssets(app);
+  setupStaticAssets(app, config);
 
   if (configService.isDocsEnabled()) {
     patchNestJsSwagger();
