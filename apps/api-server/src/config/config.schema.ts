@@ -65,6 +65,11 @@ export const accountConfigSchema = z.object({
   defaultUserStorageQuota: z.coerce.number().int().min(1).default(10_000_000_000), // 10GB default quota
 });
 
+// Integrity Verification configuration
+export const integrityVerificationConfigSchema = z.object({
+  allowCorsForVerification: z.boolean().default(true),
+});
+
 // SSO configuration schema
 export const ssoConfigSchema = z
   .object({
@@ -101,6 +106,9 @@ export const configSchema = z.object({
   files: fileConfigSchema,
   security: securityConfigSchema,
   account: accountConfigSchema,
+  integrityVerification: integrityVerificationConfigSchema.default({
+    allowCorsForVerification: true,
+  }),
   sso: ssoConfigSchema,
   webauthn: webauthnConfigSchema,
 });
@@ -159,6 +167,9 @@ export const envMappings = {
   // Account configuration
   'account.allowNewSignup': 'ALLOW_NEW_SIGNUP',
   'account.defaultUserStorageQuota': 'DEFAULT_USER_STORAGE_QUOTA',
+
+  // Integrity Verification
+  'integrityVerification.allowCorsForVerification': 'ALLOW_CORS_FOR_INTEGRITY_VERIFICATION',
 
   // SSO (OIDC)
   'sso.issuer': 'SSO_ISSUER',

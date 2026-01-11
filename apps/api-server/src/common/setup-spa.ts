@@ -2,6 +2,7 @@ import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import sirv from 'sirv';
+import { AppConfig } from '@/config/config.schema';
 
 /**
  * Route mapping for Next.js dynamic routes.
@@ -9,28 +10,71 @@ import sirv from 'sirv';
  */
 const DYNAMIC_ROUTE_MAPPINGS = [
   {
-    // Match /explorer/* paths
     urlPattern: /^\/explorer\/.+/,
     htmlPath: 'explorer/[[...folderId]]/index.html',
   },
   {
-    // Match /settings/* paths (but not /settings itself)
     urlPattern: /^\/settings\/.+/,
     htmlPath: 'settings/[tab]/index.html',
   },
 ];
 
 /**
+ * Check if origin is allowed for CORS
+ */
+function isOriginAllowed(origin: string | undefined): boolean {
+  if (!origin) return false;
+
+  if (origin === 'https://verify.agamspace.app') {
+    return true;
+  }
+
+  if (process.env.NODE_ENV !== 'production' && origin.match(/^http:\/\/localhost:\d+$/)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Add CORS headers for integrity verification paths if allowed
+ */
+function addIntegrityVerificationCorsHeaders(
+  requestPath: string,
+  origin: string | undefined,
+  reply: any,
+  config: AppConfig
+): boolean {
+  if (!(config.integrityVerification?.allowCorsForVerification ?? true)) {
+    return false;
+  }
+
+  if (requestPath !== '/' && requestPath !== '/integrity-manifest.json') {
+    return false;
+  }
+
+  if (!origin || !isOriginAllowed(origin)) {
+    return false;
+  }
+
+  reply.header('Access-Control-Allow-Origin', origin);
+  reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  reply.header('Access-Control-Allow-Headers', 'Accept, Content-Type');
+  reply.header('Vary', 'Origin');
+
+  return true;
+}
+
+/**
  * Configures static file serving and SPA fallback for the application.
  * Uses sirv for efficient static file serving with caching and compression.
  */
-export function setupStaticAssets(app: NestFastifyApplication): void {
+export function setupStaticAssets(app: NestFastifyApplication, config: AppConfig): void {
   const publicDir = join(__dirname, '../..', 'public');
   const indexHtmlPath = join(publicDir, 'index.html');
 
   console.log(`[setupStaticAssets] Checking publicDir: ${publicDir}`);
 
-  // Load root index.html for fallback
   let indexHtml = '';
   if (existsSync(indexHtmlPath)) {
     indexHtml = readFileSync(indexHtmlPath, 'utf-8');
@@ -49,7 +93,6 @@ export function setupStaticAssets(app: NestFastifyApplication): void {
 
   const instance = app.getHttpAdapter().getInstance();
 
-  // Create sirv handler with optimal settings
   const sirvHandler = sirv(publicDir, {
     dev: process.env.NODE_ENV === 'development',
     etag: true,
@@ -60,18 +103,29 @@ export function setupStaticAssets(app: NestFastifyApplication): void {
     dotfiles: false,
   });
 
+  instance.options('/*', (request, reply) => {
+    const requestPath = request.url.replace(/\?.*$/, '');
+    const origin = request.headers.origin;
+
+    if (addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config)) {
+      return reply.code(204).send();
+    }
+
+    return reply.code(404).send();
+  });
+
   instance.get('/*', (request, reply) => {
     const requestPath = request.url.replace(/\?.*$/, '');
 
-    // Skip API and docs routes - let NestJS handle them
     if (requestPath.startsWith('/api') || requestPath.startsWith('/docs')) {
       reply.callNotFound();
       return;
     }
 
+    const origin = request.headers.origin;
+    addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config);
+
     sirvHandler(request.raw, reply.raw, () => {
-      // Next.js static export creates route-specific HTML files with different JS bundles
-      // Check if this path matches any dynamic route pattern
       for (const route of DYNAMIC_ROUTE_MAPPINGS) {
         if (route.urlPattern.test(requestPath)) {
           const dynamicHtmlPath = join(publicDir, route.htmlPath);
@@ -83,7 +137,6 @@ export function setupStaticAssets(app: NestFastifyApplication): void {
         }
       }
 
-      // Default: serve root index.html
       reply.type('text/html').send(indexHtml);
     });
   });
