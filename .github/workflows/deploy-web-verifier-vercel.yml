@@ -44,4 +44,4 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB_VERIFIER }}
         run: |
-          npx vercel deploy ./apps/web-verifier/out --yes --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel deploy ./apps/web-verifier/out --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }}
