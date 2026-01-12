@@ -43,6 +43,17 @@ jobs:
         run: |
           mkdir -p .vercel/output
           cp -r ./apps/web-verifier/out .vercel/output/static
+          cat > .vercel/output/config.json <<EOF
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/(.*)",
+                "dest": "/$1"
+              }
+            ]
+          }
+          EOF
 
       - name: Deploy to Vercel
         env:
