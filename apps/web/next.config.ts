@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { randomBytes } from 'crypto';
 
 const nextConfig: NextConfig = {
   output: 'export',
@@ -15,7 +16,9 @@ const nextConfig: NextConfig = {
       return buildId;
     }
 
-    return undefined as any;
+    const randomId = randomBytes(16).toString('hex').substring(0, 21);
+    console.log(`📦 Generated random buildId (local dev): ${randomId}`);
+    return randomId;
   },
 };
 
