@@ -13,6 +13,7 @@
 # Build outputs
 **/dist/
 **/build/
+**/out/
 **/*.tsbuildinfo
 **/*.d.ts.map
 

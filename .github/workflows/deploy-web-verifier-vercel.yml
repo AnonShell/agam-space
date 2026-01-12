@@ -1,0 +1,46 @@
+name: Deploy Web Verifier to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web-verifier/**'
+      - '.github/workflows/deploy-web-verifier-vercel.yml'
+  workflow_dispatch:
+
+env:
+  PNPM_VERSION: '10.27.0'
+  NODE_VERSION: '22'
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web-verifier
+        run: pnpm build --filter=web-verifier
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB_VERIFIER }}
+        run: |
+          npx vercel deploy ./apps/web-verifier/out --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
