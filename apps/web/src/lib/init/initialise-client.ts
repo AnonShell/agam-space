@@ -12,12 +12,12 @@ import {
 import { useDownloadStore } from '@/store/download-store';
 import { useUploadStore } from '@/store/upload-store';
 import { initCrossTabCommunication } from '@/services/cross-tab';
-import { useServerConfigStore } from '@/store/server-config.store';
+import { ServerConfigService } from '@/services/server-config.service';
 import { toast } from 'sonner';
 
 let initialized = false;
 
-export function initializeClient() {
+export async function initializeClient() {
   if (initialized) return;
   initialized = true;
 
@@ -39,8 +39,23 @@ export function initializeClient() {
     );
   }
 
+  // Fetch server config first if not already loaded
+  let serverConfig;
+  console.log('⏳ Server config not loaded, fetching from API...');
+  try {
+    serverConfig = await ServerConfigService.getConfig();
+    console.log('✅ Fetched server config:', serverConfig);
+  } catch (error) {
+    console.error('❌ Error fetching server config:', error);
+  }
+
   if (!ClientRegistry.hasUploadManager()) {
-    const serverConfig = useServerConfigStore.getState().config;
+    console.log('📤 Initializing UploadManager with serverConfig:', {
+      chunkSize: serverConfig?.upload?.chunkSize,
+      maxFileSize: serverConfig?.upload?.maxFileSize,
+      maxConcurrency: serverConfig?.upload?.maxConcurrency,
+      fullConfig: serverConfig,
+    });
 
     ClientRegistry.setUploadManager(
       new UploadManager(
@@ -51,6 +66,11 @@ export function initializeClient() {
         },
         uploadManagerCallbacks
       )
+    );
+
+    console.log(
+      '✅ UploadManager initialized with maxFileSize:',
+      serverConfig?.upload?.maxFileSize
     );
   }
 

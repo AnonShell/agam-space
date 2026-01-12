@@ -39,7 +39,7 @@ export const directoryConfigSchema = z.object({
 
 // file configuration
 export const fileConfigSchema = z.object({
-  maxFileSize: z.coerce.number().int().min(1).max(1_000_000_000).default(1_000_000_000), // 1GB default
+  maxFileSize: z.coerce.number().int().min(1).default(1_000_000_000), // 1GB default (no max limit)
   chunkSize: z.coerce
     .number()
     .int()
@@ -103,7 +103,7 @@ export const configSchema = z.object({
   docs: docsConfigSchema,
   database: databaseConfigSchema,
   directories: directoryConfigSchema,
-  files: fileConfigSchema,
+  file: fileConfigSchema,
   security: securityConfigSchema,
   account: accountConfigSchema,
   integrityVerification: integrityVerificationConfigSchema.default({

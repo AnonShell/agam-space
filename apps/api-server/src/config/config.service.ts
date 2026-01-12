@@ -20,7 +20,7 @@ export class AppConfigService {
       docs: this.configService.get('docs'),
       database: this.configService.get('database'),
       directories: this.configService.get('directories'),
-      files: this.configService.get('files'),
+      file: this.configService.get('file'),
       security: this.configService.get('security'),
       sso: this.configService.get('sso'),
       account: this.configService.get('account'),

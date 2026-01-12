@@ -47,7 +47,7 @@ export class FileChunkService {
       chunkIndex,
       stream,
       checksum,
-      this.configService.getConfig().files.chunkSize
+      this.configService.getConfig().file.chunkSize
     );
 
     const newChunk: NewFileChunk = {

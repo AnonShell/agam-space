@@ -11,7 +11,7 @@ export async function bootstrapApp() {
 
   console.log('[init] Bootstrapping app...');
 
-  initializeClient();
+  await initializeClient();
 
   applyThemeFromLocalStorage();
 

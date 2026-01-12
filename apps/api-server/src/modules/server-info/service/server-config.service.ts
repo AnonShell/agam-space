@@ -33,9 +33,9 @@ export class ServerConfigService implements OnModuleInit {
   private loadConfig(): ServerConfig {
     const partialConfig = {
       upload: {
-        chunkSize: this.configService.getConfig().files.chunkSize,
-        maxFileSize: this.configService.getConfig().files.maxFileSize,
-        maxConcurrency: this.configService.getConfig().files.uploadConcurrency,
+        chunkSize: this.configService.getConfig().file.chunkSize,
+        maxFileSize: this.configService.getConfig().file.maxFileSize,
+        maxConcurrency: this.configService.getConfig().file.uploadConcurrency,
       },
       features: {
         publicSharing: false,

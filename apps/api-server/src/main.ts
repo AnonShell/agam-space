@@ -21,7 +21,7 @@ import { setupStaticAssets } from '@/common/setup-spa';
 async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
     logger: process.env.NODE_ENV === 'development',
-    bodyLimit: 1024 * 1024 * 1024, // 1GB limit,
+    bodyLimit: 100 * 1024 * 1024,
     trustProxy: true,
   });
 

@@ -63,8 +63,8 @@ export class FilesService {
   async createFile(userId: string, data: CreateFile): Promise<FileDto> {
     const parentId = isFolderIdRoot(data.parentId) ? null : data.parentId;
 
-    const chunkSize = this.appConfigService.getConfig().files.chunkSize;
-    const maxFileSize = this.appConfigService.getConfig().files.maxFileSize;
+    const chunkSize = this.appConfigService.getConfig().file.chunkSize;
+    const maxFileSize = this.appConfigService.getConfig().file.maxFileSize;
     const estimatedSize = data.chunkCount * chunkSize;
 
     // Check estimated size against max file size + one chunk buffer to allow for rounding errors
@@ -121,9 +121,9 @@ export class FilesService {
       );
     }
 
-    if (approxSize > this.appConfigService.getConfig().files.maxFileSize) {
+    if (approxSize > this.appConfigService.getConfig().file.maxFileSize) {
       throw new ConflictException(
-        `File size exceeds maximum limit of ${this.appConfigService.getConfig().files.maxFileSize} bytes`
+        `File size exceeds maximum limit of ${this.appConfigService.getConfig().file.maxFileSize} bytes`
       );
     }
 

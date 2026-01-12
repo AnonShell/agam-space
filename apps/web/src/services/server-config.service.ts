@@ -5,12 +5,14 @@ export const ServerConfigService = {
   async getConfig(cache: boolean = true) {
     try {
       let config = useServerConfigStore.getState().config;
-      if (cache && config) {
+      if (cache && config && Object.keys(config).length > 0) {
         return config;
       }
 
       config = await fetchServerConfigApi();
       useServerConfigStore.getState().setConfig(config);
+
+      return config;
     } catch (err) {
       console.error('Failed to fetch config', err);
       throw new Error(
