@@ -56,11 +56,11 @@ jobs:
           PREVIOUS_TAG=$(git describe --abbrev=0 --tags ${CURRENT_TAG}^ 2>/dev/null || echo "")
 
           if [ -z "$PREVIOUS_TAG" ]; then
-            # First release - get all commits
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+            # First release - get all commits excluding docs and web-verifier
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -- ':!docs' ':!apps/web-verifier')
           else
-            # Get commits since previous tag
-            CHANGELOG=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges)
+            # Get commits since previous tag, excluding docs and web-verifier
+            CHANGELOG=$(git log ${PREVIOUS_TAG}..${CURRENT_TAG} --pretty=format:"- %s (%h)" --no-merges -- ':!docs' ':!apps/web-verifier')
           fi
 
           # Save to file
