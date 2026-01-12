@@ -23,9 +23,11 @@ COPY tsconfig*.json ./
 
 ARG APP_VERSION
 ARG BUILD_COMMIT
+ARG BUILD_ID
 
 ENV NEXT_PUBLIC_APP_VERSION=${APP_VERSION} \
-    NEXT_PUBLIC_BUILD_COMMIT=${BUILD_COMMIT}
+    NEXT_PUBLIC_BUILD_COMMIT=${BUILD_COMMIT} \
+    NEXT_PUBLIC_BUILD_ID=${BUILD_ID}
 
 RUN find . -name '*.tsbuildinfo' -delete && \
     pnpm build:packages && \

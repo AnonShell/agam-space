@@ -137,6 +137,9 @@ jobs:
           HARDENED_TAGS="${DOCKERHUB_HARDENED_TAGS},${GHCR_HARDENED_TAGS}"
           SCAN_TAG=$(echo "${DOCKERHUB_TAGS}" | cut -d',' -f1)
 
+          # Generate BUILD_ID by hashing commit + run_id
+          BUILD_ID=$(echo -n "${SHORT_SHA}${{ github.run_id }}" | sha256sum | cut -c1-21)
+
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "hardened_tags=${HARDENED_TAGS}" >> $GITHUB_OUTPUT
           echo "scan_tag=${SCAN_TAG}" >> $GITHUB_OUTPUT
@@ -144,6 +147,7 @@ jobs:
           echo "commit=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
           echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
+          echo "build_id=${BUILD_ID}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         id: docker_build
@@ -157,7 +161,7 @@ jobs:
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
             BUILD_COMMIT=${{ steps.meta.outputs.commit }}
-            BUILD_ID=${{ github.run_number }}
+            BUILD_ID=${{ steps.meta.outputs.build_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ steps.meta.outputs.platforms }}
@@ -215,7 +219,7 @@ jobs:
           build-args: |
             APP_VERSION=${{ steps.meta.outputs.version }}
             BUILD_COMMIT=${{ steps.meta.outputs.commit }}
-            BUILD_ID=${{ github.run_number }}
+            BUILD_ID=${{ steps.meta.outputs.build_id }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ steps.meta.outputs.platforms }}
