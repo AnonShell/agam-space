@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
@@ -35,7 +40,7 @@ export class WebAuthnService {
   ): Promise<UnlockChallengeResponseDto> {
     const device = await this.trustedDevicesService.getDeviceByIdForUser(deviceId, userId);
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Trusted device not found');
     }
     const { rpId } = this.appConfigService.getWebauthnConfig();
     const options = await generateAuthenticationOptions({
@@ -74,7 +79,7 @@ export class WebAuthnService {
   }) {
     const device = await this.trustedDevicesService.getDeviceByIdForUser(deviceId, userId);
     if (!device) {
-      throw new Error('Device not found');
+      throw new NotFoundException('Device not found');
     }
     const challengeRecord = this.challengeStore[challengeId];
     if (
@@ -82,34 +87,47 @@ export class WebAuthnService {
       challengeRecord.deviceId !== deviceId ||
       challengeRecord.userId !== userId
     ) {
-      throw new Error('Invalid or expired challenge');
+      throw new BadRequestException('Invalid or expired challenge');
     }
     const { rpId, origin } = this.appConfigService.getWebauthnConfig();
 
-    const verification = await verifyAuthenticationResponse({
-      response: {
-        id: device.credentialId,
-        rawId: device.credentialId,
+    let verification;
+    try {
+      verification = await verifyAuthenticationResponse({
         response: {
-          authenticatorData,
-          clientDataJSON,
-          signature,
+          id: device.credentialId,
+          rawId: device.credentialId,
+          response: {
+            authenticatorData,
+            clientDataJSON,
+            signature,
+          },
+          type: 'public-key',
+          clientExtensionResults: {},
         },
-        type: 'public-key',
-        clientExtensionResults: {},
-      },
-      expectedChallenge: challengeRecord.challenge,
-      expectedOrigin: origin,
-      expectedRPID: rpId,
-      credential: {
-        id: device.credentialId,
-        publicKey: fromBase64Url(device.webauthnPublicKey),
-        counter: typeof device.counter === 'number' ? device.counter : 0,
-      },
-    } as unknown as Parameters<typeof verifyAuthenticationResponse>[0]);
-    if (!verification.verified) {
-      throw new Error('WebAuthn verification failed');
+        expectedChallenge: challengeRecord.challenge,
+        expectedOrigin: origin,
+        expectedRPID: rpId,
+        credential: {
+          id: device.credentialId,
+          publicKey: fromBase64Url(device.webauthnPublicKey),
+          counter: typeof device.counter === 'number' ? device.counter : 0,
+        },
+      } as unknown as Parameters<typeof verifyAuthenticationResponse>[0]);
+    } catch (error) {
+      console.error(
+        '[WebAuthn] Verification error:',
+        error instanceof Error ? error.message : String(error)
+      );
+      throw new UnauthorizedException(
+        'WebAuthn authentication failed. Please try again with the correct authenticator.'
+      );
     }
+
+    if (!verification.verified) {
+      throw new BadRequestException('WebAuthn signature verification failed.');
+    }
+
     this.removeChallenge(challengeId);
     await this.trustedDevicesService.updateLastUsedAndCounter(
       device.id,
@@ -139,24 +157,38 @@ export class WebAuthnService {
 
   async registerDeviceWithWebAuthn(userId: string, registerDevice: RegisterDeviceRequest) {
     const { rpId, origin } = this.appConfigService.getWebauthnConfig();
-    const verification = await verifyRegistrationResponse({
-      response: {
-        id: registerDevice.credentialId,
-        rawId: registerDevice.credentialId,
+
+    let verification;
+    try {
+      verification = await verifyRegistrationResponse({
         response: {
-          attestationObject: registerDevice.attestationObject,
-          clientDataJSON: registerDevice.clientDataJSON,
+          id: registerDevice.credentialId,
+          rawId: registerDevice.credentialId,
+          response: {
+            attestationObject: registerDevice.attestationObject,
+            clientDataJSON: registerDevice.clientDataJSON,
+          },
+          type: 'public-key',
+          clientExtensionResults: {},
         },
-        type: 'public-key',
-        clientExtensionResults: {},
-      },
-      expectedChallenge: registerDevice.challenge,
-      expectedOrigin: origin,
-      expectedRPID: rpId,
-    });
-    if (!verification.verified) {
-      throw new Error('WebAuthn registration verification failed');
+        expectedChallenge: registerDevice.challenge,
+        expectedOrigin: origin,
+        expectedRPID: rpId,
+      });
+    } catch (error) {
+      console.error(
+        '[WebAuthn] Registration verification error:',
+        error instanceof Error ? error.message : String(error)
+      );
+      throw new BadRequestException('WebAuthn registration failed. Please try again.');
     }
+
+    if (!verification.verified) {
+      throw new BadRequestException(
+        'WebAuthn registration verification failed. The attestation could not be verified.'
+      );
+    }
+
     const { id, publicKey, counter } = verification.registrationInfo.credential;
     return await this.trustedDevicesService.createDeviceFromWebAuthn(userId, {
       credentialId: id,
