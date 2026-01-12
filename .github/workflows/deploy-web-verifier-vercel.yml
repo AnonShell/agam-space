@@ -39,9 +39,14 @@ jobs:
         run: pnpm build
         working-directory: ./apps/web-verifier
 
+      - name: Prepare for Vercel prebuilt deployment
+        run: |
+          mkdir -p .vercel/output
+          cp -r ./apps/web-verifier/out .vercel/output/static
+
       - name: Deploy to Vercel
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB_VERIFIER }}
         run: |
-          npx vercel deploy ./apps/web-verifier --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel deploy . --prebuilt --yes --token=${{ secrets.VERCEL_TOKEN }}
