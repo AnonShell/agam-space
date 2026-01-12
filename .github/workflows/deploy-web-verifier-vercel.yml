@@ -43,13 +43,17 @@ jobs:
         run: |
           mkdir -p .vercel/output
           cp -r ./apps/web-verifier/out .vercel/output/static
-          cat > .vercel/output/config.json <<EOF
+          cat > .vercel/output/config.json <<'EOF'
           {
             "version": 3,
             "routes": [
               {
-                "src": "/(.*)",
+                "src": "/(.*\\..*)",
                 "dest": "/$1"
+              },
+              {
+                "src": "/.*",
+                "dest": "/index.html"
               }
             ]
           }
