@@ -9,6 +9,7 @@ export const TrustedDeviceSchema = z.object({
   credentialId: z.string().min(1).max(500),
   webauthnPublicKey: z.string().min(1).max(2000),
   devicePublicKey: z.string().min(1).max(2000),
+  prfInput: z.string().max(1000).nullable().optional(), // PRF input for PRF-enabled devices
   unlockKey: z.string().min(1).max(1000),
   encryptedCMK: z.string().min(1).max(4000),
   deviceName: z.string().min(1).max(100),
@@ -24,8 +25,9 @@ export const RegisterDeviceRequestSchema = z.object({
   attestationObject: z.string().min(1),
   clientDataJSON: z.string().min(1),
   devicePublicKey: z.string().min(1).max(2000),
+  prfInput: z.string().max(100).optional(),
   unlockKey: z.string().min(1).max(1000),
-  encryptedCMK: z.string().min(1).max(4000), // <-- Add encryptedCMK to registration request
+  encryptedCMK: z.string().min(1).max(4000),
   deviceName: z.string().min(1).max(100),
   challenge: z.string().optional(),
 });
@@ -43,6 +45,7 @@ export type UnlockChallengeRequest = z.infer<typeof UnlockChallengeRequestSchema
 export const UnlockChallengeResponseSchema = z.object({
   options: z.record(z.any()), // WebAuthn options
   challengeId: z.string().min(1).max(100),
+  prfInput: z.string().optional(),
 });
 
 export type UnlockChallengeResponse = z.infer<typeof UnlockChallengeResponseSchema>;

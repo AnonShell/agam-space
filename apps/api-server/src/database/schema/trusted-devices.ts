@@ -20,7 +20,9 @@ export const trustedDevices = pgTable(
     webauthnPublicKey: text('webauthn_public_key').notNull(),
     devicePublicKey: text('device_public_key').notNull(),
 
-    // just server nonce, not full key, uses split-key approach
+    prfInput: text('prf_input'),
+
+    // Server nonce (unlockKey) - only sent after successful authentication
     unlockKey: text('unlock_key').notNull(),
 
     encryptedCMK: text('encrypted_cmk').notNull(),

@@ -5,9 +5,10 @@ export interface DeviceData {
   deviceId: string;
   credentialId: string;
   encryptedDevicePrivateKey: string;
-  deviceSeed: string;
+  deviceSeed: string; // Empty string if prfEnabled=true
   devicePublicKey: string;
   salt: string;
+  prfEnabled?: boolean; // If true, uses PRF extension instead of stored seed
 }
 
 export const idbDeviceStore = {

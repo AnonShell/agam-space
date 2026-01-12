@@ -25,6 +25,7 @@ export class TrustedDevicesService {
       credentialId: string;
       webauthnPublicKey: string;
       devicePublicKey: string;
+      prfInput?: string;
       unlockKey: string;
       encryptedCMK: string;
       deviceName: string;
@@ -39,6 +40,7 @@ export class TrustedDevicesService {
         credentialId: device.credentialId,
         webauthnPublicKey: device.webauthnPublicKey,
         devicePublicKey: device.devicePublicKey,
+        prfInput: device.prfInput, // Store PRF input if provided
         unlockKey: device.unlockKey,
         encryptedCMK: device.encryptedCMK,
         deviceName: device.deviceName,

@@ -36,6 +36,13 @@
       "when": 1768056100474,
       "tag": "0004_aberrant_alex_wilder",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1768163630112,
+      "tag": "0005_hot_spirit",
+      "breakpoints": true
     }
   ]
 }

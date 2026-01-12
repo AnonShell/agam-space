@@ -1,0 +1,1 @@
+ALTER TABLE "trusted_devices" ADD COLUMN "prf_input" text;

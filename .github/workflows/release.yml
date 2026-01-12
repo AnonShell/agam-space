@@ -86,19 +86,27 @@ jobs:
 
             **Docker Hub:**
             ```bash
+            # Standard image
             docker pull agamspace/agam-space:${{ steps.get_tag.outputs.tag_name }}
             docker pull agamspace/agam-space:latest
+
+            # Hardened image (recommended for production)
+            docker pull agamspace/agam-space:${{ steps.get_tag.outputs.tag_name }}-hardened
+            docker pull agamspace/agam-space:latest-hardened
             ```
 
             **GitHub Container Registry:**
             ```bash
+            # Standard image
             docker pull ghcr.io/agam-space/agam-space:${{ steps.get_tag.outputs.tag_name }}
             docker pull ghcr.io/agam-space/agam-space:latest
+
+            # Hardened image (recommended for production)
+            docker pull ghcr.io/agam-space/agam-space:${{ steps.get_tag.outputs.tag_name }}-hardened
+            docker pull ghcr.io/agam-space/agam-space:latest-hardened
             ```
 
-            ### 🔐 Security
-
-            This is a beta release. Always keep backups of your data.
+            **Note:** This is a beta release. Always keep backups of your data.
 
             ---
 
@@ -106,3 +114,5 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}
           generate_release_notes: true
+          files: |
+            integrity-manifest.json

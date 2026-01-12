@@ -53,10 +53,35 @@ export const TrustedDevicesService = {
       await DeviceKeyManager.generateDeviceKeyPair();
 
     const serverNonce = randomBytes(32);
-    const deviceSeed = randomBytes(32);
     const salt = randomBytes(16);
+    const prfInputBytes = randomBytes(32);
 
-    const unlockKey = await this.deriveDeviceUnlockKey(serverNonce, deviceSeed, salt);
+    const challengeResp = await getRegisterChallenge(deviceName);
+
+    // Add PRF extension to options
+    const options = { ...challengeResp.options };
+    if (!options.extensions) {
+      options.extensions = {};
+    }
+    options.extensions.prf = {
+      eval: {
+        first: prfInputBytes,
+      },
+    };
+
+    const regResp = await startRegistration(options);
+
+    const prfResult = (regResp.clientExtensionResults as any)?.prf;
+    const prfEnabled = prfResult?.enabled ?? false;
+    let derivedSeed: Uint8Array;
+
+    if (prfEnabled && prfResult?.results?.first) {
+      derivedSeed = new Uint8Array(prfResult.results.first);
+    } else {
+      derivedSeed = randomBytes(32);
+    }
+
+    const unlockKey = await this.deriveDeviceUnlockKey(serverNonce, derivedSeed, salt);
 
     const envelopePriv = await EncryptionRegistry.get().encrypt(devicePrivateKey, unlockKey);
     const encryptedDevicePrivateKey = EncryptedEnvelopeCodec.serializeToTLV(envelopePriv);
@@ -67,15 +92,12 @@ export const TrustedDevicesService = {
     );
     const encryptedCMK = toBase64(encryptedCMKBytes);
 
-    const challengeResp = await getRegisterChallenge(deviceName);
-
-    const regResp = await startRegistration(challengeResp.options);
-
     const payload = {
       credentialId: regResp.id,
       attestationObject: regResp.response.attestationObject,
       clientDataJSON: regResp.response.clientDataJSON,
       devicePublicKey: toBase64(devicePublicKey),
+      prfInput: prfEnabled ? toBase64(prfInputBytes) : undefined,
       unlockKey: toBase64(serverNonce),
       encryptedCMK,
       deviceName,
@@ -88,9 +110,10 @@ export const TrustedDevicesService = {
       deviceId: result.deviceId,
       credentialId: regResp.id,
       encryptedDevicePrivateKey: toBase64(encryptedDevicePrivateKey),
-      deviceSeed: toBase64(deviceSeed),
+      deviceSeed: prfEnabled ? '' : toBase64(derivedSeed),
       devicePublicKey: toBase64(devicePublicKey),
       salt: toBase64(salt),
+      prfEnabled,
     });
 
     return {
@@ -102,10 +125,6 @@ export const TrustedDevicesService = {
   async removeDevice(deviceId: string, userId: string) {
     await removeTrustedDevice(deviceId);
     await idbDeviceStore.clearDeviceData(userId);
-  },
-
-  async clearAllDeviceData() {
-    await idbDeviceStore.clearAllDeviceData();
   },
 
   async checkAndClearDeviceDataOnLogout(userId: string, clearPreference: boolean) {
@@ -150,6 +169,20 @@ export const TrustedDevicesService = {
       throw new Error('Invalid WebAuthn options from backend');
     }
 
+    // Get prfInput from challenge if available (only for PRF-enabled devices)
+    const prfInputB64 = (challengeResp as any).prfInput;
+    let prfInputBytes: Uint8Array | undefined;
+
+    if (deviceData.prfEnabled) {
+      if (!prfInputB64) {
+        throw new Error(
+          'Device registered with PRF but server did not provide prfInput. ' +
+            'This may indicate a database migration issue. Please re-register this device.'
+        );
+      }
+      prfInputBytes = fromBase64(prfInputB64);
+    }
+
     const options: PublicKeyCredentialRequestOptionsJSON = {
       challenge: opts.challenge,
       rpId: opts.rpId,
@@ -162,6 +195,18 @@ export const TrustedDevicesService = {
         })
       ),
     };
+
+    // Add PRF extension if device uses it
+    if (deviceData.prfEnabled && prfInputBytes) {
+      (options as any).extensions = {
+        prf: {
+          eval: {
+            first: prfInputBytes,
+          },
+        },
+      };
+    }
+
     const assertion = await startAuthentication({ optionsJSON: options });
 
     const unlockResp = await verifyUnlockAssertion({
@@ -173,12 +218,35 @@ export const TrustedDevicesService = {
       deviceId,
     });
 
-    const { unlockKey: serverNonce } = unlockResp;
-    if (!serverNonce) throw new Error('Server nonce not returned');
+    const { unlockKey: serverNonceB64 } = unlockResp;
+    if (!serverNonceB64) {
+      throw new Error('Server nonce not returned after authentication');
+    }
+
+    const serverNonce = fromBase64(serverNonceB64);
+
+    let derivedSeed: Uint8Array;
+    if (deviceData.prfEnabled) {
+      const prfResult = (assertion.clientExtensionResults as any)?.prf;
+
+      if (prfResult?.results?.first) {
+        derivedSeed = new Uint8Array(prfResult.results.first);
+        console.log('[TrustedDevices] Using PRF-derived seed for unlock');
+      } else {
+        throw new Error(
+          'PRF evaluation failed - device was registered with PRF but authenticator did not return PRF output. ' +
+            'This may indicate the authenticator lost PRF support. Please re-register this device.'
+        );
+      }
+    } else {
+      // Use stored client seed (backwards compatibility or non-PRF devices)
+      derivedSeed = fromBase64(deviceData.deviceSeed);
+      console.log('[TrustedDevices] Using stored client seed for unlock');
+    }
 
     const fullUnlockKey = await this.deriveDeviceUnlockKey(
-      fromBase64(serverNonce),
-      fromBase64(deviceData.deviceSeed),
+      serverNonce,
+      derivedSeed,
       fromBase64(deviceData.salt)
     );
 

@@ -53,6 +53,7 @@ export class WebAuthnService {
     return {
       options,
       challengeId,
+      prfInput: device.prfInput || undefined, // Include prfInput for PRF-enabled devices
     };
   }
 
@@ -119,8 +120,9 @@ export class WebAuthnService {
 
   async generateRegistrationOptions(userId: string, userName: string) {
     const { rpId } = this.appConfigService.getWebauthnConfig();
-    const rpName = 'Agam Space'; // You can make this configurable
+    const rpName = 'Agam Space';
     const userIdBytes = Buffer.from(userId, 'utf-8');
+
     return generateRegistrationOptions({
       rpName,
       rpID: rpId,
@@ -160,6 +162,7 @@ export class WebAuthnService {
       credentialId: id,
       webauthnPublicKey: Buffer.from(publicKey).toString('base64url'),
       devicePublicKey: registerDevice.devicePublicKey,
+      prfInput: registerDevice.prfInput,
       unlockKey: registerDevice.unlockKey,
       encryptedCMK: registerDevice.encryptedCMK,
       deviceName: registerDevice.deviceName,
