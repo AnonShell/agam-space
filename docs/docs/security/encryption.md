@@ -261,16 +261,21 @@ sequenceDiagram
    efficiency. Metadata uses base64-encoded TLV for JSON transport. Each chunk
    is checksummed (BLAKE3) and verified on upload for integrity.
 
-4. **Encrypt FEK with folder key:**
+4. **Compute file-level checksum:**
+   - BLAKE3 hash of concatenated chunk checksums
+   - Provides integrity verification for the entire file
+
+5. **Encrypt FEK with folder key:**
    - Encrypt FEK using folder key
 
-5. **Encrypt metadata:**
+6. **Encrypt metadata:**
    - Encrypt filename with folder key
    - Encrypt MIME type with folder key
 
-6. **Upload to server:**
+7. **Upload to server:**
    - Encrypted chunks (TLV binary)
    - Checksums (BLAKE3, one per chunk)
+   - File checksum (BLAKE3, derived from chunk checksums)
    - Encrypted FEK (base64-encoded TLV)
    - Encrypted metadata (base64-encoded TLV)
    - File size (plaintext)

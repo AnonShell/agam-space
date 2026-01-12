@@ -26,9 +26,19 @@ interface ChallengeStore {
   };
 }
 
+interface RegistrationChallengeStore {
+  [key: string]: {
+    challenge: string;
+    deviceId: string;
+    userId: string;
+    timestamp: number;
+  };
+}
+
 @Injectable()
 export class WebAuthnService {
   private challengeStore: ChallengeStore = {};
+  private registrationChallengeStore: RegistrationChallengeStore = {};
   constructor(
     private readonly trustedDevicesService: TrustedDevicesService,
     private readonly appConfigService: AppConfigService
@@ -47,6 +57,12 @@ export class WebAuthnService {
       rpID: rpId,
       timeout: 60000,
       userVerification: 'preferred',
+      allowCredentials: [
+        {
+          id: device.credentialId,
+          transports: ['internal'],
+        },
+      ],
     });
     const challengeId = ulid();
     this.challengeStore[challengeId] = {
@@ -136,16 +152,25 @@ export class WebAuthnService {
     return { unlockKey: device.unlockKey };
   }
 
-  async generateRegistrationOptions(userId: string, userName: string) {
+  async generateRegistrationOptions(
+    userId: string,
+    userName: string,
+    deviceId: string,
+    deviceName: string
+  ) {
     const { rpId } = this.appConfigService.getWebauthnConfig();
     const rpName = 'Agam Space';
-    const userIdBytes = Buffer.from(userId, 'utf-8');
 
-    return generateRegistrationOptions({
+    // Create unique userID per device to prevent authenticator confusion
+    const userIdBytes = Buffer.from(`${userId}--device--${deviceId}`, 'utf-8');
+
+    const displayUserName = `${userName} - ${deviceName}`;
+
+    const options = await generateRegistrationOptions({
       rpName,
       rpID: rpId,
       userID: userIdBytes,
-      userName: userName,
+      userName: displayUserName,
       timeout: 60000,
       attestationType: 'none',
       authenticatorSelection: {
@@ -153,10 +178,31 @@ export class WebAuthnService {
         residentKey: 'preferred',
       },
     });
+
+    this.registrationChallengeStore[deviceId] = {
+      challenge: options.challenge,
+      deviceId,
+      userId,
+      timestamp: Date.now(),
+    };
+
+    return options;
   }
 
   async registerDeviceWithWebAuthn(userId: string, registerDevice: RegisterDeviceRequest) {
     const { rpId, origin } = this.appConfigService.getWebauthnConfig();
+
+    // Validate registration challenge using deviceId as the key
+    const challengeRecord = this.registrationChallengeStore[registerDevice.deviceId];
+    if (
+      !challengeRecord ||
+      challengeRecord.userId !== userId ||
+      challengeRecord.deviceId !== registerDevice.deviceId
+    ) {
+      throw new BadRequestException(
+        'Invalid or expired registration challenge. Please request a new challenge.'
+      );
+    }
 
     let verification;
     try {
@@ -171,7 +217,7 @@ export class WebAuthnService {
           type: 'public-key',
           clientExtensionResults: {},
         },
-        expectedChallenge: registerDevice.challenge,
+        expectedChallenge: challengeRecord.challenge,
         expectedOrigin: origin,
         expectedRPID: rpId,
       });
@@ -189,6 +235,8 @@ export class WebAuthnService {
       );
     }
 
+    this.removeRegistrationChallenge(registerDevice.deviceId);
+
     const { id, publicKey, counter } = verification.registrationInfo.credential;
     return await this.trustedDevicesService.createDeviceFromWebAuthn(userId, {
       credentialId: id,
@@ -204,5 +252,9 @@ export class WebAuthnService {
 
   private removeChallenge(challengeId: string): void {
     delete this.challengeStore[challengeId];
+  }
+
+  private removeRegistrationChallenge(challengeId: string): void {
+    delete this.registrationChallengeStore[challengeId];
   }
 }

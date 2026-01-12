@@ -74,6 +74,14 @@ biometrics while maintaining the same security level.
 3. Next time: Login with credentials, unlock with biometric (no master password
    needed)
 
+**Enhanced security:** Browsers with WebAuthn PRF (Pseudo-Random Function)
+support derive encryption keys directly from device secure hardware (TPM, Secure
+Enclave), providing stronger protection against device cloning.
+
+**Persistence:** Device credentials persist across logouts by default, allowing
+biometric unlock without re-registration. You can enable "Clear on logout" in
+Settings → Trusted Devices to remove credentials when logging out.
+
 See [Trusted Devices](../configuration/trusted-devices) for setup instructions.
 
 See [CMK Unlock](../security/cmk-unlock) for technical details on how device

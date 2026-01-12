@@ -2,6 +2,7 @@ import {
   DeviceInfoArraySchema,
   RegisterDeviceRequest,
   RegisterDeviceResponseSchema,
+  RegisterChallengeResponse,
   UnlockChallengeResponseSchema,
   UnlockResponseSchema,
 } from '@agam-space/shared-types';
@@ -49,9 +50,7 @@ export async function verifyUnlockAssertion(data: any) {
   });
 }
 
-export async function getRegisterChallenge(
-  deviceName: string
-): Promise<{ deviceId: string; options: any }> {
+export async function getRegisterChallenge(deviceName: string): Promise<RegisterChallengeResponse> {
   const response = await ClientRegistry.getApiClient().fetchRaw('/v1/devices/register/challenge', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

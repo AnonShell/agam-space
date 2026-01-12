@@ -4,9 +4,11 @@ import {
   DeviceDto,
   RegisterDeviceDto,
   RegisterDeviceResponseDto,
+  RegisterChallengeResponseDto,
   UnlockAssertionDto,
   UnlockChallengeDto,
   UnlockResponseDto,
+  RegisterChallengeRequestDto,
 } from '@/modules/trusted-devices/dto/trusted-devices.dto';
 import { TrustedDevicesService } from '@/modules/trusted-devices/trusted-devices.service';
 import {
@@ -126,17 +128,19 @@ export class TrustedDevicesController {
   @ApiResponse({
     status: 200,
     description: 'Registration challenge and deviceId',
-    schema: {
-      type: 'object',
-      properties: {
-        deviceId: { type: 'string' },
-        options: { type: 'object' },
-      },
-    },
+    type: RegisterChallengeResponseDto,
   })
-  async getRegisterChallenge(@CurrentUser() user: AuthenticatedUser) {
+  async getRegisterChallenge(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: RegisterChallengeRequestDto
+  ): Promise<RegisterChallengeResponseDto> {
     const deviceId = this.trustedDevicesService.generateDeviceId();
-    const options = await this.webAuthnService.generateRegistrationOptions(user.id, user.username);
+    const options = await this.webAuthnService.generateRegistrationOptions(
+      user.id,
+      user.username,
+      deviceId,
+      body.deviceName
+    );
     return { deviceId, options };
   }
 }

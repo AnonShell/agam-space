@@ -6,57 +6,6 @@ sidebar_position: 6
 
 Enable biometric unlock on your devices (Touch ID, Face ID, Windows Hello).
 
-## What is Trusted Device Unlock?
-
-After registering a device, you can unlock Agam Space with biometrics instead of
-typing your master password every time.
-
-**How it works:**
-
-1. **Register device (requires master password once):**
-   - Client generates device keypair (X25519 public/private keys)
-   - Client generates server nonce (16 bytes)
-   - Client generates device seed (16 bytes)
-   - Client generates salt (16 bytes)
-   - Unlock key derived using Argon2id from: server nonce + device seed + salt
-   - Device private key encrypted with derived unlock key
-   - CMK encrypted with device public key
-   - WebAuthn credential created in device secure hardware
-   - **Server stores:** Server nonce, encrypted CMK, device public key
-   - **Client stores (IndexedDB):** Encrypted device private key, device seed,
-     salt
-
-2. **On subsequent logins:**
-   - Enter login credentials (password or SSO)
-   - Biometric prompt (Touch ID, Face ID, fingerprint)
-   - WebAuthn creates authentication signature
-   - Server sends server nonce (only after successful verification)
-   - Client retrieves device seed + salt from IndexedDB
-   - Unlock key derived using Argon2id from: server nonce + device seed + salt
-   - Derived unlock key decrypts device private key
-   - Device private key decrypts CMK
-   - CMK loaded in memory
-
-**Security model - Split-Key:**
-
-The **derived unlock key** is never persisted - it's computed on-demand from
-three stored components:
-
-- **Server has:** Server nonce (16 bytes) - released only after WebAuthn
-  verification
-- **Client has:** Device seed (16 bytes) + salt (16 bytes) in IndexedDB
-- **Derivation:** `Argon2id(serverNonce + deviceSeed, salt)` = unlock key
-  (ephemeral, not stored)
-
-**Protection:**
-
-- **Server breach alone:** Cannot derive unlock key without device seed and salt
-- **Client storage theft alone:** Cannot derive unlock key without server nonce
-- **WebAuthn required:** Server nonce only released after biometric
-  authentication
-
-One device per browser. Each device has unique nonce, seed, and salt.
-
 ## Requirements
 
 - **HTTPS required** (doesn't work on http://localhost)
@@ -112,30 +61,46 @@ To revoke device access:
 2. Click **Remove** next to the device
 3. Confirm removal
 
+## Settings
+
+**Device persistence:**
+
+Device credentials persist locally (browser storage) by default. This allows
+biometric unlock without re-registration after logout.
+
+Your data remains encrypted - only the unlock mechanism is persisted, not your
+actual files or encryption key.
+
+**Clear device data on logout:**
+
+By default, your device credentials stay saved after logout. If you prefer to
+remove them:
+
+1. Go to **Settings** → **Security** → **Trusted Devices**
+2. Enable **Clear device data on logout**
+3. Next logout will remove local credentials
+4. You'll need to re-register this device on next login
+
+When disabled (default):
+
+- Device stays registered after logout
+- Biometric unlock works on next login
+- No need to re-register
+
 ## Security
 
-**Split-key security model:**
+**Never stored locally:**
 
-The unlock key is never stored - it's derived on-demand from:
+- Master password
+- Encryption key (CMK)
+- Server nonce
 
-- Server nonce (from server, requires WebAuthn authentication)
-- Device seed (from IndexedDB)
-- Salt (from IndexedDB)
+**Enhanced security with PRF:**
 
-**Storage:**
-
-- **Server:** Server nonce, encrypted CMK, device public key
-- **Client IndexedDB:** Encrypted device private key, device seed, salt, device
-  public key
-
-**Attack resistance:**
-
-- Server breach: Cannot derive unlock key without client seed + salt
-- Client storage theft: Cannot derive unlock key without server nonce
-- Session hijacking: Server nonce requires WebAuthn authentication
-
-**One device per browser** - registering again from the same browser overwrites
-the previous device.
+On supported browsers, device unlock uses WebAuthn PRF (Pseudo-Random Function)
+which derives the unlock key directly from your device's secure hardware (like
+Secure Enclave on Mac or TPM on Windows). This provides stronger protection than
+software-only methods.
 
 ## Troubleshooting
 

@@ -13,6 +13,7 @@ import {
 } from '@agam-space/client';
 import {
   PublicKeyCredentialDescriptorJSON,
+  PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
   startAuthentication,
   startRegistration,
@@ -59,7 +60,9 @@ export const TrustedDevicesService = {
     const challengeResp = await getRegisterChallenge(deviceName);
 
     // Add PRF extension to options
-    const options = { ...challengeResp.options };
+    const options = { ...challengeResp.options } as PublicKeyCredentialCreationOptionsJSON & {
+      extensions?: { prf?: any };
+    };
     if (!options.extensions) {
       options.extensions = {};
     }
@@ -69,7 +72,9 @@ export const TrustedDevicesService = {
       },
     };
 
-    const regResp = await startRegistration(options);
+    const regResp = await startRegistration({
+      optionsJSON: options as PublicKeyCredentialCreationOptionsJSON,
+    });
 
     const prfResult = (regResp.clientExtensionResults as any)?.prf;
     const prfEnabled = prfResult?.enabled ?? false;
@@ -102,6 +107,7 @@ export const TrustedDevicesService = {
       encryptedCMK,
       deviceName,
       challenge: challengeResp.options.challenge,
+      deviceId: challengeResp.deviceId,
     };
 
     const result = await registerTrustedDevice(payload);

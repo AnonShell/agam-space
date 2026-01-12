@@ -25,7 +25,7 @@ const DYNAMIC_ROUTE_MAPPINGS = [
 function isOriginAllowed(origin: string | undefined): boolean {
   if (!origin) return false;
 
-  if (origin === 'https://verify.agamspace.app') {
+  if (origin === 'https://web-verifier.agamspace.app') {
     return true;
   }
 
@@ -49,7 +49,13 @@ function addIntegrityVerificationCorsHeaders(
     return false;
   }
 
-  if (requestPath !== '/' && requestPath !== '/integrity-manifest.json') {
+  // Allow CORS for integrity verification
+  const isAllowedPath =
+    requestPath === '/' ||
+    requestPath === '/integrity-manifest.json' ||
+    DYNAMIC_ROUTE_MAPPINGS.some(route => route.urlPattern.test(requestPath));
+
+  if (!isAllowedPath) {
     return false;
   }
 

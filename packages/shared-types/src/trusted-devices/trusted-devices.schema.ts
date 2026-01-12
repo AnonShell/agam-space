@@ -30,9 +30,25 @@ export const RegisterDeviceRequestSchema = z.object({
   encryptedCMK: z.string().min(1).max(4000),
   deviceName: z.string().min(1).max(100),
   challenge: z.string().optional(),
+  deviceId: UlidSchema,
 });
 
 export type RegisterDeviceRequest = z.infer<typeof RegisterDeviceRequestSchema>;
+
+// Device register challenge request
+export const RegisterChallengeRequestSchema = z.object({
+  deviceName: z.string().min(1).max(100),
+});
+
+export type RegisterChallengeRequest = z.infer<typeof RegisterChallengeRequestSchema>;
+
+// Device register challenge response
+export const RegisterChallengeResponseSchema = z.object({
+  deviceId: UlidSchema,
+  options: z.record(z.any()), // WebAuthn registration options
+});
+
+export type RegisterChallengeResponse = z.infer<typeof RegisterChallengeResponseSchema>;
 
 // Device unlock challenge request
 export const UnlockChallengeRequestSchema = z.object({

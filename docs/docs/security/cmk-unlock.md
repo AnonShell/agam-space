@@ -123,29 +123,47 @@ sequenceDiagram
 **Registration (one-time):**
 
 1. Client generates device keypair (X25519 public/private keys)
-2. Client generates random server nonce (16 bytes)
-3. Client generates random device seed (16 bytes)
-4. Client generates random salt (16 bytes)
-5. Unlock key derived using Argon2id from: server nonce + device seed + salt
-6. Device private key encrypted with derived unlock key
-7. CMK encrypted with device public key
-8. WebAuthn credential created in device secure hardware
-9. **Server stores:** Server nonce, encrypted CMK, device public key
-10. **Client stores in IndexedDB:** Encrypted device private key, device seed,
-    salt, device public key
+2. Client generates random PRF input (32 bytes)
+3. Client generates random server nonce (16 bytes)
+4. WebAuthn credential created with PRF extension (if supported)
+5. If PRF not supported, client generates random device seed (16 bytes)
+6. Client generates random salt (16 bytes)
+7. Unlock key derived using Argon2id from: server nonce + (PRF output or device
+   seed) + salt
+8. Device private key encrypted with derived unlock key
+9. CMK encrypted with device public key
+10. **Server stores:** Server nonce, encrypted CMK, device public key
+11. **Client stores in IndexedDB:** Encrypted device private key, salt, device
+    public key (device seed only if PRF not supported)
 
 **Subsequent logins:**
 
 1. Enter login credentials (password or SSO)
 2. Biometric prompt (Touch ID, Face ID, fingerprint)
 3. WebAuthn creates authentication signature
-4. Server verifies WebAuthn signature
-5. Server sends server nonce (only after successful verification)
-6. Client retrieves device seed + salt from IndexedDB
-7. Unlock key derived using Argon2id from: server nonce + device seed + salt
-8. Derived unlock key decrypts device private key
-9. Device private key decrypts CMK
-10. CMK loaded into memory
+4. If PRF supported, WebAuthn derives key using stored PRF input (embedded in
+   credential)
+5. Server verifies WebAuthn signature
+6. Server sends server nonce (only after successful verification)
+7. Client retrieves salt from IndexedDB (and device seed if PRF not used)
+8. Unlock key derived using Argon2id from: server nonce + (PRF output or device
+   seed) + salt
+9. Derived unlock key decrypts device private key
+10. Device private key decrypts CMK
+11. CMK loaded into memory
+
+**PRF Extension:**
+
+Browsers with WebAuthn PRF (Pseudo-Random Function) support derive a
+cryptographic key directly from the device's secure hardware. This provides
+stronger security than a client-generated seed:
+
+- Key derived from device secure element (TPM, Secure Enclave)
+- Cannot be extracted or cloned without physical device access
+- Bound to the specific WebAuthn credential
+
+Browsers without PRF support use a randomly generated device seed stored in
+IndexedDB instead.
 
 **Security - Split-Key Model:**
 
@@ -159,35 +177,45 @@ client storage theft alone can decrypt the CMK:
 - Encrypted CMK
 - Device public key
 
-**Client stores (IndexedDB, one device per browser):**
+**Client stores (IndexedDB, persisted by default):**
 
 - Encrypted device private key
-- Device seed (16 bytes)
+- Device seed (16 bytes, only if PRF not supported)
 - Salt (16 bytes)
 - Device public key
+
+**Note:** Client data persists across logouts by default. This allows biometric
+unlock without re-registration after logout. Users can enable "Clear on logout"
+in Settings → Trusted Devices to remove local data on logout.
 
 **Unlock key derivation:**
 
 ```
+With PRF support:
+unlockKey = Argon2id(serverNonce + PRF(deviceSecureElement), salt)
+
+Without PRF:
 unlockKey = Argon2id(serverNonce + deviceSeed, salt)
 ```
 
 **What this prevents:**
 
 - **Server breach alone:** Attacker gets server nonce but cannot derive unlock
-  key without device seed and salt (stored client-side only)
+  key without device hardware (PRF) or client-stored seed/salt
 - **Client storage theft alone:** Attacker gets device seed, salt, and encrypted
   device private key but cannot derive unlock key without server nonce (requires
   WebAuthn authentication)
 - **Compromised session:** Cannot retrieve server nonce without WebAuthn proof
   from device secure hardware
+- **Device cloning (with PRF):** PRF output bound to device secure element,
+  cannot be extracted
 
 **Requirements for successful unlock:**
 
 1. Valid login session
 2. WebAuthn authentication (biometric or hardware key)
 3. Server nonce (released only after WebAuthn proof)
-4. Device seed + salt from client IndexedDB
+4. PRF-derived key (if supported) or device seed + salt from client IndexedDB
 5. Derive unlock key using Argon2id
 6. Decrypt device private key
 7. Decrypt CMK with device private key
@@ -195,9 +223,10 @@ unlockKey = Argon2id(serverNonce + deviceSeed, salt)
 **Device Registration:**
 
 - One trusted device per browser instance
-- Each device has unique server nonce, device seed, and salt
+- Each device has unique server nonce, PRF input (or device seed), and salt
 - Multiple browsers/devices can be registered (e.g., laptop + phone + tablet)
-- Removing a device from the server also requires clearing client-side data
+- Removing a device from the server requires manual cleanup of IndexedDB if
+  "Clear on logout" is disabled
 
 ## 3. Auto-unlock on Page Reload (Optional)
 
