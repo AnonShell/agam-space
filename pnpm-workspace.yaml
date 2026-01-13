@@ -1,6 +1,7 @@
 packages:
   - 'apps/*'
   - '!apps/cli'
+  - '!apps/web-verifier'
   - 'packages/*'
   - 'services/*'
   - 'modules/*'
