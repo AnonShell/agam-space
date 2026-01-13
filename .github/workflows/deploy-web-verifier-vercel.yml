@@ -33,15 +33,11 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --ignore-workspace --frozen-lockfile
         working-directory: ./apps/web-verifier
 
       - name: Build web-verifier
         run: pnpm build
-        working-directory: ./apps/web-verifier
-
-      - name: Prepare for Vercel deployment
-        run: cp ../../pnpm-lock.yaml .
         working-directory: ./apps/web-verifier
 
       - name: Deploy to Vercel
