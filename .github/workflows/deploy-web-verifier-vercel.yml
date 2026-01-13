@@ -32,14 +32,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --ignore-workspace --frozen-lockfile
-        working-directory: ./apps/web-verifier
-
-      - name: Build web-verifier
-        run: pnpm build
-        working-directory: ./apps/web-verifier
-
       - name: Deploy to Vercel
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
