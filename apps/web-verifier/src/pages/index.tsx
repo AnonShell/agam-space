@@ -6,7 +6,7 @@ import VerifyForm from '../components/VerifyForm';
 import LoadingScreen from '../components/LoadingScreen';
 import VerificationResults from '../components/VerificationResults';
 import ThemeToggle from '../components/ThemeToggle';
-import { verifyInstance } from '../lib/verifier';
+import { verifyInstance, verifyInstanceManual } from '../lib/verifier';
 import { VerificationResult, VerificationStep } from '../types/manifest';
 
 type ViewState = 'form' | 'loading' | 'results' | 'error';
@@ -18,21 +18,37 @@ export default function Home() {
   const [error, setError] = useState('');
   const [errorSteps, setErrorSteps] = useState<VerificationStep[]>([]);
   const [lastUrl, setLastUrl] = useState('');
+  const [lastManifestHtml, setLastManifestHtml] = useState('');
+  const [lastVerificationMode, setLastVerificationMode] = useState<'url' | 'manual'>('url');
 
-  const handleVerify = async (url: string, version?: string) => {
-    setLastUrl(url);
+  const handleVerify = async (url: string, version?: string, manifestHtml?: string) => {
     setViewState('loading');
-    setLoadingStatus('Fetching instance...');
 
     try {
-      setTimeout(() => setLoadingStatus('Verifying HTML files...'), 500);
-      setTimeout(() => setLoadingStatus('Downloading official manifest...'), 1500);
-      setTimeout(() => setLoadingStatus('Comparing hashes...'), 2500);
+      if (manifestHtml) {
+        // Handle manual paste verification
+        setLastManifestHtml(manifestHtml);
+        setLastVerificationMode('manual');
+        setLoadingStatus('Processing manifest...');
+        setTimeout(() => setLoadingStatus('Extracting file hashes...'), 500);
+        setTimeout(() => setLoadingStatus('Comparing hashes...'), 1500);
 
-      const verificationResult = await verifyInstance(url, version);
+        const verificationResult = await verifyInstanceManual(manifestHtml, version);
+        setResult(verificationResult);
+        setViewState('results');
+      } else {
+        // Handle URL verification
+        setLastUrl(url);
+        setLastVerificationMode('url');
+        setLoadingStatus('Fetching instance...');
+        setTimeout(() => setLoadingStatus('Verifying HTML files...'), 500);
+        setTimeout(() => setLoadingStatus('Downloading official manifest...'), 1500);
+        setTimeout(() => setLoadingStatus('Comparing hashes...'), 2500);
 
-      setResult(verificationResult);
-      setViewState('results');
+        const verificationResult = await verifyInstance(url, version);
+        setResult(verificationResult);
+        setViewState('results');
+      }
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'steps' in err) {
         const errorWithSteps = err as { steps?: VerificationStep[]; message?: string };
@@ -53,7 +69,9 @@ export default function Home() {
   };
 
   const handleRetry = () => {
-    if (lastUrl) {
+    if (lastVerificationMode === 'manual' && lastManifestHtml) {
+      handleVerify('', undefined, lastManifestHtml);
+    } else if (lastVerificationMode === 'url' && lastUrl) {
       handleVerify(lastUrl);
     }
   };

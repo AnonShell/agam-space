@@ -1,34 +1,45 @@
 import { useState } from 'react';
-import { ArrowRight, AlertCircle } from 'lucide-react';
+import { ArrowRight, AlertCircle, Copy, Clipboard } from 'lucide-react';
 
 interface VerifyFormProps {
-  onVerify: (url: string, version?: string) => void;
+  onVerify: (url: string, version?: string, manifestHtml?: string) => void;
   isLoading: boolean;
   initialUrl?: string;
 }
 
 export default function VerifyForm({ onVerify, isLoading, initialUrl = '' }: VerifyFormProps) {
+  const [tab, setTab] = useState<'url' | 'paste'>('url');
   const [url, setUrl] = useState(initialUrl);
+  const [manifestHtml, setManifestHtml] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!url.trim()) {
-      setError('Please enter an instance URL');
-      return;
-    }
+    if (tab === 'url') {
+      if (!url.trim()) {
+        setError('Please enter an instance URL');
+        return;
+      }
 
-    try {
-      new URL(url.startsWith('http') ? url : `https://${url}`);
-    } catch {
-      setError('Please enter a valid URL');
-      return;
-    }
+      try {
+        new URL(url.startsWith('http') ? url : `https://${url}`);
+      } catch {
+        setError('Please enter a valid URL');
+        return;
+      }
 
-    const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
-    onVerify(normalizedUrl);
+      const normalizedUrl = url.startsWith('http') ? url : `https://${url}`;
+      onVerify(normalizedUrl);
+    } else {
+      if (!manifestHtml.trim()) {
+        setError('Please paste the integrity manifest HTML');
+        return;
+      }
+
+      onVerify('', undefined, manifestHtml);
+    }
   };
 
   return (
@@ -46,26 +57,92 @@ export default function VerifyForm({ onVerify, isLoading, initialUrl = '' }: Ver
           </p>
         </div>
 
-        <div className='mb-5'>
-          <label
-            htmlFor='url'
-            className='block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2'
+        {/* Tabs */}
+        <div className='flex gap-0 mb-6 border-b border-gray-200 dark:border-slate-700'>
+          <button
+            type='button'
+            onClick={() => {
+              setTab('url');
+              setError('');
+            }}
+            className={`flex-1 px-4 py-2 font-semibold text-sm transition-colors text-center ${
+              tab === 'url'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
+            }`}
           >
-            Instance URL
-          </label>
-          <input
-            id='url'
-            type='text'
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-            placeholder='https://agam.example.com'
-            className='input-field'
-            disabled={isLoading}
-          />
-          <p className='text-xs text-gray-500 dark:text-slate-400 mt-2'>
-            Enter the full URL of the Agam Space instance
-          </p>
+            Verify URL
+          </button>
+          <button
+            type='button'
+            onClick={() => {
+              setTab('paste');
+              setError('');
+            }}
+            className={`flex-1 px-4 py-2 font-semibold text-sm transition-colors text-center ${
+              tab === 'paste'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200'
+            }`}
+          >
+            Paste HTML
+          </button>
         </div>
+
+        {/* URL Tab */}
+        {tab === 'url' && (
+          <div className='mb-5'>
+            <label
+              htmlFor='url'
+              className='block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2'
+            >
+              Instance URL
+            </label>
+            <input
+              id='url'
+              type='text'
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder='https://agam.example.com'
+              className='input-field'
+              disabled={isLoading}
+            />
+            <p className='text-xs text-gray-500 dark:text-slate-400 mt-2'>
+              Enter the full URL of the Agam Space instance
+            </p>
+          </div>
+        )}
+
+        {/* Paste Tab */}
+        {tab === 'paste' && (
+          <div className='mb-5'>
+            <label
+              htmlFor='manifest'
+              className='block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2'
+            >
+              HTML Page Content
+            </label>
+            <textarea
+              id='manifest'
+              value={manifestHtml}
+              onChange={e => setManifestHtml(e.target.value)}
+              placeholder='Paste the complete HTML page here...'
+              className='input-field min-h-40 font-mono text-xs'
+              disabled={isLoading}
+            />
+            <div className='mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/50 rounded-lg'>
+              <p className='text-xs text-blue-800 dark:text-blue-300 font-semibold mb-1'>
+                How to use:
+              </p>
+              <ol className='text-xs text-blue-700 dark:text-blue-400 space-y-1 list-decimal list-inside'>
+                <li>Open your Agam Space instance in the browser</li>
+                <li>Right-click → Select all (Ctrl+A)</li>
+                <li>Copy the entire page (Ctrl+C)</li>
+                <li>Paste it here and click "Verify Instance"</li>
+              </ol>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className='mb-5 flex items-start gap-3 bg-red-50 dark:bg-red-900/30 border-2 border-red-200 dark:border-red-700/50 rounded-xl px-4 py-3'>

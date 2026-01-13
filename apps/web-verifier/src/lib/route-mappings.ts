@@ -15,15 +15,15 @@ export interface RouteMapping {
  */
 export const HTML_ROUTE_MAPPINGS: RouteMapping[] = [
   {
-    htmlPath: 'index.html',
+    htmlPath: '/index.html',
     sampleUrl: '/',
   },
   {
-    htmlPath: 'explorer/[[...folderId]]/index.html',
+    htmlPath: '/explorer/[[...folderId]]/index.html',
     sampleUrl: '/explorer/root',
   },
   {
-    htmlPath: 'settings/[tab]/index.html',
+    htmlPath: '/settings/[tab]/index.html',
     sampleUrl: '/settings/general',
   },
 ];
