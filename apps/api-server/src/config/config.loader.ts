@@ -254,13 +254,13 @@ class ConfigLoader {
   /**
    * Generate default configuration using individual Zod schema defaults
    */
-  private getDefaultConfigFromSchema(): any {
+  private getDefaultConfigFromSchema(): Partial<AppConfig> {
     // Parse each schema section with empty object to get Zod defaults
     const serverDefaults = serverConfigSchema.partial().parse({});
     const docsDefaults = docsConfigSchema.partial().parse({});
     const databaseDefaults = databaseConfigSchema.partial().parse({});
     const securityDefaults = securityConfigSchema.partial().parse({});
-    const filsDefaults = fileConfigSchema.partial().parse({});
+    const fileDefaults = fileConfigSchema.partial().parse({});
     const accountDefaults = accountConfigSchema.partial().parse({});
 
     return {
@@ -268,7 +268,7 @@ class ConfigLoader {
       docs: docsDefaults,
       database: databaseDefaults,
       security: securityDefaults,
-      files: filsDefaults,
+      file: fileDefaults,
       account: accountDefaults,
     };
   }
@@ -276,7 +276,7 @@ class ConfigLoader {
   /**
    * Step 6: Merge configurations with precedence DEFAULTS → CONFIG_FILE → ENV
    */
-  private mergeConfigs(envConfig: any, fileConfig: any, resolvedDirs: any): any {
+  private mergeConfigs(envConfig: any, fileConfig: any, resolvedDirs: any): Partial<AppConfig> {
     // Start with schema defaults (this ensures backward compatibility)
     const schemaDefaults = this.getDefaultConfigFromSchema();
 

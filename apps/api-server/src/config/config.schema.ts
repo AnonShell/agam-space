@@ -12,7 +12,7 @@ export const serverConfigSchema = z.object({
 
 // Documentation configuration
 export const docsConfigSchema = z.object({
-  enabled: z.boolean().default(true),
+  enabled: z.boolean().default(false),
   path: z.string().default('docs'),
 });
 
@@ -162,7 +162,6 @@ export const envMappings = {
 
   // Security
   'security.sessionTimeout': 'SESSION_TIMEOUT',
-  'security.jwtSecret': 'JWT_SECRET',
 
   // Account configuration
   'account.allowNewSignup': 'ALLOW_NEW_SIGNUP',
