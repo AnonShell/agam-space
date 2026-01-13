@@ -39,7 +39,7 @@ JavaScript and CSS files.
 - Instance must be running a tagged release (v0.2.7 or later)
 - Cannot verify dev builds or custom versions
 - Instance must have `ALLOW_CORS_FOR_INTEGRITY_VERIFICATION=true` (enabled by
-  default)
+  default) or be publicly accessible with no authentication layer
 
 ## Technical Details
 

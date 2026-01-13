@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowRight, AlertCircle, Copy, Clipboard } from 'lucide-react';
+import { trackVerifyInstance } from '@/lib/analytics';
 
 interface VerifyFormProps {
   onVerify: (url: string, version?: string, manifestHtml?: string) => void;
@@ -16,6 +17,8 @@ export default function VerifyForm({ onVerify, isLoading, initialUrl = '' }: Ver
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    trackVerifyInstance(tab === 'url' ? 'url' : 'manual');
 
     if (tab === 'url') {
       if (!url.trim()) {
@@ -188,7 +191,7 @@ export default function VerifyForm({ onVerify, isLoading, initialUrl = '' }: Ver
                 <code className='bg-gray-200 dark:bg-slate-700 px-1 rounded'>
                   ALLOW_CORS_FOR_INTEGRITY_VERIFICATION=true
                 </code>{' '}
-                (enabled by default).
+                (enabled by default) or be publicly accessible with no authentication layer.
               </p>
             </div>
           </div>
