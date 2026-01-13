@@ -20,7 +20,7 @@ interface ConfigOptions {
   validateOnly?: boolean;
 }
 
-class ConfigLoader {
+export class ConfigLoader {
   private static instance: ConfigLoader;
   private config: AppConfig | null = null;
 
@@ -33,6 +33,12 @@ class ConfigLoader {
     return ConfigLoader.instance;
   }
 
+  static resetInstance(): void {
+    if (ConfigLoader.instance) {
+      ConfigLoader.instance.config = null;
+    }
+  }
+
   /**
    * Bootstrap and load configuration
    * This is the main entry point that follows the user's plan
@@ -42,7 +48,7 @@ class ConfigLoader {
       return this.config;
     }
 
-    console.log('🚀 Bootstrapping Agam Space...');
+    console.log('Bootstrapping Agam Space...');
 
     // Step 1: Load ENV
     const envConfig = loadFromEnvironment();
@@ -61,11 +67,11 @@ class ConfigLoader {
     // Step 5: Ensure all paths exist
     const dirsCreated = this.createRequiredDirectories(resolvedDirs);
 
-    // Step 6: Final merge + validation
-    const finalConfig = this.mergeConfigs(envConfig, fileConfig, resolvedDirs);
+    // Step 6: Update merged config with resolved directories
+    merged.directories = resolvedDirs;
 
     try {
-      const validatedConfig = configSchema.parse(finalConfig);
+      const validatedConfig = configSchema.parse(merged);
 
       this.logConfigSummary(validatedConfig, dirsCreated);
 
@@ -88,8 +94,8 @@ class ConfigLoader {
     let resolvedDataDir: string;
 
     if (envDataDir) {
-      // Priority 1: Use DATA_DIR from environment (developer override)
-      resolvedDataDir = envDataDir;
+      // Priority 1: Use DATA_DIR from environment
+      resolvedDataDir = this.resolvePath(envDataDir);
       console.log(`✅ DATA_DIR (from env): ${resolvedDataDir}`);
     } else {
       // Priority 2: Try default Docker path
@@ -234,12 +240,10 @@ class ConfigLoader {
   private loadOrCreateConfigFile(configPath: string): any {
     try {
       if (existsSync(configPath)) {
+        console.log(`Loading configuration file from ${configPath}`);
         const content = readFileSync(configPath, 'utf8');
         return JSON.parse(content);
       } else {
-        console.warn(
-          `⚠️ No config.json found at ${configPath}. Proceeding with environment variables and schema defaults.`
-        );
         return {};
       }
     } catch (error) {

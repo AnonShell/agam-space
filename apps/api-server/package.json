@@ -7,6 +7,7 @@
     "start": "nest start",
     "build": "rimraf dist && nest build && mkdir -p dist/migrations && cp -r ./migrations dist/migrations",
     "test": "jest --passWithNoTests",
+    "test:integration": "jest --config test/integration/jest-integration.json",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
