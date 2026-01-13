@@ -27,16 +27,19 @@ function calculateHash(filePath) {
 }
 
 /**
- * Get git commit hash if available
+ * Get version from environment variable (set by Dockerfile)
+ * @returns {string|null} Version or null
+ */
+function getVersion() {
+  return process.env.NEXT_PUBLIC_APP_VERSION || null;
+}
+
+/**
+ * Get git commit from environment variable (set by Dockerfile)
  * @returns {string|null} Git commit hash or null
  */
 function getGitCommit() {
-  try {
-    const { execSync } = require('child_process');
-    return execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-  } catch {
-    return null;
-  }
+  return process.env.NEXT_PUBLIC_BUILD_COMMIT || null;
 }
 
 /**
@@ -144,20 +147,6 @@ async function generateManifest(outputDir) {
   console.log(`📊 Total assets in manifest: ${Object.keys(assets).length}`);
 
   return assets;
-}
-
-/**
- * Read package.json version
- * @returns {string|null} Version or null
- */
-function getVersion() {
-  try {
-    const pkgPath = path.join(process.cwd(), 'package.json');
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-    return pkg.version || null;
-  } catch {
-    return null;
-  }
 }
 
 /**

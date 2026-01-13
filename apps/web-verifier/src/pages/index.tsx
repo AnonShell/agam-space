@@ -26,7 +26,6 @@ export default function Home() {
 
     try {
       if (manifestHtml) {
-        // Handle manual paste verification
         setLastManifestHtml(manifestHtml);
         setLastVerificationMode('manual');
         setLoadingStatus('Processing manifest...');

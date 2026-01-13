@@ -109,6 +109,11 @@ export default function VerificationResults({ result, onVerifyAnother }: Verific
                       {step.name}:
                     </span>
                     <span className='text-gray-600 dark:text-slate-400 ml-1'>{step.message}</span>
+                    {step.details && (
+                      <div className='text-xs text-gray-500 dark:text-slate-500 mt-1 ml-1 leading-relaxed'>
+                        {step.details}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -22,6 +22,7 @@ export default [
       '**/*.config.ts',
       '**/jest.config.js',
       '**/jest.preset.js',
+      '**/next-env.d.ts',
       'docs/.docusaurus/**',
       'docs/build/**',
     ],

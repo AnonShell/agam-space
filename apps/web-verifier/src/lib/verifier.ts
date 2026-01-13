@@ -1,6 +1,6 @@
-import { VerificationResult, FileComparison, VerificationStep } from '../types/manifest';
+import { FileComparison, VerificationResult, VerificationStep } from '../types/manifest';
 import { fetchOfficialManifest } from './github';
-import { extractVersion, extractCommit, parseIntegrityHashes } from './parser';
+import { extractCommit, extractVersion, parseIntegrityHashes } from './parser';
 
 /**
  * Compare semantic versions
@@ -219,10 +219,6 @@ async function verifyFromHTML(
     throw { steps, message: 'No integrity hashes found in the instance HTML.' };
   }
 
-  // DEBUG: Log extracted hashes
-  console.log('📋 Extracted Integrity Hashes from HTML:');
-  console.table(instanceHashes);
-
   steps.push({
     name: 'Integrity Hashes',
     status: 'success',
@@ -254,25 +250,70 @@ async function verifyFromHTML(
     };
   }
 
-  // Step 6: Verify ALL HTML files
-  // TEMPORARILY DISABLED: HTML verification skipped due to CDN/proxy modifications
-  // const htmlFiles = Object.keys(manifest.assets).filter(path => path.endsWith('.html'));
-
-  // Skip HTML verification for now
+  // Step 6: Verify HTML integrity (common for all verification modes)
+  const pageInfo = extractPageInfo(html);
   steps.push({
-    name: 'HTML Verification',
-    status: 'warning',
-    message: 'Skipped (HTML can be modified by CDN/proxies)',
-    details: 'HTML verification temporarily disabled. Only verifying JS/CSS integrity.',
+    name: 'Page Detection',
+    status: 'success',
+    message: `HTML page: ${pageInfo.page}`,
   });
 
-  /*
-  if (instanceUrl !== 'manual-verification') {
-    // ...existing HTML verification code...
+  // Determine which HTML file to verify against
+  let expectedHtmlPath: string;
+  if (instanceUrl === 'manual-verification') {
+    // For manual verification, use the page from the HTML
+    expectedHtmlPath = pageInfo.page === '/' ? '/index.html' : `${pageInfo.page}/index.html`;
   } else {
-    // ...existing manual mode HTML verification...
+    // For URL-based verification, always expect root index.html
+    expectedHtmlPath = '/index.html';
   }
-  */
+
+  // Calculate hash of the actual HTML content
+  const crypto = await import('crypto');
+  const htmlHash = crypto.default.createHash('sha384').update(html).digest('base64');
+  const htmlHashWithPrefix = `sha384-${htmlHash}`;
+
+  const expectedHtmlHash = manifest.assets[expectedHtmlPath];
+
+  // Always attempt HTML verification
+  if (!expectedHtmlHash) {
+    steps.push({
+      name: 'HTML Verification',
+      status: 'warning',
+      message: `HTML file not found in manifest: ${expectedHtmlPath}`,
+      details: 'The HTML file hash is not available in the official manifest.',
+    });
+  } else {
+    const isHtmlAuthentic = htmlHashWithPrefix === expectedHtmlHash;
+
+    if (isHtmlAuthentic) {
+      steps.push({
+        name: 'HTML Verification',
+        status: 'success',
+        message: `HTML matches official release (${expectedHtmlPath})`,
+      });
+    } else {
+      // HTML verification failed - check for Cloudflare or show general warning
+      const hasCloudflareMods = false; //html.includes('__CF$cv') || html.includes('cf-browser-verification') || html.includes('cdn-cgi/challenge-platform');
+
+      if (hasCloudflareMods) {
+        steps.push({
+          name: 'HTML Verification',
+          status: 'warning',
+          message: 'Skipped (Cloudflare inline script detected)',
+          details:
+            'HTML verification is skipped because Cloudflare has injected inline scripts for security/bot protection. Only JS/CSS integrity is verified.',
+        });
+      } else {
+        steps.push({
+          name: 'HTML Verification',
+          status: 'warning',
+          message: 'HTML hash mismatch detected',
+          details: `HTML content does not match the official release. This could be due to CDN modifications (like Cloudflare), custom scripts, or tampering. However, if the hash DID match, we would know the HTML is authentic and unmodified.`,
+        });
+      }
+    }
+  }
 
   // Step 7: Compare external resource hashes (JS/CSS)
   // Filter out HTML files from manifest since we're skipping HTML verification
@@ -281,15 +322,6 @@ async function verifyFromHTML(
   );
 
   const comparison = compareHashes(instanceHashes, manifestWithoutHtml);
-
-  // DEBUG: Log comparison results
-  console.log(
-    '✅ Matched Files:',
-    comparison.matchedFiles,
-    comparison.details.filter(d => d.status === 'match').map(d => d.path)
-  );
-  console.log('❌ Modified Files:', comparison.modifiedFiles);
-  console.log('⚠️ Extra Files:', comparison.extraFiles);
 
   const isAuthentic = comparison.modifiedFiles.length === 0 && comparison.missingFiles.length === 0;
 
@@ -334,9 +366,62 @@ async function verifyFromHTML(
 async function fetchInstanceHTML(instanceUrl: string): Promise<string> {
   const url = instanceUrl.endsWith('/') ? instanceUrl : `${instanceUrl}/`;
 
+  // Try 1: Direct fetch (faster, no proxy overhead)
   try {
-    // Use our API proxy to fetch instance HTML (avoids CORS and gets exact HTML)
-    const proxyUrl = `/api/proxy/instance/?url=${encodeURIComponent(url)}`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        DNT: '1',
+        Connection: 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch instance (HTTP ${response.status})`);
+    }
+
+    const html = await response.text();
+
+    if (!html.toLowerCase().includes('<html') && !html.toLowerCase().includes('<!doctype')) {
+      throw new Error('Response does not appear to be valid HTML');
+    }
+
+    return html;
+  } catch (error) {
+    const isCorsError =
+      error instanceof TypeError &&
+      (error.message.includes('fetch') ||
+        error.message.includes('CORS') ||
+        error.message.includes('Network'));
+
+    if (isCorsError) {
+      return await fetchInstanceHTMLViaProxy(url);
+    }
+
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to fetch instance');
+  }
+}
+
+/**
+ * Fetch instance HTML via API proxy (used as fallback when direct fetch fails due to CORS)
+ */
+async function fetchInstanceHTMLViaProxy(instanceUrl: string): Promise<string> {
+  try {
+    const proxyUrl = `/api/proxy/instance/?url=${encodeURIComponent(instanceUrl)}`;
     const response = await fetch(proxyUrl);
 
     if (!response.ok) {
@@ -344,8 +429,7 @@ async function fetchInstanceHTML(instanceUrl: string): Promise<string> {
       throw new Error(errorData.error || `Failed to fetch instance (HTTP ${response.status})`);
     }
 
-    const data = (await response.json()) as { html: string };
-    const html = data.html;
+    const html = await response.text();
 
     // Basic HTML validation
     if (!html.toLowerCase().includes('<html') && !html.toLowerCase().includes('<!doctype')) {
@@ -362,7 +446,7 @@ async function fetchInstanceHTML(instanceUrl: string): Promise<string> {
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error('Failed to fetch instance');
+    throw new Error('Failed to fetch instance via proxy');
   }
 }
 
@@ -395,8 +479,28 @@ function compareHashes(
     }
   }
 
-  // Note: We DON'T check for missing files from manifest
-  // because HTML might not include all possible files (e.g., admin pages for non-admins)
-
   return { matchedFiles, modifiedFiles, missingFiles: missingFromManifest, extraFiles, details };
+}
+
+/**
+ * Extract page information from Next.js HTML
+ * @param html - The HTML content
+ * @returns Object with page path and other metadata
+ */
+function extractPageInfo(html: string): { page: string; buildId: string } {
+  try {
+    // Look for Next.js data in script tag
+    const nextDataMatch = html.match(/id="__NEXT_DATA__"[^>]*>([^<]+)</);
+    if (!nextDataMatch) {
+      return { page: '/', buildId: 'unknown' };
+    }
+
+    const nextData = JSON.parse(nextDataMatch[1]);
+    return {
+      page: nextData.page || '/',
+      buildId: nextData.buildId || 'unknown',
+    };
+  } catch {
+    return { page: '/', buildId: 'unknown' };
+  }
 }
