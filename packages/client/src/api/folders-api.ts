@@ -63,6 +63,29 @@ export async function trashFoldersApi(folderIds: string[]) {
   );
 }
 
+export async function restoreFolderApi(
+  folderId: string,
+  renameData?: { nameHash?: string; metadataEncrypted?: string }
+): Promise<void> {
+  await ClientRegistry.getApiClient().fetchRaw(`/v1/folders/${folderId}/restore`, {
+    method: 'PATCH',
+    body: renameData ? JSON.stringify(renameData) : undefined,
+    headers: renameData ? { 'Content-Type': 'application/json' } : undefined,
+  });
+}
+
+export async function batchCheckFolderExists(
+  checks: Array<{ parentId: string | null; nameHash: string }>
+): Promise<{ results: Array<{ nameHash: string; exists: boolean }> }> {
+  return ClientRegistry.getApiClient()
+    .fetchRaw(`/v1/folders/batch/check-exists`, {
+      method: 'POST',
+      body: JSON.stringify({ checks }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    .then(res => res.json());
+}
+
 export async function fetchFolderAncestorsApi(folderId: string, depth: number): Promise<Folder[]> {
   return await ClientRegistry.getApiClient().fetchAndParse(
     `/v1/folders/${folderId}/ancestors/path?depth=${depth}`,

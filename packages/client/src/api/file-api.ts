@@ -72,19 +72,6 @@ export async function uploadFileChunkApi(
       'X-Checksum': checksum,
     },
   });
-
-  // const blob = new Blob([new Uint8Array(chunk)], { type: 'application/octet-stream' });
-  //
-  // const form = new FormData();
-  // form.append('chunk', blob, `chunk-${chunkIndex}`);
-  //
-  // await ClientRegistry.getApiClient().fetchRaw(`/v1/files/${fileId}/chunks/${chunkIndex}`, {
-  //   method: 'PUT',
-  //   body: form,
-  //   headers: {
-  //     'X-Checksum': checksum,
-  //   },
-  // });
 }
 
 export async function fetchFileChunkApi(fileId: string, chunkIndex: number): Promise<Uint8Array> {
@@ -92,6 +79,29 @@ export async function fetchFileChunkApi(fileId: string, chunkIndex: number): Pro
     `/v1/files/${fileId}/chunks/${chunkIndex}`
   );
   return new Uint8Array(await response.arrayBuffer());
+}
+
+export async function restoreFileApi(
+  fileId: string,
+  renameData?: { nameHash?: string }
+): Promise<void> {
+  await ClientRegistry.getApiClient().fetchRaw(`/v1/files/${fileId}/restore`, {
+    method: 'PATCH',
+    body: renameData ? JSON.stringify(renameData) : undefined,
+    headers: renameData ? { 'Content-Type': 'application/json' } : undefined,
+  });
+}
+
+export async function batchCheckFileExists(
+  checks: Array<{ parentId: string | null; nameHash: string }>
+): Promise<{ results: Array<{ nameHash: string; exists: boolean; existingId: string | null }> }> {
+  return ClientRegistry.getApiClient()
+    .fetchRaw(`/v1/files/batch/check-exists`, {
+      method: 'POST',
+      body: JSON.stringify({ checks }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    .then(res => res.json());
 }
 
 export async function checkIfFileExistsApi(

@@ -9,6 +9,7 @@ import { useRouter } from 'next/router';
 import { useAccessBootstrap } from '@/hooks/useAccessBootstrap';
 import { useEffect, useState } from 'react';
 import { useAppBootstrap } from '@/lib/init/use-bootstrap-app';
+import { GlobalEventListeners } from '@/components/global-event-listeners';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -25,7 +26,7 @@ const SIDEBAR_ROUTES = ['/explorer', '/trash'];
 const ROUTES_REQUIRING_UNLOCK = ['/explorer', '/trash'];
 
 function matchPrefix(pathname: string, patterns: string[]) {
-  return patterns.some((p) => pathname.startsWith(p));
+  return patterns.some(p => pathname.startsWith(p));
 }
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -56,6 +57,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <GlobalEventListeners />
       {showAppShell && ready ? (
         <AppShell showSidebar={showSidebar}>
           <Component {...pageProps} />
@@ -65,7 +67,7 @@ export default function App({ Component, pageProps }: AppProps) {
       ) : (
         <Component {...pageProps} />
       )}
-      <Toaster richColors position="bottom-right" />
+      <Toaster richColors position='bottom-right' />
     </div>
   );
 }

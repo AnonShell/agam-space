@@ -40,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePreferencesStore } from '@/store/preferences.store';
+import { logger } from '@/lib/logger';
 import type { SortKey } from '@agam-space/client';
 
 function mapSortKey(uiSortKey: 'name' | 'size' | 'modified' | 'created'): SortKey {
@@ -102,8 +103,9 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
         key: mapSortKey(explorerPrefs.sortBy),
         direction: explorerPrefs.sortDir,
       };
-      console.log(
-        '[ExplorerPage] Loading folder with sort:',
+      logger.debug(
+        'ExplorerPage',
+        'Loading folder with sort:',
         sortParams,
         'groupFolders:',
         explorerPrefs.groupFolders
@@ -114,7 +116,7 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
         sortParams,
         explorerPrefs.groupFolders
       );
-      console.log('[ExplorerPage] Loaded entries:', result?.entries.length, 'items');
+      logger.debug('ExplorerPage', `Loaded entries: ${result?.entries.length} items`);
 
       setExplorerState(result);
     },
@@ -125,12 +127,12 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
     (newEntry?: ContentEntry) => {
       setLoading(true);
 
-      console.log('[Explorer] Refreshing folder state for:', folderId);
+      logger.debug('Explorer', `Refreshing folder state for: ${folderId}`);
 
       if (newEntry) {
         contentTreeManager.addItem(newEntry, folderId);
       } else {
-        console.log('[Explorer] Evicting folder data for:', folderId);
+        logger.debug('Explorer', `Evicting folder data for: ${folderId}`);
         contentTreeManager.store.evictFolderData(folderId);
       }
 
@@ -198,8 +200,19 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
 
   useEffect(() => {
     setLoading(true);
-    loadFolderState(folderId).finally(() => setLoading(false));
-  }, [folderId, loadFolderState]);
+
+    const folderKey = folderId ?? 'root';
+    const hadPendingRefresh = useExplorerRefreshStore
+      .getState()
+      .getAndConsumeRefreshFlag(folderKey);
+
+    if (hadPendingRefresh) {
+      logger.debug('Explorer', `Found pending refresh flag on mount for folder: ${folderKey}`);
+      refresh();
+    } else {
+      loadFolderState(folderId).finally(() => setLoading(false));
+    }
+  }, [folderId, loadFolderState, refresh]);
 
   useEffect(() => {
     const unsubscribe = contentTreeStore.subscribeToFolder(folderId, updatedNode => {
@@ -214,7 +227,6 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
 
   useEffect(() => {
     const folderKey = folderId ?? 'root';
-
     const unsub = useExplorerRefreshStore.subscribe(
       state => state.refreshFlags[folderKey],
       shouldRefresh => {
@@ -225,21 +237,10 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
       }
     );
 
-    return () => unsub();
+    return () => {
+      unsub();
+    };
   }, [folderId, refresh]);
-
-  useEffect(() => {
-    if (explorerState?.entries) {
-      console.log(
-        '[ExplorerPage] State updated, first 3 entries:',
-        explorerState.entries.slice(0, 3).map(e => ({
-          name: e.name,
-          updatedAt: e.updatedAt,
-          createdAt: e.createdAt,
-        }))
-      );
-    }
-  }, [explorerState]);
 
   const { entries: contentEntries } = explorerState ?? {};
 
@@ -281,32 +282,11 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
     }
   }
 
-  // const handleFiles =  (files: File[], parentId: string) => {
-  //   files.forEach((file) => {
-  //     const reader = new BrowserFileReader(file);
-  //     const metadata = reader.getMetadata();
-  //
-  //     const item = ClientRegistry.getUploadManager().enqueue(reader, folderId);
-  //
-  //     addUpload({
-  //       id: item.id,
-  //       fileName: metadata.name,
-  //       parentFolderId : parentId,
-  //       status: 'pending',
-  //       progress: 0,
-  //       uploadedBytes: 0,
-  //       totalBytes: metadata.size,
-  //     });
-  //   });
-  // }
-
   const handleDroppedFiles = async (files: Map<string, File[]>) => {
     await WebUploadService.uploadFilesInFolder(files, folderId);
 
-    // Refresh current folder to show any newly created folders
     const folderKey = folderId ?? 'root';
     useExplorerRefreshStore.getState().triggerRefreshForFolder(folderKey);
-    console.log(`🔄 Triggered refresh for folder after upload: ${folderKey}`);
   };
 
   const getEntryById = (id: string): FileEntry | FolderEntry | null => {

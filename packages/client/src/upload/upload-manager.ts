@@ -117,8 +117,6 @@ export class UploadManager {
         //TODO need extend to include user metadata
         const req = await new FileManager().prepareNewFileUpload(item.fileMetadata!, item.parentId);
 
-        const t0 = performance.now();
-
         item.fileReq = {
           nameHash: req.nameHash,
           metadataEncrypted: req.metadataEncrypted,

@@ -1,12 +1,10 @@
-import { UpdateFile, UpdateFolder, UserFileMetadata } from '@agam-space/shared-types';
-import { FileEntry, FolderEntry } from '../content-tree.store';
-import { blake3HashWithEncoding } from '@agam-space/core';
-import { UploadableFile } from '../upload/types';
+import { UpdateFile, UserFileMetadata } from '@agam-space/shared-types';
+import { FileEntry } from '../content-tree.store';
+import { blake3HashWithEncoding, EncryptedEnvelopeCodec, toUtf8Bytes } from '@agam-space/core';
 import { EncryptionRegistry } from '../encryption/encryption-strategy';
-import { EncryptedEnvelopeCodec, toUtf8Bytes } from '@agam-space/core';
-import { getDecryptedFileKey, getDecryptedFileKeyById } from './file-decrypt';
-import { patchFolderApi, updateFileApi } from '../api';
-import { getDecryptedFolderKey, getFolderInfo } from '../folder/folder-contents';
+import { getDecryptedFileKeyById } from './file-decrypt';
+import { updateFileApi } from '../api';
+import { getDecryptedFolderKey } from '../folder/folder-contents';
 import { ClientRegistry } from '../init/client.registry';
 
 export function hashFileName(name: string): string {
