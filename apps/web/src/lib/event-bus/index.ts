@@ -3,7 +3,7 @@ export type { EventMap } from './event-bus';
 export { eventBus } from './event-bus';
 
 export type {
-  FilesRestoredPayload,
+  ContentRestoredPayload,
   FilesTrashedPayload,
   FolderDeletedPayload,
   QuotaChangedPayload,
