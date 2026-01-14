@@ -39,12 +39,9 @@ export async function initializeClient() {
     );
   }
 
-  // Fetch server config first if not already loaded
   let serverConfig;
-  console.log('⏳ Server config not loaded, fetching from API...');
   try {
     serverConfig = await ServerConfigService.getConfig();
-    console.log('✅ Fetched server config:', serverConfig);
   } catch (error) {
     console.error('❌ Error fetching server config:', error);
   }
@@ -66,11 +63,6 @@ export async function initializeClient() {
         },
         uploadManagerCallbacks
       )
-    );
-
-    console.log(
-      '✅ UploadManager initialized with maxFileSize:',
-      serverConfig?.upload?.maxFileSize
     );
   }
 
