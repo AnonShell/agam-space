@@ -227,6 +227,28 @@ export class FilesService {
     return result.length > 0 ? result[0].id : null;
   }
 
+  /**
+   * Batch check if files exist with given nameHashes
+   * Reusable for conflict detection during restore
+   */
+  async batchCheckNameExists(
+    userId: string,
+    checks: Array<{ parentId: string | null; nameHash: string }>
+  ): Promise<Array<{ nameHash: string; exists: boolean; existingId: string | null }>> {
+    const results = await Promise.all(
+      checks.map(async ({ parentId, nameHash }) => {
+        const existingId = await this.hasFileWithNameHash(userId, parentId, nameHash);
+        return {
+          nameHash,
+          exists: !!existingId,
+          existingId,
+        };
+      })
+    );
+
+    return results;
+  }
+
   async ensureFileDirectory(userId: string, fileId: string): Promise<string> {
     return this.storageService.ensureFileDirectory(userId, fileId);
   }
@@ -345,7 +367,11 @@ export class FilesService {
     this.logger.log(`File ${fileId} marked as trashed by user ${userId}`);
   }
 
-  async restoreFile(userId: string, fileId: string): Promise<FileEntity> {
+  async restoreFile(
+    userId: string,
+    fileId: string,
+    renameData?: { nameHash?: string; metadataEncrypted?: string }
+  ): Promise<FileEntity> {
     const file = await this.getFileEntity(userId, fileId);
     if (!file) {
       throw new NotFoundException('File not found');
@@ -355,9 +381,42 @@ export class FilesService {
       throw new ConflictException(`File is status ${file.status} cannot be restored`);
     }
 
+    // Check if parent folder exists and is active
+    if (file.parentId) {
+      const parentFolder = await this.foldersService.getFolder(userId, file.parentId);
+      if (!parentFolder) {
+        throw new ConflictException('Cannot restore file: parent folder was permanently deleted');
+      }
+      if (parentFolder.status === 'trashed') {
+        throw new ConflictException('Cannot restore file: parent folder is in trash');
+      }
+      if (parentFolder.status !== 'active') {
+        throw new ConflictException(`Cannot restore file: parent folder is ${parentFolder.status}`);
+      }
+    }
+
+    const nameHash = renameData?.nameHash || file.nameHash;
+    if (nameHash) {
+      const existingWithNewName = await this.hasFileWithNameHash(userId, file.parentId, nameHash);
+      if (existingWithNewName) {
+        throw new ConflictException('A file with the name already exists');
+      }
+    }
+
+    const updates: Partial<FileEntity> = { status: 'complete' };
+
+    if (renameData?.nameHash) {
+      updates.nameHash = renameData.nameHash;
+
+      if (!renameData?.metadataEncrypted) {
+        throw new ConflictException('Cannot update file name without providing encrypted metadata');
+      }
+      updates.metadataEncrypted = renameData.metadataEncrypted;
+    }
+
     const [updatedFile] = await this.db
       .update(files)
-      .set({ status: 'complete' })
+      .set(updates)
       .where(eq(files.id, fileId))
       .returning();
 
@@ -365,7 +424,9 @@ export class FilesService {
       throw new Error('Failed to restore file');
     }
 
-    this.logger.log(`File ${fileId} restored by user ${userId}`);
+    this.logger.log(
+      `File ${fileId} restored by user ${userId}${renameData?.nameHash ? ' with rename' : ''}`
+    );
     return updatedFile;
   }
 

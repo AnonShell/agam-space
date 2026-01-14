@@ -1,4 +1,4 @@
-import { bigint, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import { bigint, index, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 
 import { ulidColumn, ulidPrimaryKey } from '../utils/ulid';
 
@@ -9,42 +9,53 @@ import { users } from './users';
  * Files table for storing encrypted files
  * parentFolderId = null means file is at root level
  */
-export const files = pgTable('files', {
-  // Primary key
-  id: ulidPrimaryKey(),
+export const files = pgTable(
+  'files',
+  {
+    // Primary key
+    id: ulidPrimaryKey(),
 
-  // Foreign key to users table
-  userId: ulidColumn('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    // Foreign key to users table
+    userId: ulidColumn('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
 
-  // Foreign key to folders table (null = root level)
-  parentId: ulidColumn('parent_id').references(() => folders.id, {
-    onDelete: 'cascade',
-  }),
+    // Foreign key to folders table (null = root level)
+    parentId: ulidColumn('parent_id').references(() => folders.id, {
+      onDelete: 'cascade',
+    }),
 
-  nameHash: text('name_hash').notNull(),
+    nameHash: text('name_hash').notNull(),
 
-  chunkCount: integer('chunk_count').notNull(),
+    chunkCount: integer('chunk_count').notNull(),
 
-  metadataEncrypted: text('metadata_encrypted').notNull(),
+    metadataEncrypted: text('metadata_encrypted').notNull(),
 
-  // Wrapped file key (encrypted with parent folder key or CMK for root)
-  fkWrapped: text('fk_wrapped').notNull(),
+    // Wrapped file key (encrypted with parent folder key or CMK for root)
+    fkWrapped: text('fk_wrapped').notNull(),
 
-  // File status
-  status: text('status').notNull().default('pending'),
+    // File status
+    status: text('status').notNull().default('pending'),
 
-  // File size in bytes
-  approxSize: bigint('approx_size', { mode: 'number' }).notNull().default(0),
+    // File size in bytes
+    approxSize: bigint('approx_size', { mode: 'number' }).notNull().default(0),
 
-  // File-level checksum
-  checksum: text('checksum'),
+    // File-level checksum
+    checksum: text('checksum'),
 
-  // Audit timestamps
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+    // Audit timestamps
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    userParentNameHashIdx: index('files_user_parent_namehash_idx').on(
+      table.userId,
+      table.parentId,
+      table.nameHash
+    ),
+    userStatusIdx: index('files_user_status_idx').on(table.userId, table.status),
+  })
+);
 
 /**
  * File chunks table for storing encrypted file content

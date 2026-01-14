@@ -30,13 +30,6 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.ref || github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Download integrity manifest artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: integrity-manifest
-          path: .
-        continue-on-error: true
-
       - name: Get tag name
         id: get_tag
         run: |
@@ -83,6 +76,39 @@ jobs:
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Extract integrity manifest from Docker image
+        run: |
+          TAG_NAME="${{ steps.get_tag.outputs.tag_name }}"
+          VERSION="${TAG_NAME#v}"
+          IMAGE="agamspace/agam-space:${VERSION}"
+
+          echo "📥 Pulling Docker image: ${IMAGE}"
+          docker pull --platform linux/amd64 ${IMAGE}
+
+          echo "📦 Creating temporary container"
+          CONTAINER_ID=$(docker create ${IMAGE})
+          echo "Container ID: ${CONTAINER_ID}"
+
+          echo "📄 Extracting integrity manifest"
+          docker cp ${CONTAINER_ID}:/app/public/integrity-manifest.json ./integrity-manifest.json
+
+          echo "🧹 Cleaning up container"
+          docker rm ${CONTAINER_ID}
+
+          # Verify manifest exists and is valid
+          if [ ! -f integrity-manifest.json ]; then
+            echo "❌ Error: integrity-manifest.json not found in image"
+            exit 1
+          fi
+
+          if ! jq empty integrity-manifest.json 2>/dev/null; then
+            echo "❌ Error: integrity-manifest.json is not valid JSON"
+            exit 1
+          fi
+
+          echo "✅ Successfully extracted integrity manifest"
+          echo "Manifest hash: $(jq -r '.manifestHash' integrity-manifest.json | head -c 20)..."
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

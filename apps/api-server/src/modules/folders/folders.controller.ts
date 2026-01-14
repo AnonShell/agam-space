@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -9,11 +19,17 @@ import {
 } from '@nestjs/swagger';
 
 import { AuthRequired, CurrentUser } from '../auth/auth.decorator';
-import { CreateFolderDto, FolderDto, UpdateFolderDto } from './dto/folder-content.dto';
+import {
+  CreateFolderDto,
+  FolderDto,
+  UpdateFolderDto,
+  BatchCheckFolderExistsDto,
+  RestoreFolderDto,
+} from './dto/folder-content.dto';
 import { FoldersService } from './folders.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { TrashFilesResponseDto } from '@/modules/files/dto/files.dto';
-import { Folder } from '@agam-space/shared-types';
+import { Folder, BatchCheckFolderExistsResponse } from '@agam-space/shared-types';
 
 @ApiTags('Folders')
 @ApiBearerAuth()
@@ -97,16 +113,39 @@ export class FoldersController {
   }
 
   @Patch('/:folderId/restore')
-  @ApiOperation({ summary: 'Restore folder from trash' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Restore folder from trash with optional rename' })
+  @ApiBody({ type: RestoreFolderDto, required: false })
   @ApiResponse({
-    status: 200,
+    status: HttpStatus.NO_CONTENT,
     description: 'Folder restored successfully',
   })
   async restoreFolder(
     @Param('folderId') folderId: string,
-    @CurrentUser() user: AuthenticatedUser
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() renameData?: RestoreFolderDto
   ): Promise<void> {
-    return this.foldersService.restoreFolder(user.id, folderId);
+    return this.foldersService.restoreFolder(user.id, folderId, renameData);
+  }
+
+  // Batch check if multiple nameHashes exist
+  @Post('/batch/check-exists')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Batch check if folder nameHashes exist' })
+  @ApiBody({ type: BatchCheckFolderExistsDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Batch name existence check completed',
+  })
+  async batchCheckExists(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: BatchCheckFolderExistsDto
+  ): Promise<BatchCheckFolderExistsResponse> {
+    const results = await this.foldersService.batchCheckNameExists(
+      user.id,
+      dto.checks as Array<{ parentId: string | null; nameHash: string }>
+    );
+    return { results };
   }
 
   @Get('/:folderId/ancestors/path')

@@ -111,6 +111,26 @@ export class FoldersService {
     return result.length > 0;
   }
 
+  /**
+   * Batch check if folders exist with given nameHashes
+   */
+  async batchCheckNameExists(
+    userId: string,
+    checks: Array<{ parentId: string | null; nameHash: string }>
+  ): Promise<Array<{ nameHash: string; exists: boolean }>> {
+    const results = await Promise.all(
+      checks.map(async ({ parentId, nameHash }) => {
+        const exists = await this.hasFolderWithName(userId, nameHash, parentId ?? undefined);
+        return {
+          nameHash,
+          exists,
+        };
+      })
+    );
+
+    return results;
+  }
+
   async patchFolder(
     userId: string,
     folderId: string,
@@ -226,7 +246,11 @@ export class FoldersService {
     this.logger.log(`Folder ${folderId} deleted successfully for user ${userId}`);
   }
 
-  async restoreFolder(userId: string, folderId: string) {
+  async restoreFolder(
+    userId: string,
+    folderId: string,
+    renameData?: { nameHash?: string; metadataEncrypted?: string }
+  ) {
     this.logger.log(`📁 Restoring folder ${folderId} for user ${userId}`);
 
     const folder = await this.getFolder(userId, folderId);
@@ -239,15 +263,58 @@ export class FoldersService {
       throw new BadRequestException('Folder is not in trash');
     }
 
+    // Check if parent folder exists and is active
+    if (folder.parentId) {
+      const parentFolder = await this.getFolder(userId, folder.parentId);
+      if (!parentFolder) {
+        throw new ConflictException('Cannot restore folder: parent folder was permanently deleted');
+      }
+      if (parentFolder.status === 'trashed') {
+        throw new ConflictException('Cannot restore folder: parent folder is in trash');
+      }
+      if (parentFolder.status !== 'active') {
+        throw new ConflictException(
+          `Cannot restore folder: parent folder is ${parentFolder.status}`
+        );
+      }
+    }
+
+    const nameHash = renameData?.nameHash || folder.nameHash;
+    if (nameHash) {
+      const existsWithNewName = await this.hasFolderWithName(
+        userId,
+        nameHash,
+        folder.parentId ?? undefined
+      );
+      if (existsWithNewName) {
+        throw new ConflictException('A folder with the new name already exists');
+      }
+    }
+
+    const updates: Partial<FolderEntity> = { status: 'active' };
+    if (renameData?.nameHash) {
+      updates.nameHash = renameData.nameHash;
+
+      if (!renameData?.metadataEncrypted) {
+        throw new ConflictException('metadataEncrypted is required when restoring with a new name');
+      }
+
+      updates.metadataEncrypted = renameData.metadataEncrypted;
+    }
+
     const result = await this.db
       .update(folders)
-      .set({ status: 'active' })
+      .set(updates)
       .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
       .returning();
 
     if (result.length === 0) {
       throw new NotFoundException('Error restoring folder');
     }
+
+    this.logger.log(
+      `Folder ${folderId} restored${renameData?.nameHash ? ' with rename' : ''} for user ${userId}`
+    );
   }
 
   async markAllTrashedFoldersAsDeleted(userId: string): Promise<

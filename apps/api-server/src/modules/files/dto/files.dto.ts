@@ -4,6 +4,8 @@ import {
   FileSchema,
   TrashFilesResponseSchema,
   UpdateFileSchema,
+  RestoreFileSchema,
+  BatchCheckExistsSchema,
 } from '@agam-space/shared-types';
 
 export class CreateFileDto extends createZodDto(CreateFileSchema) {}
@@ -19,3 +21,7 @@ export const CheckFileExistsQuery = FileSchema.pick({
 });
 
 export class CheckFileExistsDto extends createZodDto(CheckFileExistsQuery) {}
+
+export class BatchCheckExistsDto extends createZodDto(BatchCheckExistsSchema) {}
+
+export class RestoreFileDto extends createZodDto(RestoreFileSchema) {}

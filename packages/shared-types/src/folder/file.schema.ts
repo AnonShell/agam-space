@@ -50,6 +50,32 @@ export const TrashFilesResponseSchema = z.object({
   failedIds: z.array(UlidSchema).nullish(),
 });
 
+export const BatchCheckExistsItemSchema = z.object({
+  parentId: z.string().nullable(),
+  nameHash: z.string(),
+});
+
+export const BatchCheckExistsSchema = z.object({
+  checks: z.array(BatchCheckExistsItemSchema),
+});
+
+export const BatchCheckExistsResultSchema = z.object({
+  nameHash: z.string(),
+  exists: z.boolean(),
+  existingId: z.string().nullable(),
+});
+
+export const BatchCheckExistsResponseSchema = z.object({
+  results: z.array(BatchCheckExistsResultSchema),
+});
+
+export const RestoreFileSchema = z
+  .object({
+    nameHash: z.string().optional(),
+    metadataEncrypted: z.string().optional(),
+  })
+  .optional();
+
 export type RawFileMetadata = z.infer<typeof RawFileMetadataSchema>;
 export type UserFileMetadata = z.infer<typeof UserFileMetadataSchema>;
 
@@ -59,4 +85,9 @@ export const FileArraySchema = z.array(FileSchema);
 export type FileArray = z.infer<typeof FileArraySchema>;
 export type CreateFile = z.infer<typeof CreateFileSchema>;
 export type UpdateFile = z.infer<typeof UpdateFileSchema>;
+export type RestoreFile = z.infer<typeof RestoreFileSchema>;
+export type BatchCheckExistsItem = z.infer<typeof BatchCheckExistsItemSchema>;
+export type BatchCheckExists = z.infer<typeof BatchCheckExistsSchema>;
+export type BatchCheckExistsResult = z.infer<typeof BatchCheckExistsResultSchema>;
+export type BatchCheckExistsResponse = z.infer<typeof BatchCheckExistsResponseSchema>;
 export type TrashFilesResponse = z.infer<typeof TrashFilesResponseSchema>;

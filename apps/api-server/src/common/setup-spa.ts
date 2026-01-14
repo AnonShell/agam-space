@@ -129,9 +129,14 @@ export function setupStaticAssets(app: NestFastifyApplication, config: AppConfig
     }
 
     const origin = request.headers.origin;
-    addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config);
+    const hasCorsHeaders = addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config);
 
     sirvHandler(request.raw, reply.raw, () => {
+      // Re-apply CORS headers after sirv sends the response
+      if (hasCorsHeaders) {
+        addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config);
+      }
+
       for (const route of DYNAMIC_ROUTE_MAPPINGS) {
         if (route.urlPattern.test(requestPath)) {
           const dynamicHtmlPath = join(publicDir, route.htmlPath);

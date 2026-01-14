@@ -26,11 +26,13 @@ import {
   CreateFileDto,
   TrashFilesResponseDto,
   UpdateFileDto,
+  BatchCheckExistsDto,
+  RestoreFileDto,
 } from './dto/files.dto';
 import { FilesService } from './files.service';
 import { CompleteFileUploadDto, FileUploadStatusDto } from '@/modules/files/dto/upload.dto';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
-import { File } from '@agam-space/shared-types';
+import { File, BatchCheckExistsResponse } from '@agam-space/shared-types';
 import { FileDto } from '@/modules/folders/dto/folder-content.dto';
 
 @ApiBearerAuth()
@@ -143,17 +145,19 @@ export class FilesController {
   }
 
   @Patch(':id/restore')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Restore trashed file' })
+  @ApiBody({ type: RestoreFileDto, required: false })
   @ApiResponse({
-    status: HttpStatus.OK,
+    status: HttpStatus.NO_CONTENT,
     description: 'File restored successfully',
   })
   async restoreFile(
     @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string
+    @Param('id') id: string,
+    @Body() renameData?: RestoreFileDto
   ): Promise<void> {
-    await this.filesService.restoreFile(user.id, id);
+    await this.filesService.restoreFile(user.id, id, renameData);
   }
 
   @Get(':id/upload/status')
@@ -196,5 +200,25 @@ export class FilesController {
       exists: !!exitingId,
       id: exitingId || null,
     };
+  }
+
+  // Batch check if multiple nameHashes exist
+  @Post('/batch/check-exists')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Batch check if file nameHashes exist' })
+  @ApiBody({ type: BatchCheckExistsDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Batch name existence check completed',
+  })
+  async batchCheckExists(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: BatchCheckExistsDto
+  ): Promise<BatchCheckExistsResponse> {
+    const results = await this.filesService.batchCheckNameExists(
+      user.id,
+      dto.checks as Array<{ parentId: string | null; nameHash: string }>
+    );
+    return { results };
   }
 }

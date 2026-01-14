@@ -56,7 +56,37 @@ export const TrashFoldersResponseSchema = z.object({
   failedIds: z.array(UlidSchema).nullish(),
 });
 
+export const BatchCheckFolderExistsItemSchema = z.object({
+  parentId: z.string().nullable(),
+  nameHash: z.string(),
+});
+
+export const BatchCheckFolderExistsSchema = z.object({
+  checks: z.array(BatchCheckFolderExistsItemSchema),
+});
+
+export const BatchCheckFolderExistsResultSchema = z.object({
+  nameHash: z.string(),
+  exists: z.boolean(),
+});
+
+export const BatchCheckFolderExistsResponseSchema = z.object({
+  results: z.array(BatchCheckFolderExistsResultSchema),
+});
+
+export const RestoreFolderSchema = z
+  .object({
+    nameHash: z.string().optional(),
+    metadataEncrypted: z.string().optional(),
+  })
+  .optional();
+
 export type TrashFoldersResponse = z.infer<typeof TrashFoldersResponseSchema>;
+export type RestoreFolder = z.infer<typeof RestoreFolderSchema>;
+export type BatchCheckFolderExistsItem = z.infer<typeof BatchCheckFolderExistsItemSchema>;
+export type BatchCheckFolderExists = z.infer<typeof BatchCheckFolderExistsSchema>;
+export type BatchCheckFolderExistsResult = z.infer<typeof BatchCheckFolderExistsResultSchema>;
+export type BatchCheckFolderExistsResponse = z.infer<typeof BatchCheckFolderExistsResponseSchema>;
 
 export const isFolderIdRoot = (id: string | null | undefined): boolean => {
   return !id || id.toLowerCase().trim() === 'root';
