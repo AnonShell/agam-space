@@ -1,5 +1,7 @@
 {
   "framework": "nextjs",
   "buildCommand": "pnpm build",
-  "installCommand": "pnpm install --ignore-workspace --frozen-lockfile"
+  "outputDirectory": ".next",
+  "installCommand": "pnpm install --ignore-workspace  --frozen-lockfile",
+  "routes": [{ "src": "/api/(.*)", "dest": "/api/$1" }]
 }
