@@ -49,7 +49,6 @@ function addIntegrityVerificationCorsHeaders(
     return false;
   }
 
-  // Allow CORS for integrity verification
   const isAllowedPath =
     requestPath === '/' ||
     requestPath === '/integrity-manifest.json' ||
@@ -63,10 +62,10 @@ function addIntegrityVerificationCorsHeaders(
     return false;
   }
 
-  reply.header('Access-Control-Allow-Origin', origin);
-  reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  reply.header('Access-Control-Allow-Headers', 'Accept, Content-Type');
-  reply.header('Vary', 'Origin');
+  reply.raw.setHeader('Access-Control-Allow-Origin', origin);
+  reply.raw.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  reply.raw.setHeader('Access-Control-Allow-Headers', 'Accept, Content-Type');
+  reply.raw.setHeader('Vary', 'Origin');
 
   return true;
 }
@@ -129,14 +128,11 @@ export function setupStaticAssets(app: NestFastifyApplication, config: AppConfig
     }
 
     const origin = request.headers.origin;
-    const hasCorsHeaders = addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config);
+
+    addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config);
 
     sirvHandler(request.raw, reply.raw, () => {
-      // Re-apply CORS headers after sirv sends the response
-      if (hasCorsHeaders) {
-        addIntegrityVerificationCorsHeaders(requestPath, origin, reply, config);
-      }
-
+      // If sirv didn't handle it, fallback to SPA routes
       for (const route of DYNAMIC_ROUTE_MAPPINGS) {
         if (route.urlPattern.test(requestPath)) {
           const dynamicHtmlPath = join(publicDir, route.htmlPath);
