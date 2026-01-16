@@ -42,24 +42,33 @@ export class FolderManager {
       updatedAt: new Date().toISOString(),
     };
 
-    const metadataBytes = Buffer.from(JSON.stringify(metadata));
-
-    const [encryptedMetadata, fkWrapped] = await Promise.all([
-      EncryptionRegistry.get().encrypt(metadataBytes, newFolderKey),
-      EncryptionRegistry.get().encrypt(newFolderKey, fkEncryptionKey),
+    const [metadataEncrypted, fkWrapped] = await Promise.all([
+      this.encryptMetadata(metadata, newFolderKey),
+      this.encryptFolderKey(newFolderKey, fkEncryptionKey),
     ]);
 
     return {
       parentId,
       nameHash,
-      metadataEncrypted: EncryptedEnvelopeCodec.serialize(encryptedMetadata),
-      fkWrapped: EncryptedEnvelopeCodec.serialize(fkWrapped),
+      metadataEncrypted,
+      fkWrapped,
     };
+  }
+
+  async encryptFolderKey(folderKey: Uint8Array, fkEncryptionKey: Uint8Array): Promise<string> {
+    const encryptedFk = await EncryptionRegistry.get().encrypt(folderKey, fkEncryptionKey);
+    return EncryptedEnvelopeCodec.serialize(encryptedFk);
   }
 
   async decryptFolderKey(fkWrapped: string, fkEncryptionKey: Uint8Array): Promise<Uint8Array> {
     const envelope = EncryptedEnvelopeCodec.deserialize(fkWrapped);
     return EncryptionRegistry.get().decrypt(envelope, fkEncryptionKey);
+  }
+
+  async encryptMetadata(metadata: FolderMetadata, folderKey: Uint8Array): Promise<string> {
+    const metadataBytes = Buffer.from(JSON.stringify(metadata));
+    const encryptedMetadata = await EncryptionRegistry.get().encrypt(metadataBytes, folderKey);
+    return EncryptedEnvelopeCodec.serialize(encryptedMetadata);
   }
 
   async decryptMetadata(metadataEncrypted: string, folderKey: Uint8Array): Promise<FolderMetadata> {
@@ -92,3 +101,5 @@ export async function createNewFolder(name: string, parentId?: string): Promise<
     throw new AppError(`Failed to create folder: ${e}`, 'FOLDER_CREATION_FAILED');
   }
 }
+
+export const folderManager = new FolderManager();

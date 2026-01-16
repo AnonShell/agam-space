@@ -121,7 +121,7 @@ export class ContentTreeManager {
     }
   }
 
-  private async getFolderInfo(folderId: string) {
+  async getFolderInfo(folderId: string) {
     let folderInfo = this.store.getItem(folderId);
     if (folderInfo) {
       return folderInfo as FolderEntry;
@@ -130,7 +130,8 @@ export class ContentTreeManager {
     if (isFolderIdRoot(folderId)) {
       folderInfo = {
         id: 'root',
-        name: 'Root Folder',
+        name: 'root',
+        nameHash: 'root',
         isFolder: true,
       };
     } else {

@@ -2,6 +2,7 @@ import {
   CreateFile,
   File,
   FileSchema,
+  RestoreItem,
   TrashFilesResponseSchema,
   UpdateFile,
 } from '@agam-space/shared-types';
@@ -81,14 +82,11 @@ export async function fetchFileChunkApi(fileId: string, chunkIndex: number): Pro
   return new Uint8Array(await response.arrayBuffer());
 }
 
-export async function restoreFileApi(
-  fileId: string,
-  renameData?: { nameHash?: string }
-): Promise<void> {
+export async function restoreFileApi(fileId: string, restoreItem?: RestoreItem): Promise<void> {
   await ClientRegistry.getApiClient().fetchRaw(`/v1/files/${fileId}/restore`, {
     method: 'PATCH',
-    body: renameData ? JSON.stringify(renameData) : undefined,
-    headers: renameData ? { 'Content-Type': 'application/json' } : undefined,
+    body: restoreItem ? JSON.stringify(restoreItem) : undefined,
+    headers: restoreItem ? { 'Content-Type': 'application/json' } : undefined,
   });
 }
 

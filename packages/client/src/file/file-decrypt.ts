@@ -13,6 +13,7 @@ export async function decryptFile(file: File): Promise<FileEntry> {
   return {
     id: file.id,
     name: metadata.name,
+    nameHash: file.nameHash,
     mime: metadata.mimeType || 'application/octet-stream',
     parentId: file.parentId || 'root',
     size: file.approxSize,

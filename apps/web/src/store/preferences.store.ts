@@ -10,6 +10,13 @@ type ExplorerPrefs = {
   groupFolders: boolean; // true = folders first, false = mixed with files
 };
 
+type TrashPrefs = {
+  view: 'grid' | 'list';
+  sortBy: 'name' | 'size' | 'modified';
+  sortDir: 'asc' | 'desc';
+  groupFolders: boolean;
+};
+
 type SecurityPrefs = {
   sessionAutoUnlock: boolean;
   clearDeviceDataOnLogout: boolean;
@@ -17,6 +24,7 @@ type SecurityPrefs = {
 
 type Preferences = {
   explorer: ExplorerPrefs;
+  trash: TrashPrefs;
   security: SecurityPrefs;
 };
 
@@ -26,12 +34,17 @@ type Actions = {
   setExplorerSortDir: (v: ExplorerPrefs['sortDir']) => void;
   setExplorerGroupFolders: (v: boolean) => void;
   setExplorerPrefs: (p: Partial<ExplorerPrefs>) => void;
+  setTrashView: (v: TrashPrefs['view']) => void;
+  setTrashSortBy: (v: TrashPrefs['sortBy']) => void;
+  setTrashSortDir: (v: TrashPrefs['sortDir']) => void;
+  setTrashGroupFolders: (v: boolean) => void;
   setSessionAutoUnlock: (enabled: boolean) => void;
   setClearDeviceDataOnLogout: (enabled: boolean) => void;
 };
 
 const DEFAULT_PREFS: Preferences = {
   explorer: { view: 'grid', sortBy: 'name', sortDir: 'asc', groupFolders: true },
+  trash: { view: 'grid', sortBy: 'name', sortDir: 'asc', groupFolders: true },
   security: { sessionAutoUnlock: false, clearDeviceDataOnLogout: false },
 };
 
@@ -45,6 +58,10 @@ export const usePreferencesStore = create<Preferences & Actions>()(
       setExplorerGroupFolders: groupFolders =>
         set(s => ({ explorer: { ...s.explorer, groupFolders } })),
       setExplorerPrefs: p => set(s => ({ explorer: { ...s.explorer, ...p } })),
+      setTrashView: view => set(s => ({ trash: { ...s.trash, view } })),
+      setTrashSortBy: sortBy => set(s => ({ trash: { ...s.trash, sortBy } })),
+      setTrashSortDir: sortDir => set(s => ({ trash: { ...s.trash, sortDir } })),
+      setTrashGroupFolders: groupFolders => set(s => ({ trash: { ...s.trash, groupFolders } })),
       setSessionAutoUnlock: sessionAutoUnlock =>
         set(s => ({ security: { ...s.security, sessionAutoUnlock } })),
       setClearDeviceDataOnLogout: clearDeviceDataOnLogout =>
@@ -52,9 +69,9 @@ export const usePreferencesStore = create<Preferences & Actions>()(
     }),
     {
       name: 'preferences',
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => localStorage),
-      partialize: s => ({ explorer: s.explorer, security: s.security }),
+      partialize: s => ({ explorer: s.explorer, trash: s.trash, security: s.security }),
       migrate: (persistedState: any, version: number) => {
         // Migrate from v1 to v2: add groupFolders property
         if (version === 1) {
@@ -76,6 +93,13 @@ export const usePreferencesStore = create<Preferences & Actions>()(
             },
           };
         }
+        // Migrate from v3 to v4: add trash preferences
+        if (version === 3) {
+          return {
+            ...persistedState,
+            trash: DEFAULT_PREFS.trash,
+          };
+        }
         return persistedState;
       },
       merge: (persistedState, currentState) => {
@@ -85,6 +109,10 @@ export const usePreferencesStore = create<Preferences & Actions>()(
           explorer: {
             ...DEFAULT_PREFS.explorer,
             ...persisted?.explorer,
+          },
+          trash: {
+            ...DEFAULT_PREFS.trash,
+            ...persisted?.trash,
           },
           security: {
             ...DEFAULT_PREFS.security,

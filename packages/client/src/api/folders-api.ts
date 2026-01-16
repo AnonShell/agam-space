@@ -5,6 +5,7 @@ import {
   FolderContents,
   FolderContentsSchema,
   FolderSchema,
+  RestoreItem,
   TrashFoldersResponseSchema,
   UpdateFolder,
 } from '@agam-space/shared-types';
@@ -63,14 +64,11 @@ export async function trashFoldersApi(folderIds: string[]) {
   );
 }
 
-export async function restoreFolderApi(
-  folderId: string,
-  renameData?: { nameHash?: string; metadataEncrypted?: string }
-): Promise<void> {
+export async function restoreFolderApi(folderId: string, restoreItem?: RestoreItem): Promise<void> {
   await ClientRegistry.getApiClient().fetchRaw(`/v1/folders/${folderId}/restore`, {
     method: 'PATCH',
-    body: renameData ? JSON.stringify(renameData) : undefined,
-    headers: renameData ? { 'Content-Type': 'application/json' } : undefined,
+    body: restoreItem ? JSON.stringify(restoreItem) : undefined,
+    headers: restoreItem ? { 'Content-Type': 'application/json' } : undefined,
   });
 }
 

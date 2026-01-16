@@ -148,6 +148,7 @@ export async function getFolderInfo(folderId: string): Promise<FolderEntry> {
     isFolder: true,
     createdAt: new Date(metadata.createdAt),
     updatedAt: new Date(folder.updatedAt),
+    status: folder.status,
   };
 }
 
@@ -164,8 +165,6 @@ export async function getFoldersInFolder(
 export async function getDecryptedFolderKey(
   folderId: string | null | undefined
 ): Promise<Uint8Array> {
-  // console.log(`getDecryptedFolderKey: folderId=${folderId}`);
-
   //Root-level folder uses CMK
   if (!folderId || folderId === 'root') {
     const cmk = ClientRegistry.getKeyManager().getCMK();

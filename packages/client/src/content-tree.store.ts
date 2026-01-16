@@ -1,12 +1,13 @@
 import { LRUCache } from 'lru-cache';
 import { getFolderInfo } from './folder/folder-contents';
-import { FolderMetadata, UserFileMetadata } from '@agam-space/shared-types';
+import { FolderMetadata, FolderStatus, UserFileMetadata } from '@agam-space/shared-types';
 import { SortDirection } from './folder/content-tree/content-tree-v2.store';
+import { hashFolderName } from './folder/folder-operations';
 
 export type FolderEntry = {
   id: string;
   name: string;
-  nameHash?: string;
+  nameHash: string;
   parentId?: string;
   isFolder: true;
   size?: number;
@@ -14,11 +15,13 @@ export type FolderEntry = {
   createdAt?: Date;
   updatedAt?: Date;
   metadata?: FolderMetadata;
+  status?: FolderStatus;
 };
 
 export type FileEntry = {
   id: string;
   name: string;
+  nameHash: string;
   size: number;
   mime: string;
   parentId: string;
@@ -27,6 +30,7 @@ export type FileEntry = {
   createdAt?: Date;
   updatedAt?: Date;
   metadata?: UserFileMetadata;
+  status?: string;
 };
 
 export type ContentEntry = FileEntry | FolderEntry;
@@ -106,6 +110,7 @@ class ContentTreeStore {
         folder = {
           id: 'root',
           name: 'root',
+          nameHash: hashFolderName('root'),
           isFolder: true,
         };
       } else {

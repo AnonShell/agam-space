@@ -336,6 +336,7 @@ export class UploadManager {
     return {
       id: item.fileResponse.id,
       name: item.fileMetadata.name,
+      nameHash: item.fileResponse.nameHash,
       size: item.fileMetadata.size,
       mime: item.fileMetadata.mimeType || 'application/octet-stream',
       chunkCount: item.fileResponse.chunkCount,

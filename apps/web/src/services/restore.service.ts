@@ -24,8 +24,9 @@ export class RestoreService {
     success: boolean;
     finalName: string;
     hasConflict: boolean;
+    movedToRoot?: boolean;
   }> {
-    const { finalName, renameData, hasConflict } =
+    const { finalName, finalParentId, restoreItem, hasConflict, movedToRoot } =
       await RestoreConflictService.handleRestoreWithConflict(
         itemName,
         parentId,
@@ -35,22 +36,20 @@ export class RestoreService {
       );
 
     if (isFolder) {
-      await restoreFolderApi(itemId, renameData ? renameData : undefined);
+      await restoreFolderApi(itemId, restoreItem);
     } else {
-      await restoreFileApi(itemId, renameData ? renameData : undefined);
+      await restoreFileApi(itemId, restoreItem);
     }
 
     eventBus.emit(AppEvent.CONTENT_RESTORED, {
       itemId,
-      parentId,
+      parentId: finalParentId,
       itemType: isFolder ? 'folder' : 'file',
     });
-    return { success: true, finalName, hasConflict };
+
+    return { success: true, finalName, hasConflict, movedToRoot };
   }
 
-  /**
-   * Empty all items from trash
-   */
   static async emptyTrash(emptyTrashApi: () => Promise<{ deletedCount: number }>): Promise<void> {
     const { deletedCount } = await emptyTrashApi();
     toast.success(
@@ -58,7 +57,6 @@ export class RestoreService {
         ? `Permanently deleted ${deletedCount} item(s) from Trash.`
         : 'Trash is already empty.'
     );
-    // Refresh user quota
     useUserQuotaStore.getState().refresh();
   }
 }
