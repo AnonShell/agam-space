@@ -50,6 +50,13 @@
       "when": 1768428437852,
       "tag": "0006_warm_raider",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1768563636926,
+      "tag": "0007_files-status-complete-to-active",
+      "breakpoints": true
     }
   ]
 }

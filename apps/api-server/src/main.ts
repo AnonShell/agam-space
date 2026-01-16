@@ -51,7 +51,7 @@ async function bootstrap() {
 
   const isHttpsEnabled = config.domain?.domain?.startsWith('https://') ?? false;
 
-  await app.register(helmet, {
+  await app.register(helmet as any, {
     contentSecurityPolicy: {
       reportOnly: false,
       directives: {

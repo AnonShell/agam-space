@@ -27,13 +27,12 @@ import {
   TrashFilesResponseDto,
   UpdateFileDto,
   BatchCheckExistsDto,
-  RestoreFileDto,
 } from './dto/files.dto';
 import { FilesService } from './files.service';
 import { CompleteFileUploadDto, FileUploadStatusDto } from '@/modules/files/dto/upload.dto';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { File, BatchCheckExistsResponse } from '@agam-space/shared-types';
-import { FileDto } from '@/modules/folders/dto/folder-content.dto';
+import { FileDto, RestoreItemDto } from '@/modules/folders/dto/folder-content.dto';
 
 @ApiBearerAuth()
 @ApiTags('Files')
@@ -147,7 +146,7 @@ export class FilesController {
   @Patch(':id/restore')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Restore trashed file' })
-  @ApiBody({ type: RestoreFileDto, required: false })
+  @ApiBody({ type: RestoreItemDto, required: false })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
     description: 'File restored successfully',
@@ -155,9 +154,9 @@ export class FilesController {
   async restoreFile(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
-    @Body() renameData?: RestoreFileDto
+    @Body() restoreItemDto?: RestoreItemDto
   ): Promise<void> {
-    await this.filesService.restoreFile(user.id, id, renameData);
+    await this.filesService.restoreFile(user.id, id, restoreItemDto);
   }
 
   @Get(':id/upload/status')

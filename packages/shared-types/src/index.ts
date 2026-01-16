@@ -16,6 +16,7 @@ export * from './server/server.schema';
 export * from './e2ee/e2ee.schema';
 
 //folder types
+export * from './contents/content.schema';
 export * from './folder/file.schema';
 export * from './folder/folder.schema';
 export * from './trusted-devices/trusted-devices.schema';

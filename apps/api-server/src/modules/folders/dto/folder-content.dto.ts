@@ -5,8 +5,8 @@ import {
   FolderContentsSchema,
   FolderSchema,
   UpdateFolderSchema,
-  RestoreFolderSchema,
   BatchCheckFolderExistsSchema,
+  RestoreItemSchema,
 } from '@agam-space/shared-types';
 
 export class CreateFolderDto extends createZodDto(CreatedFolderSchema) {}
@@ -21,7 +21,7 @@ export class FolderContentsDto extends createZodDto(FolderContentsSchema) {}
 
 export class BatchCheckFolderExistsDto extends createZodDto(BatchCheckFolderExistsSchema) {}
 
-export class RestoreFolderDto extends createZodDto(RestoreFolderSchema) {}
+export class RestoreItemDto extends createZodDto(RestoreItemSchema) {}
 
 export function isRootFolder(folderId: string): boolean {
   return !folderId || folderId === 'root';

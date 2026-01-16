@@ -24,7 +24,7 @@ import {
   FolderDto,
   UpdateFolderDto,
   BatchCheckFolderExistsDto,
-  RestoreFolderDto,
+  RestoreItemDto,
 } from './dto/folder-content.dto';
 import { FoldersService } from './folders.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
@@ -115,7 +115,7 @@ export class FoldersController {
   @Patch('/:folderId/restore')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Restore folder from trash with optional rename' })
-  @ApiBody({ type: RestoreFolderDto, required: false })
+  @ApiBody({ type: RestoreItemDto, required: false })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
     description: 'Folder restored successfully',
@@ -123,9 +123,9 @@ export class FoldersController {
   async restoreFolder(
     @Param('folderId') folderId: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() renameData?: RestoreFolderDto
+    @Body() restoreItemDto?: RestoreItemDto
   ): Promise<void> {
-    return this.foldersService.restoreFolder(user.id, folderId, renameData);
+    return this.foldersService.restoreFolder(user.id, folderId, restoreItemDto);
   }
 
   // Batch check if multiple nameHashes exist

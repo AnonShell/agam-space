@@ -14,7 +14,13 @@ import { DATABASE_CONNECTION } from '../../database/database.providers';
 import { FolderEntity, folders, NewFolderEntity } from '../../database/schema';
 
 import { CreateFolderDto, FolderDto, UpdateFolderDto } from './dto/folder-content.dto';
-import { Folder, FolderSchema } from '@agam-space/shared-types';
+import {
+  FileStatus,
+  Folder,
+  FolderSchema,
+  FolderStatus,
+  RestoreItem,
+} from '@agam-space/shared-types';
 import { FilesService } from '@/modules/files/files.service';
 
 @Injectable()
@@ -37,9 +43,9 @@ export class FoldersService {
       parentId ? eq(folders.parentId, parentId) : isNull(folders.parentId),
     ];
 
-    const excludeStatuses = ['pending', 'deleted'];
+    const excludeStatuses = [FolderStatus.DELETED, FolderStatus.INACTIVE_PARENT];
     if (!includeTrashed) {
-      excludeStatuses.push('trashed');
+      excludeStatuses.push(FolderStatus.TRASHED);
     }
 
     baseConditions.push(not(inArray(folders.status, excludeStatuses)));
@@ -94,18 +100,28 @@ export class FoldersService {
     }
   }
 
-  async hasFolderWithName(userId: string, nameHash: string, parentId?: string): Promise<boolean> {
+  async hasFolderWithName(
+    userId: string,
+    nameHash: string,
+    parentId?: string,
+    checkAll: boolean = false
+  ): Promise<boolean> {
+    const conditions = [
+      eq(folders.userId, userId),
+      parentId && !isFolderIdRoot(parentId)
+        ? eq(folders.parentId, parentId)
+        : isNull(folders.parentId),
+      eq(folders.nameHash, nameHash),
+    ];
+
+    if (!checkAll) {
+      conditions.push(not(inArray(folders.status, ['deleted', 'trashed'])));
+    }
+
     const result = await this.db
       .select({ id: folders.id })
       .from(folders)
-      .where(
-        and(
-          eq(folders.userId, userId),
-          parentId ? eq(folders.parentId, parentId) : isNull(folders.parentId),
-          eq(folders.nameHash, nameHash),
-          not(inArray(folders.status, ['deleted', 'trashed']))
-        )
-      )
+      .where(and(...conditions))
       .limit(1);
 
     return result.length > 0;
@@ -120,7 +136,7 @@ export class FoldersService {
   ): Promise<Array<{ nameHash: string; exists: boolean }>> {
     const results = await Promise.all(
       checks.map(async ({ parentId, nameHash }) => {
-        const exists = await this.hasFolderWithName(userId, nameHash, parentId ?? undefined);
+        const exists = await this.hasFolderWithName(userId, nameHash, parentId ?? undefined, true);
         return {
           nameHash,
           exists,
@@ -183,7 +199,9 @@ export class FoldersService {
       throw new BadRequestException('No valid fields to update');
     }
 
-    console.log(`Updating folder ${folderId} for user ${userId} with data:`, allowedUpdates);
+    this.logger.log(
+      `Updating folder ${folderId} for user ${userId} with data: ${JSON.stringify(allowedUpdates)}`
+    );
 
     const [updatedFolder] = await this.db
       .update(folders)
@@ -210,15 +228,18 @@ export class FoldersService {
 
     const updatedIds = await this.db
       .update(folders)
-      .set({ status: 'trashed' })
+      .set({ status: FolderStatus.TRASHED })
       .where(
         and(
           eq(folders.userId, userId),
           inArray(folders.id, folderIds),
-          not(inArray(folders.status, ['trashed', 'deleted']))
+          not(inArray(folders.status, [FolderStatus.TRASHED, FolderStatus.DELETED]))
         )
       )
       .returning({ id: folders.id });
+
+    // IMMEDIATELY mark all descendants as inactive_parent in background
+    this.asyncMarkAllFolderDescendantsAsInactiveParent(updatedIds.map(item => item.id));
 
     // compare the result with the input folderIds for failed IDs
     const updatedIdsSet = new Set(updatedIds.map(item => item.id));
@@ -230,8 +251,29 @@ export class FoldersService {
       });
   }
 
+  private asyncMarkAllFolderDescendantsAsInactiveParent(folderIds: string[]): void {
+    (async () => {
+      for (const folderId of folderIds) {
+        try {
+          await this.markDescendantsAsInactiveParent(folderId);
+        } catch (err) {
+          this.logger.error(`Failed to mark descendants of ${folderId} as inactive_parent`, err);
+        }
+      }
+    })();
+  }
+
+  private async markDescendantsAsInactiveParent(folderId: string): Promise<void> {
+    const { folderIds, fileIds } = await this.collectDescendantFoldersAndFiles(folderId);
+
+    await Promise.all([
+      this.filesService.markFilesAsInactiveParent(fileIds),
+      this.markFoldersAsStatus(folderIds, FolderStatus.INACTIVE_PARENT, [FolderStatus.ACTIVE]),
+    ]);
+  }
+
   async deleteFolder(userId: string, folderId: string, force: boolean = false): Promise<void> {
-    this.logger.log(`📁 Deleting folder ${folderId} by user ${userId}`);
+    this.logger.log(`${force ? 'deleted' : 'trashed'} folder ${folderId} by user ${userId}`);
 
     const result = await this.db
       .update(folders)
@@ -243,18 +285,20 @@ export class FoldersService {
       throw new NotFoundException('Folder not found or already deleted');
     }
 
-    this.logger.log(`Folder ${folderId} deleted successfully for user ${userId}`);
+    if (!force) {
+      // IMMEDIATELY mark all descendants as inactive_parent in background
+      this.asyncMarkAllFolderDescendantsAsInactiveParent([folderId]);
+    }
+
+    this.logger.log(
+      `Folder ${folderId} ${force ? 'deleted' : 'trashed'} successfully for user ${userId}`
+    );
   }
 
-  async restoreFolder(
-    userId: string,
-    folderId: string,
-    renameData?: { nameHash?: string; metadataEncrypted?: string }
-  ) {
+  async restoreFolder(userId: string, folderId: string, restoreItem?: RestoreItem) {
     this.logger.log(`📁 Restoring folder ${folderId} for user ${userId}`);
 
     const folder = await this.getFolder(userId, folderId);
-
     if (!folder) {
       throw new NotFoundException('Folder not found');
     }
@@ -279,7 +323,7 @@ export class FoldersService {
       }
     }
 
-    const nameHash = renameData?.nameHash || folder.nameHash;
+    const nameHash = restoreItem?.nameHash || folder.nameHash;
     if (nameHash) {
       const existsWithNewName = await this.hasFolderWithName(
         userId,
@@ -292,14 +336,19 @@ export class FoldersService {
     }
 
     const updates: Partial<FolderEntity> = { status: 'active' };
-    if (renameData?.nameHash) {
-      updates.nameHash = renameData.nameHash;
+    if (restoreItem?.nameHash) {
+      updates.nameHash = restoreItem.nameHash;
 
-      if (!renameData?.metadataEncrypted) {
+      if (!restoreItem?.metadataEncrypted) {
         throw new ConflictException('metadataEncrypted is required when restoring with a new name');
       }
 
-      updates.metadataEncrypted = renameData.metadataEncrypted;
+      updates.metadataEncrypted = restoreItem.metadataEncrypted;
+    }
+
+    if (restoreItem?.fkWrapped) {
+      updates.fkWrapped = restoreItem.fkWrapped;
+      updates.parentId = restoreItem.parentId || null;
     }
 
     const result = await this.db
@@ -312,9 +361,28 @@ export class FoldersService {
       throw new NotFoundException('Error restoring folder');
     }
 
+    //Restore all inactive_parent descendants back to active in background
+    this.restoreInactiveParentDescendants(folderId);
+
     this.logger.log(
-      `Folder ${folderId} restored${renameData?.nameHash ? ' with rename' : ''} for user ${userId}`
+      `Folder ${folderId} restored${restoreItem?.nameHash ? ' with rename' : ''} for user ${userId}`
     );
+  }
+
+  private restoreInactiveParentDescendants(folderId: string) {
+    (async () => {
+      const { folderIds, fileIds } = await this.collectDescendantFoldersAndFiles(
+        folderId,
+        FolderStatus.INACTIVE_PARENT.toString()
+      );
+
+      await Promise.all([
+        this.markFoldersAsStatus(folderIds, FolderStatus.ACTIVE, [FolderStatus.INACTIVE_PARENT]),
+        this.filesService.markFilesAsStatus(fileIds, FileStatus.ACTIVE, [
+          FileStatus.INACTIVE_PARENT,
+        ]),
+      ]);
+    })();
   }
 
   async markAllTrashedFoldersAsDeleted(userId: string): Promise<
@@ -367,11 +435,16 @@ export class FoldersService {
     return deletedRoots.map(folder => folder.id);
   }
 
-  async getFolderChildrenIds(folderId: string): Promise<string[]> {
+  async getFolderChildrenIds(folderId: string, status?: string): Promise<string[]> {
+    const conditions = [eq(folders.parentId, folderId)];
+    if (status) {
+      conditions.push(eq(folders.status, status));
+    }
+
     const children = await this.db
       .select({ id: folders.id })
       .from(folders)
-      .where(eq(folders.parentId, folderId));
+      .where(and(...conditions));
 
     return children.map(child => child.id);
   }
@@ -435,6 +508,59 @@ export class FoldersService {
       .where(and(eq(folders.id, folderId)));
 
     return size;
+  }
+
+  async markFoldersAsStatus(
+    folderIds: string[],
+    status: FolderStatus,
+    inStatuses?: FolderStatus[]
+  ): Promise<void> {
+    if (folderIds.length === 0) {
+      return;
+    }
+
+    this.logger.log(`Marking ${folderIds.length} folders as ${status}`);
+
+    const conditions = [inArray(folders.id, folderIds)];
+
+    if (inStatuses && inStatuses.length > 0) {
+      conditions.push(inArray(folders.status, inStatuses));
+    }
+
+    await this.db
+      .update(folders)
+      .set({ status: FolderStatus.INACTIVE_PARENT })
+      .where(and(...conditions));
+  }
+
+  async collectDescendantFoldersAndFiles(
+    rootId: string,
+    status?: string
+  ): Promise<{
+    folderIds: string[];
+    fileIds: string[];
+  }> {
+    const folderQueue = [rootId];
+    const folderIds: string[] = [];
+    const fileIds: string[] = [];
+
+    while (folderQueue.length > 0) {
+      const folderId = folderQueue.shift()!;
+
+      if (folderId !== rootId) {
+        folderIds.push(folderId);
+      }
+
+      const [folderIdsInFolder, fileIdsInFolder] = await Promise.all([
+        this.getFolderChildrenIds(folderId, status),
+        this.filesService.getFilesInFolder(folderId, status),
+      ]);
+
+      folderQueue.push(...folderIdsInFolder);
+      fileIds.push(...fileIdsInFolder);
+    }
+
+    return { folderIds, fileIds };
   }
 }
 

@@ -3,6 +3,15 @@ import { z } from 'zod';
 import { BASE64_REGEX, bigintSchema, datetimeSchema, UlidSchema } from '../common.schema';
 import { FileArraySchema } from './file.schema';
 
+export enum FolderStatus {
+  ACTIVE = 'active',
+  TRASHED = 'trashed',
+  DELETED = 'deleted',
+  INACTIVE_PARENT = 'inactive_parent',
+}
+
+export const FolderStatusSchema = z.nativeEnum(FolderStatus);
+
 export const FolderSchema = z.object({
   id: UlidSchema,
   parentId: z.string().min(1).max(50).nullish(),
@@ -16,7 +25,7 @@ export const FolderSchema = z.object({
   fkWrapped: z.string().min(64).max(500).regex(BASE64_REGEX, 'Invalid base64 encoded wrapped key'),
   createdAt: datetimeSchema,
   updatedAt: datetimeSchema,
-  status: z.enum(['active', 'trashed', 'deleted']).default('active'),
+  status: FolderStatusSchema.default(FolderStatus.ACTIVE),
 });
 
 export const CreatedFolderSchema = FolderSchema.pick({
@@ -50,7 +59,6 @@ export const FolderContentsPaginatedSchema = FolderContentsSchema.extend({
 });
 
 export type FolderContents = z.infer<typeof FolderContentsSchema>;
-export type FolderContentsPaginated = z.infer<typeof FolderContentsPaginatedSchema>;
 
 export const TrashFoldersResponseSchema = z.object({
   failedIds: z.array(UlidSchema).nullish(),
@@ -74,15 +82,7 @@ export const BatchCheckFolderExistsResponseSchema = z.object({
   results: z.array(BatchCheckFolderExistsResultSchema),
 });
 
-export const RestoreFolderSchema = z
-  .object({
-    nameHash: z.string().optional(),
-    metadataEncrypted: z.string().optional(),
-  })
-  .optional();
-
 export type TrashFoldersResponse = z.infer<typeof TrashFoldersResponseSchema>;
-export type RestoreFolder = z.infer<typeof RestoreFolderSchema>;
 export type BatchCheckFolderExistsItem = z.infer<typeof BatchCheckFolderExistsItemSchema>;
 export type BatchCheckFolderExists = z.infer<typeof BatchCheckFolderExistsSchema>;
 export type BatchCheckFolderExistsResult = z.infer<typeof BatchCheckFolderExistsResultSchema>;

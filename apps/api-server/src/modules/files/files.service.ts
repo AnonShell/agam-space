@@ -15,7 +15,14 @@ import { FileChunkService } from './file-chunk.service';
 import { FileUploadStatusDto } from '@/modules/files/dto/upload.dto';
 import { FoldersService, isFolderIdRoot } from '@/modules/folders/folders.service';
 import { AppConfigService } from '@/config/config.service';
-import { CreateFile, File, FileSchema, UpdateFile } from '@agam-space/shared-types';
+import {
+  CreateFile,
+  File,
+  FileSchema,
+  FileStatus,
+  RestoreItem,
+  UpdateFile,
+} from '@agam-space/shared-types';
 import { FileDto, isValidFolderAndNotRoot } from '@/modules/folders/dto/folder-content.dto';
 import { QuotaService } from '@/modules/quota/quota.service';
 import { DrizzleTransaction } from '@/database/database.providers';
@@ -47,9 +54,9 @@ export class FilesService {
       parentFolderId ? eq(files.parentId, parentFolderId) : isNull(files.parentId),
     ];
 
-    const excludeStatuses = ['pending', 'deleted'];
+    const excludeStatuses = [FileStatus.PENDING, FileStatus.DELETED, FileStatus.INACTIVE_PARENT];
     if (!includeTrashed) {
-      excludeStatuses.push('trashed');
+      excludeStatuses.push(FileStatus.TRASHED);
     }
 
     baseConditions.push(not(inArray(files.status, excludeStatuses)));
@@ -82,10 +89,13 @@ export class FilesService {
 
     try {
       const newFile: NewFile = {
-        ...data,
-        parentId,
         userId,
-        status: 'pending',
+        parentId,
+        metadataEncrypted: data.metadataEncrypted,
+        nameHash: data.nameHash,
+        fkWrapped: data.fkWrapped,
+        chunkCount: data.chunkCount,
+        status: FileStatus.PENDING,
         approxSize: 0,
       };
       const [createdFile] = await this.db.insert(files).values(newFile).returning();
@@ -108,7 +118,7 @@ export class FilesService {
       throw new NotFoundException('File not found');
     }
 
-    if (file.status !== 'pending') {
+    if (file.status !== FileStatus.PENDING) {
       throw new ConflictException(`File is status ${file.status} cannot be completed`);
     }
 
@@ -150,7 +160,7 @@ export class FilesService {
 
       const updatedFile = await this.updateFileProps(
         fileId,
-        { status: 'complete', approxSize, checksum: computedChecksum },
+        { status: FileStatus.ACTIVE, approxSize, checksum: computedChecksum },
         tx
       );
 
@@ -223,7 +233,6 @@ export class FilesService {
       )
       .limit(1);
 
-    console.log('Checking file existence:', { userId, parentFolderId, nameHash, result });
     return result.length > 0 ? result[0].id : null;
   }
 
@@ -346,12 +355,12 @@ export class FilesService {
       throw new NotFoundException('File not found');
     }
 
-    if (file.status === 'trashed') {
+    if (file.status === FileStatus.TRASHED) {
       return;
     }
 
-    if (file.status !== 'complete') {
-      throw new ConflictException(`File is status ${file.status} cannot be trashed`);
+    if (file.status === FileStatus.DELETED) {
+      throw new ConflictException(`File is already deleted and cannot be trashed`);
     }
 
     const [updatedFile] = await this.db
@@ -367,11 +376,7 @@ export class FilesService {
     this.logger.log(`File ${fileId} marked as trashed by user ${userId}`);
   }
 
-  async restoreFile(
-    userId: string,
-    fileId: string,
-    renameData?: { nameHash?: string; metadataEncrypted?: string }
-  ): Promise<FileEntity> {
+  async restoreFile(userId: string, fileId: string, renameItem?: RestoreItem): Promise<FileEntity> {
     const file = await this.getFileEntity(userId, fileId);
     if (!file) {
       throw new NotFoundException('File not found');
@@ -381,8 +386,11 @@ export class FilesService {
       throw new ConflictException(`File is status ${file.status} cannot be restored`);
     }
 
+    const finalParentId = renameItem?.fkWrapped ? renameItem?.parentId || 'root' : file.parentId;
+
     // Check if parent folder exists and is active
-    if (file.parentId) {
+    if (finalParentId && !isFolderIdRoot(finalParentId)) {
+      this.logger.warn(`checking parent folder ${finalParentId} for file ${fileId}`);
       const parentFolder = await this.foldersService.getFolder(userId, file.parentId);
       if (!parentFolder) {
         throw new ConflictException('Cannot restore file: parent folder was permanently deleted');
@@ -395,7 +403,7 @@ export class FilesService {
       }
     }
 
-    const nameHash = renameData?.nameHash || file.nameHash;
+    const nameHash = renameItem?.nameHash || file.nameHash;
     if (nameHash) {
       const existingWithNewName = await this.hasFileWithNameHash(userId, file.parentId, nameHash);
       if (existingWithNewName) {
@@ -403,15 +411,20 @@ export class FilesService {
       }
     }
 
-    const updates: Partial<FileEntity> = { status: 'complete' };
+    const updates: Partial<FileEntity> = { status: FileStatus.ACTIVE };
 
-    if (renameData?.nameHash) {
-      updates.nameHash = renameData.nameHash;
+    if (renameItem?.nameHash) {
+      updates.nameHash = renameItem.nameHash;
 
-      if (!renameData?.metadataEncrypted) {
+      if (!renameItem?.metadataEncrypted) {
         throw new ConflictException('Cannot update file name without providing encrypted metadata');
       }
-      updates.metadataEncrypted = renameData.metadataEncrypted;
+      updates.metadataEncrypted = renameItem.metadataEncrypted;
+    }
+
+    if (renameItem?.fkWrapped) {
+      updates.fkWrapped = renameItem.fkWrapped;
+      updates.parentId = renameItem.parentId || null;
     }
 
     const [updatedFile] = await this.db
@@ -425,7 +438,7 @@ export class FilesService {
     }
 
     this.logger.log(
-      `File ${fileId} restored by user ${userId}${renameData?.nameHash ? ' with rename' : ''}`
+      `File ${fileId} restored by user ${userId}${renameItem?.nameHash ? ' with rename' : ''}`
     );
     return updatedFile;
   }
@@ -600,23 +613,58 @@ export class FilesService {
   }
 
   async markFilesAsDeleted(fileIds: string[]) {
+    return this.markFilesAsStatus(fileIds, FileStatus.DELETED, undefined, [FileStatus.DELETED]);
+  }
+
+  async markFilesAsInactiveParent(fileIds: string[]) {
+    return this.markFilesAsStatus(fileIds, FileStatus.INACTIVE_PARENT, [FileStatus.ACTIVE]);
+  }
+
+  async markFilesAsActive(fileIds: string[]) {
+    return this.markFilesAsStatus(fileIds, FileStatus.ACTIVE, [
+      FileStatus.INACTIVE_PARENT,
+      FileStatus.TRASHED,
+    ]);
+  }
+
+  async markFilesAsStatus(
+    fileIds: string[],
+    status: FileStatus,
+    inStatuses?: FileStatus[],
+    notInStatuses?: FileStatus[]
+  ) {
     if (fileIds.length === 0) {
-      return [];
+      return;
     }
 
-    this.logger.log(`Marking ${fileIds.length} files as deleted`);
+    this.logger.log(`Marking ${fileIds.length} files as ${status}`);
+
+    const conditions = [inArray(files.id, fileIds)];
+
+    if (inStatuses && inStatuses.length > 0) {
+      conditions.push(inArray(files.status, inStatuses));
+    }
+
+    if (notInStatuses && notInStatuses.length > 0) {
+      conditions.push(not(inArray(files.status, notInStatuses)));
+    }
 
     await this.db
       .update(files)
-      .set({ status: 'deleted' })
-      .where(and(inArray(files.id, fileIds), not(inArray(files.status, ['deleted', 'trashed']))));
+      .set({ status })
+      .where(and(...conditions));
   }
 
-  async getFilesInFolder(folderId: string) {
+  async getFilesInFolder(folderId: string, status?: string) {
+    const conditions = [eq(files.parentId, folderId)];
+    if (status) {
+      conditions.push(eq(files.status, status));
+    }
+
     const result = await this.db
       .select({ id: files.id })
       .from(files)
-      .where(eq(files.parentId, folderId));
+      .where(and(...conditions));
 
     return result.map(file => file.id);
   }

@@ -1,10 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { FoldersService } from '@/modules/folders/folders.service';
 import { FilesService } from '@/modules/files/files.service';
-import { DATABASE_CONNECTION, FileEntity, files, FolderEntity, folders } from '@/database';
+import { DATABASE_CONNECTION, files, folders } from '@/database';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { sql } from 'drizzle-orm';
-import { File, Folder, TrashedItems } from '@agam-space/shared-types';
+import { and, eq } from 'drizzle-orm';
+import {
+  File,
+  FileSchema,
+  FileStatus,
+  Folder,
+  FolderSchema,
+  FolderStatus,
+  TrashedItems,
+} from '@agam-space/shared-types';
 
 @Injectable()
 export class TrashService {
@@ -46,9 +54,7 @@ export class TrashService {
       await this.filesService.markFilesAsDeleted(fileIds);
 
       // Mark all descendant folders as deleted
-      if (folderIds.length > 0) {
-        await this.foldersService.hardDeleteFolders(folderIds);
-      }
+      await this.foldersService.hardDeleteFolders(folderIds);
     }
   }
 
@@ -103,82 +109,20 @@ export class TrashService {
   }
 
   private async getTopLevelTrashedFolders(userId: string): Promise<Folder[]> {
-    const result = await this.db.execute<FolderEntity>(sql`
-  WITH RECURSIVE trashed_folders AS (
-    SELECT id, parent_id
-    FROM folders
-    WHERE status = 'trashed' AND user_id = ${userId}
+    const items = await this.db
+      .select()
+      .from(folders)
+      .where(and(eq(folders.status, FolderStatus.TRASHED), eq(folders.userId, userId)));
 
-    UNION ALL
-
-    SELECT f.id, f.parent_id
-    FROM folders f
-    INNER JOIN trashed_folders tf ON f.parent_id = tf.id
-    WHERE f.user_id = ${userId}
-  )
-  SELECT
-    'folder' AS type,
-    id,
-    parent_id,
-    metadata_encrypted,
-    name_hash,
-    fk_wrapped,
-    created_at,
-    updated_at,
-    status
-  FROM folders
-  WHERE status = 'trashed'
-    AND user_id = ${userId}
-    AND id NOT IN (
-      SELECT f.id
-      FROM folders f
-      JOIN trashed_folders tf ON f.parent_id = tf.id
-    );
-`);
-
-    return result.map(folderRow => ({
-      id: folderRow.id,
-      parentId: folderRow[folders.parentId.name],
-      metadataEncrypted: folderRow[folders.metadataEncrypted.name],
-      nameHash: folderRow[folders.nameHash.name],
-      fkWrapped: folderRow[folders.fkWrapped.name],
-      createdAt: new Date(folderRow[folders.createdAt.name] as string | Date).toISOString(),
-      updatedAt: new Date(folderRow[folders.updatedAt.name] as string | Date).toISOString(),
-      status: 'trashed',
-    }));
+    return items.map(folder => FolderSchema.parse(folder));
   }
 
   private async getTopLevelTrashedFiles(userId: string): Promise<File[]> {
-    const fileSelectSql = Object.values(files)
-      .filter(col => col && typeof col === 'object' && 'name' in col)
-      .map(col => `files.${col.name}`)
-      .join(', ');
+    const result = await this.db
+      .select()
+      .from(files)
+      .where(and(eq(files.status, FileStatus.TRASHED), eq(files.userId, userId)));
 
-    // 2. Trashed files whose parent is not trashed
-
-    const filesResult = await this.db.execute<FileEntity>(
-      sql.raw(`
-      SELECT ${fileSelectSql}
-      FROM files
-      LEFT JOIN folders ON files.parent_id = folders.id
-      WHERE files.status = 'trashed'
-        AND files.user_id = '${userId}'
-        AND (folders.status IS NULL OR folders.status != 'trashed');
-    `)
-    );
-
-    return filesResult.map(fileRow => ({
-      id: fileRow.id as string,
-      userId: fileRow[files.userId.name] as string,
-      parentId: fileRow[files.parentId.name] as string | null,
-      metadataEncrypted: fileRow[files.metadataEncrypted.name] as string,
-      nameHash: fileRow[files.nameHash.name] as string,
-      fkWrapped: fileRow[files.fkWrapped.name] as string,
-      createdAt: new Date(fileRow[files.createdAt.name] as string | Date).toISOString(),
-      updatedAt: new Date(fileRow[files.updatedAt.name] as string | Date).toISOString(),
-      chunkCount: fileRow[files.chunkCount.name] as number,
-      approxSize: fileRow[files.approxSize.name] as number,
-      status: 'trashed',
-    }));
+    return result.map(file => FileSchema.parse(file));
   }
 }
