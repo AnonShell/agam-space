@@ -57,29 +57,30 @@ encrypted with your master password, which it cannot decrypt.
 See [Authentication](../security/authentication) for technical details on how
 master password authentication works.
 
-## Biometric unlock (trusted devices)
+## Passkey unlock (trusted devices)
 
 Typing your master password every time you access the app can be tedious,
-especially on trusted devices like your personal laptop or phone. Biometric
-unlock lets you use Touch ID, Face ID, or Windows Hello instead.
+especially on trusted devices like your personal laptop or phone. Passkey unlock
+lets you use biometric authentication (Touch ID, Face ID, or Windows Hello)
+instead.
 
 Once you register a device, your CMK is encrypted with device-specific keys
 stored in your device's secure hardware. This means you can unlock quickly with
-biometrics while maintaining the same security level.
+your device's passkey while maintaining the same security level.
 
 **How it works:**
 
 1. First time: Login with credentials, unlock with master password
-2. Register device: Browser generates WebAuthn key pair in secure hardware
-3. Next time: Login with credentials, unlock with biometric (no master password
+2. Register device: Browser generates passkey in your device's secure hardware
+3. Next time: Login with credentials, unlock with passkey (no master password
    needed)
 
-**Enhanced security:** Browsers with WebAuthn PRF (Pseudo-Random Function)
-support derive encryption keys directly from device secure hardware (TPM, Secure
-Enclave), providing stronger protection against device cloning.
+**Enhanced security:** Device passpasses derive encryption keys directly from
+device secure hardware (TPM, Secure Enclave), providing stronger protection
+against device cloning.
 
 **Persistence:** Device credentials persist across logouts by default, allowing
-biometric unlock without re-registration. You can enable "Clear on logout" in
+passkey unlock without re-registration. You can enable "Clear on logout" in
 Settings → Trusted Devices to remove credentials when logging out.
 
 See [Trusted Devices](../configuration/trusted-devices) for setup instructions.

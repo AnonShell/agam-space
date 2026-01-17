@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Trusted Devices
 
-Enable biometric unlock on your devices (Touch ID, Face ID, Windows Hello).
+Enable passkey unlock on your devices (Touch ID, Face ID, Windows Hello).
 
 ## Requirements
 
@@ -20,7 +20,7 @@ Enable biometric unlock on your devices (Touch ID, Face ID, Windows Hello).
 3. Go to **Settings** → **Security** → **Trusted Devices**
 4. Click **Register This Device**
 5. Give device a name (e.g., "My MacBook Pro")
-6. Follow biometric prompt (Touch ID, Face ID, etc.)
+6. Follow passkey registration prompt (Touch ID, Face ID, etc.)
 7. Done!
 
 Next time you login on this device:
@@ -66,7 +66,7 @@ To revoke device access:
 **Device persistence:**
 
 Device credentials persist locally (browser storage) by default. This allows
-biometric unlock without re-registration after logout.
+passkey unlock without re-registration after logout.
 
 Your data remains encrypted - only the unlock mechanism is persisted, not your
 actual files or encryption key.
@@ -84,7 +84,7 @@ remove them:
 When disabled (default):
 
 - Device stays registered after logout
-- Biometric unlock works on next login
+- Passkey unlock works on next login
 - No need to re-register
 
 ## Security
@@ -95,12 +95,29 @@ When disabled (default):
 - Encryption key (CMK)
 - Server nonce
 
-**Enhanced security with PRF:**
+**Device-specific passkeys:**
 
-On supported browsers, device unlock uses WebAuthn PRF (Pseudo-Random Function)
-which derives the unlock key directly from your device's secure hardware (like
-Secure Enclave on Mac or TPM on Windows). This provides stronger protection than
-software-only methods.
+The passkey itself is not device-bound - your password manager can sync it
+across devices. What IS device-bound is the private key stored encrypted in your
+device's IndexedDB. Even if your password manager syncs the passkey across
+devices (like Chrome or Bitwarden), they cannot unlock Agam Space on another
+device. Here's why:
+
+During registration, your device generates a unique private key and stores it
+encrypted in IndexedDB using a key derived from your passkey. To unlock, the
+browser must have access to this encrypted private key stored locally on that
+device. On a different device, it won't have Device A's private key.
+
+**Example:** If you register Device A with a passkey, and your password manager
+syncs it to Device B, the synced passkey on Device B is useless because Device
+B's doesn't have Device A's private key. You must login with your master
+password on Device B and register it separately.
+
+**Enhanced security:**
+
+Your private key is encrypted in IndexedDB using a key derived from your
+passkey. This means even if someone gains access to your device's local storage,
+they cannot decrypt the private key without your passkey.
 
 ## Troubleshooting
 
@@ -110,23 +127,23 @@ software-only methods.
 - Check device has biometric hardware
 - Try different browser
 
-**Biometric prompt doesn't appear:**
+**Passkey prompt doesn't appear:**
 
-- Check browser supports WebAuthn
+- Check browser supports passkeys
 - Enable biometric in OS settings (Touch ID, Windows Hello)
 - Try incognito/private mode to test
 
 **Device unlock not working:**
 
 - Device may have been removed
-- Browser cache cleared (clears WebAuthn data)
+- Browser cache cleared (clears passkey data)
 - Re-register device
 
 **Works on Chrome, not Firefox:**
 
-- Some browsers have stricter WebAuthn policies
+- Some browsers have stricter passkey support
 - Update browser to latest version
-- Check browser WebAuthn settings
+- Check browser passkey settings
 
 ## Recovery
 

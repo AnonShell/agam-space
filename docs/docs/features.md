@@ -39,7 +39,7 @@ options.
     </td>
     <td width="50%">
       <img src="/img/features/device-unlock.png" alt="Device Unlock" />
-      <p align="center"><b>Biometric Device Unlock</b></p>
+      <p align="center"><b>Trusted Device Unlock</b></p>
     </td>
   </tr>
 <tr>
