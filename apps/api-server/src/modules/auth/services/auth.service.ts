@@ -99,6 +99,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException(`Account is not active. Current status: ${user.status}`);
+    }
+
     if (!user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -158,6 +162,10 @@ export class AuthService {
 
       user = await this.userService.createUser(newUserData, true);
       this.logger.log(`Auto created new user from sso : ${user.username} (${user.id})`);
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException(`Account is not active. Current status: ${user.status}`);
     }
 
     const sessionData: CreateSessionData = {
