@@ -5,7 +5,6 @@ import { decryptCmkWithRecovery } from './recovery-key';
 import { generateCmkChallenge } from '@agam-space/core';
 import { resetCmkPasswordApi } from '../api';
 
-// Accept both UserKeysSetup (required fields) and UserKeys (nullable fields from store)
 type UserKeysInput = UserKeysSetup | UserKeys;
 
 export async function validateMasterPassword(

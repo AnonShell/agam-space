@@ -1,4 +1,4 @@
-import { generateFingerprint, getSodium } from '../src';
+import { fromBase64, generateFingerprint, getSodium } from '../src';
 import { IdentityKeyManager } from '../src';
 
 describe('generateFingerprint', () => {
@@ -22,12 +22,16 @@ describe('generateFingerprint', () => {
 
   it('should generate deterministic fingerprint for same public key', async () => {
     const identitySeed = IdentityKeyManager.generateIdentitySeed();
-    const identityKeys = await IdentityKeyManager.generateIdentityKeys(identitySeed);
+    const identityKeys = await IdentityKeyManager.generateIdentityKeys(
+      fromBase64('vf4G4rVxSz0k2T+2kvm1PhJBtNUAtBthPLRuvAZQgGU')
+    );
 
     const fingerprint1 = await generateFingerprint(identityKeys.signKey.publicKey);
     const fingerprint2 = await generateFingerprint(identityKeys.signKey.publicKey);
 
     expect(fingerprint1).toBe(fingerprint2);
+
+    console.log('Fingerprint:', fingerprint1);
   });
 
   it('should generate different fingerprints for different public keys', async () => {

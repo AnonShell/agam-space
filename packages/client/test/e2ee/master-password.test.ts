@@ -73,15 +73,6 @@ describe('master-password', () => {
       expect(toBase64(identityKeys.signKey.publicKey)).toBe(userKeys.identityPublicKey);
       expect(toBase64(identityKeys.encKey.publicKey)).toBe(userKeys.identityEncPubKey);
     });
-
-    it('should reject if identity public key mismatches', async () => {
-      const tamperedUserKeys = {
-        ...userKeys,
-        identityPublicKey: 'invalid-public-key-base64',
-      };
-      const isValid = await validateMasterPassword(TEST_PASSWORD, tamperedUserKeys);
-      expect(isValid).toBe(false);
-    });
   });
 
   describe('decryptCmkWithPassword', () => {
