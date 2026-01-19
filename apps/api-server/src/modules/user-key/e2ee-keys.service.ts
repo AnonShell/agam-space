@@ -1,5 +1,6 @@
 import {
   E2eeChallenge,
+  MigrateIdentitySeedRequest,
   ResetCmkPasswordRequest,
   ResetRecoveryKeyRequest,
   UserKeys,
@@ -14,6 +15,7 @@ import { userKeys, type UserKeysEntity } from '@/database';
 import { ChallengeVerificationService } from './challenge-verification.service';
 import { userKeysHistory } from '@/database/schema/user-keys-backups';
 import { UserKeysSetupDto } from '@/modules/user-key/dto/e2ee-keys.types';
+import { fromBase64, generateFingerprint } from '@agam-space/core';
 
 @Injectable()
 export class E2eeKeysService {
@@ -33,6 +35,10 @@ export class E2eeKeysService {
       throw new ConflictException('User already has encryption setup');
     }
 
+    // Generate fingerprint from identity public key
+    const fingerprint = await this.generateAndCheckFingerprint(fromBase64(data.identityPublicKey));
+    this.logger.log(`Generated fingerprint for user ${userId}: ${fingerprint}`);
+
     const newKeys = await this.db
       .insert(userKeys)
       .values({
@@ -43,6 +49,9 @@ export class E2eeKeysService {
         encCmkWithRecovery: data.encCmkWithRecovery,
         encRecoveryWithCmk: data.encRecoveryWithCmk,
         identityPublicKey: data.identityPublicKey,
+        encIdentitySeed: data.encIdentitySeed,
+        identityEncPubKey: data.identityEncPubKey,
+        identityFingerprint: fingerprint,
       })
       .returning();
 
@@ -155,7 +164,90 @@ export class E2eeKeysService {
     return this.toDto(updatedUserKeys);
   }
 
+  async migrateIdentitySeed(userId: string, data: MigrateIdentitySeedRequest): Promise<UserKeys> {
+    this.logger.log(`Migrating identity seed for user: ${userId}`);
+
+    const dbKeys = await this.findUserKeys(userId);
+    if (!dbKeys) {
+      throw new BadRequestException('User keys not found');
+    }
+
+    if (dbKeys.encIdentitySeed) {
+      throw new ConflictException('User has already migrated to seed-based identity');
+    }
+
+    await this.challengeVerification.verifyChallengeAndSignature({
+      signature: data.challengeData.signature,
+      timestamp: data.challengeData.timestamp,
+      publicKey: dbKeys.identityPublicKey,
+      payload: {
+        encIdentitySeed: data.encIdentitySeed,
+        identityPublicKey: data.identityPublicKey,
+        identityEncPubKey: data.identityEncPubKey,
+      },
+    });
+
+    // Generate fingerprint from new identity public key
+    const fingerprint = await this.generateAndCheckFingerprint(fromBase64(data.identityPublicKey));
+    this.logger.log(`Generated fingerprint during migration for user ${userId}: ${fingerprint}`);
+
+    const allowedUpdates: Partial<UserKeysEntity> = {
+      encIdentitySeed: data.encIdentitySeed,
+      identityPublicKey: data.identityPublicKey,
+      identityEncPubKey: data.identityEncPubKey,
+      identityFingerprint: fingerprint,
+    };
+
+    const migratedKeys: UserKeysEntity = await this.db.transaction(async tx => {
+      const historyEntry = await tx
+        .insert(userKeysHistory)
+        .values({
+          userId,
+          ...allowedUpdates,
+        })
+        .returning();
+
+      if (historyEntry.length === 0) {
+        throw new BadRequestException('Failed to store migration in history');
+      }
+
+      this.logger.log(
+        `Stored identity seed migration in history for user: ${userId} with entry ID: ${historyEntry[0].id}`
+      );
+
+      // Update user keys with new identity
+      const updatedKeys = await tx
+        .update(userKeys)
+        .set(allowedUpdates)
+        .where(eq(userKeys.userId, userId))
+        .returning();
+
+      if (updatedKeys.length === 0) {
+        throw new BadRequestException('Failed to migrate identity seed');
+      }
+
+      return updatedKeys[0];
+    });
+
+    this.logger.log(`Identity seed migration completed successfully for user: ${userId}`);
+    return this.toDto(migratedKeys);
+  }
+
   async toDto(userKeys: UserKeysEntity): Promise<UserKeys> {
     return UserKeysSchema.parse(userKeys);
+  }
+
+  async generateAndCheckFingerprint(identityPublicKey: Uint8Array): Promise<string> {
+    const fingerprint = await generateFingerprint(identityPublicKey);
+    const existingFingerprint = await this.db
+      .select()
+      .from(userKeys)
+      .where(eq(userKeys.identityFingerprint, fingerprint));
+
+    if (existingFingerprint.length > 0) {
+      throw new ConflictException('Identity fingerprint collision - please try again');
+    }
+
+    return fingerprint;
   }
 }

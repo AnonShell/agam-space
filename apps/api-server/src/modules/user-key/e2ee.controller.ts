@@ -14,6 +14,7 @@ import { AuthRequired, CurrentUser } from '../auth/auth.decorator';
 import {
   ResetCmkPasswordRequestDto,
   ResetRecoveryKeyRequestDto,
+  MigrateIdentitySeedRequestDto,
   UserKeysDto,
   UserKeysSetupDto,
 } from './dto/e2ee-keys.types';
@@ -123,5 +124,33 @@ export class E2eeController {
     @Body() body: ResetRecoveryKeyRequestDto
   ): Promise<UserKeysDto> {
     return await this.userKeysService.resetRecoveryKey(user.id, body);
+  }
+
+  @Post('/migrate-identity-seed')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Migrate to seed-based identity',
+    description:
+      'Migrate from CMK-derived identity to seed-based identity. Allows CMK rotation without changing identity keys.',
+  })
+  @ApiBody({ type: MigrateIdentitySeedRequestDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Identity seed migration successful',
+    type: UserKeysDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'User already migrated',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated',
+  })
+  async migrateIdentitySeed(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: MigrateIdentitySeedRequestDto
+  ): Promise<UserKeysDto> {
+    return await this.userKeysService.migrateIdentitySeed(user.id, body);
   }
 }

@@ -1,21 +1,61 @@
 import sodium from 'libsodium-wrappers-sumo';
 import { getSodium } from './utils/sodium-loader';
+import { randomBytes } from './crypto';
 
 export interface IdentityKeyPair {
   publicKey: Uint8Array;
   privateKey: Uint8Array;
 }
 
-const IDENTITY_KEY_V1_NAME = 'agam-space-identity-key-v1';
+export interface IdentityKeys {
+  signKey: IdentityKeyPair;
+  encKey: IdentityKeyPair;
+}
 
-/** Generates Ed25519 identity keypair for signing */
+const enum IdentityKeyName {
+  SIGN_V1 = 'agam-space-identity-sign-key-v1',
+  ENC_V1 = 'agam-space-identity-enc-key-v1',
+}
+
 export const IdentityKeyManager = {
-  async generateIdentityKeyPair(cmk: Uint8Array): Promise<IdentityKeyPair> {
-    const seed = (await getSodium()).crypto_generichash(32, cmk, IDENTITY_KEY_V1_NAME);
+  generateIdentitySeed(): Uint8Array {
+    return randomBytes(32);
+  },
+
+  // Legacy method for backward compatibility - generates Ed25519 keypair from CMK
+  // Used for old accounts that haven't migrated to seed-based identity yet
+  async generateIdentityKeyPairWithCmk(cmk: Uint8Array): Promise<IdentityKeyPair> {
+    const sodium_instance = await getSodium();
+    const seed = sodium_instance.crypto_generichash(32, cmk, 'agam-space-identity-key-v1');
     const keypair = sodium.crypto_sign_seed_keypair(seed);
     return {
       publicKey: keypair.publicKey,
       privateKey: keypair.privateKey,
+    };
+  },
+
+  async generateIdentityKeys(identitySeed: Uint8Array): Promise<IdentityKeys> {
+    const sodium_instance = await getSodium();
+    const ed25519Seed = sodium_instance.crypto_generichash(
+      32,
+      identitySeed,
+      IdentityKeyName.SIGN_V1
+    );
+
+    const x25519Seed = sodium_instance.crypto_generichash(32, identitySeed, IdentityKeyName.ENC_V1);
+
+    const signKeyPair = sodium.crypto_sign_seed_keypair(ed25519Seed);
+    const encKeyPair = sodium.crypto_box_seed_keypair(x25519Seed);
+
+    return {
+      signKey: {
+        publicKey: signKeyPair.publicKey,
+        privateKey: signKeyPair.privateKey,
+      },
+      encKey: {
+        publicKey: encKeyPair.publicKey,
+        privateKey: encKeyPair.privateKey,
+      },
     };
   },
 

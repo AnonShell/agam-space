@@ -35,14 +35,32 @@ export const UserKeysSchema = z
     encCmkWithRecovery: z
       .string()
       .min(44)
-      .regex(/^[A-Za-z0-9+/]*={0,2}$/, 'Invalid base64 encrypted CMK with recovery key')
+      .regex(base64Regex, 'Invalid base64 encrypted CMK with recovery key')
       .describe('CMK encrypted with recovery key, base64 encoded'),
     encRecoveryWithCmk: z
       .string()
       .min(44)
-      .regex(/^[A-Za-z0-9+/]*={0,2}$/, 'Invalid base64 recovery key encrypted with CMK')
+      .regex(base64Regex, 'Invalid base64 recovery key encrypted with CMK')
       .describe('Recovery key encrypted with CMK, base64 encoded'),
     identityPublicKey: z.string().min(44).max(70).regex(base64Regex),
+    encIdentitySeed: z
+      .string()
+      .min(44)
+      .regex(base64Regex)
+      .describe('Identity seed encrypted with CMK, base64 encoded')
+      .nullable(),
+    identityEncPubKey: z
+      .string()
+      .min(44)
+      .max(70)
+      .regex(base64Regex)
+      .describe('X25519 public key for encryption, base64 encoded')
+      .nullable(),
+    identityFingerprint: z
+      .string()
+      .regex(/^[a-z]+-[a-z]+-[a-z]+-[a-z]+$/)
+      .describe('Human-readable 4-word EFF fingerprint')
+      .nullable(),
   })
   .strict();
 
@@ -53,7 +71,23 @@ export const UserKeysSetupSchema = UserKeysSchema.pick({
   encCmkWithRecovery: true,
   encRecoveryWithCmk: true,
   identityPublicKey: true,
-}).strip();
+  encIdentitySeed: true,
+  identityEncPubKey: true,
+})
+  .extend({
+    encIdentitySeed: z
+      .string()
+      .min(44)
+      .regex(base64Regex)
+      .describe('Identity seed encrypted with CMK, base64 encoded'),
+    identityEncPubKey: z
+      .string()
+      .min(44)
+      .max(70)
+      .regex(base64Regex)
+      .describe('X25519 public key for encryption, base64 encoded'),
+  })
+  .strip();
 
 export type KdfMetadata = z.infer<typeof KdfMetadataSchema>;
 export type UserKeys = z.infer<typeof UserKeysSchema>;

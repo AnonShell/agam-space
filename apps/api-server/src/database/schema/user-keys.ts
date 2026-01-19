@@ -26,8 +26,18 @@ export const userKeys = pgTable('user_keys', {
   encCmkWithRecovery: text('enc_cmk_with_recovery').notNull(),
   // Encrypted recovery key with CMK
   encRecoveryWithCmk: text('enc_recovery_with_cmk').notNull(),
-  // Identity public key (base64 encoded)
+
+  // Identity seed - for identity key derivation
+  encIdentitySeed: text('enc_identity_seed'),
+
+  // Identity signing public key (Ed25519)
   identityPublicKey: text('identity_public_key').notNull(),
+
+  // Identity encryption public key (X25519)
+  identityEncPubKey: text('identity_enc_pub_key'),
+
+  // Identity fingerprint - human-readable 4-word EFF fingerprint
+  identityFingerprint: text('identity_fingerprint').unique(),
 
   // Audit timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),

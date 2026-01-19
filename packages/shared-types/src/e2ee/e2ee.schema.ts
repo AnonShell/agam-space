@@ -27,3 +27,12 @@ export const ResetRecoveryKeyRequestSchema = z.object({
 });
 
 export type ResetRecoveryKeyRequest = z.infer<typeof ResetRecoveryKeyRequestSchema>;
+
+export const MigrateIdentitySeedRequestSchema = z.object({
+  challengeData: E2eeChallengeSchema,
+  encIdentitySeed: UserKeysSchema.shape.encIdentitySeed,
+  identityPublicKey: UserKeysSchema.shape.identityPublicKey,
+  identityEncPubKey: UserKeysSchema.shape.identityEncPubKey,
+});
+
+export type MigrateIdentitySeedRequest = z.infer<typeof MigrateIdentitySeedRequestSchema>;

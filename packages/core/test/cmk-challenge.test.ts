@@ -10,8 +10,12 @@ describe('cmkChallenge', () => {
   describe('generateCmkChallenge', () => {
     it('should generate a valid challenge signature for a user', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { timestamp, signature } = await generateCmkChallenge(payload, keyPair.privateKey);
+      const seed = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(seed);
+      const { timestamp, signature } = await generateCmkChallenge(
+        payload,
+        identityKeys.signKey.privateKey
+      );
       expect(timestamp).toBeGreaterThan(Date.now() - 1000);
       expect(signature).toMatch(/^[A-Za-z0-9+/]+={0,2}$/); // Base64 format
       expect(signature.length).toBeGreaterThan(44);
@@ -21,13 +25,17 @@ describe('cmkChallenge', () => {
   describe('verifyCmkChallenge', () => {
     it('should verify a valid challenge signature', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { timestamp, signature } = await generateCmkChallenge(payload, keyPair.privateKey);
+      const seed = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(seed);
+      const { timestamp, signature } = await generateCmkChallenge(
+        payload,
+        identityKeys.signKey.privateKey
+      );
 
       await verifyCmkChallenge(
         payload,
         signature,
-        Buffer.from(keyPair.publicKey).toString('base64'),
+        Buffer.from(identityKeys.signKey.publicKey).toString('base64'),
         timestamp,
         30000 // 30 seconds max age
       );
@@ -35,14 +43,15 @@ describe('cmkChallenge', () => {
 
     it('should throw an error for an invalid signature', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { timestamp } = await generateCmkChallenge(payload, keyPair.privateKey);
+      const seed = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(seed);
+      const { timestamp } = await generateCmkChallenge(payload, identityKeys.signKey.privateKey);
 
       await expect(
         verifyCmkChallenge(
           payload,
           Buffer.from(randomBytes(44)).toString('base64'),
-          Buffer.from(keyPair.publicKey).toString('base64'),
+          Buffer.from(identityKeys.signKey.publicKey).toString('base64'),
           timestamp,
           30000 // 30 seconds max age
         )
@@ -51,14 +60,18 @@ describe('cmkChallenge', () => {
 
     it('should throw an error for an expired challenge', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { timestamp, signature } = await generateCmkChallenge(payload, keyPair.privateKey);
+      const seed = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(seed);
+      const { timestamp, signature } = await generateCmkChallenge(
+        payload,
+        identityKeys.signKey.privateKey
+      );
 
       await expect(
         verifyCmkChallenge(
           payload,
           signature,
-          Buffer.from(keyPair.publicKey).toString('base64'),
+          Buffer.from(identityKeys.signKey.publicKey).toString('base64'),
           timestamp - 60000, // 1 minute ago
           30000 // 30 seconds max age
         )
@@ -67,14 +80,15 @@ describe('cmkChallenge', () => {
 
     it('should throw an error for a future challenge', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { signature } = await generateCmkChallenge(payload, keyPair.privateKey);
+      const seed = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(seed);
+      const { signature } = await generateCmkChallenge(payload, identityKeys.signKey.privateKey);
 
       await expect(
         verifyCmkChallenge(
           payload,
           signature,
-          Buffer.from(keyPair.publicKey).toString('base64'),
+          Buffer.from(identityKeys.signKey.publicKey).toString('base64'),
           Date.now() + 60000, // 1 minute in the future
           30000 // 30 seconds max age
         )
@@ -83,14 +97,18 @@ describe('cmkChallenge', () => {
 
     it('should throw an error for a mismatched userId', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { timestamp, signature } = await generateCmkChallenge(payload, keyPair.privateKey);
+      const seed = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(seed);
+      const { timestamp, signature } = await generateCmkChallenge(
+        payload,
+        identityKeys.signKey.privateKey
+      );
 
       await expect(
         verifyCmkChallenge(
           { userId: 'another-user' },
           signature,
-          Buffer.from(keyPair.publicKey).toString('base64'),
+          Buffer.from(identityKeys.signKey.publicKey).toString('base64'),
           timestamp,
           30000 // 30 seconds max age
         )
@@ -99,15 +117,20 @@ describe('cmkChallenge', () => {
 
     it('should throw an error for a mismatched public key', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair1 = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const keyPair2 = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { timestamp, signature } = await generateCmkChallenge(payload, keyPair1.privateKey);
+      const seed1 = IdentityKeyManager.generateIdentitySeed();
+      const seed2 = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys1 = await IdentityKeyManager.generateIdentityKeys(seed1);
+      const identityKeys2 = await IdentityKeyManager.generateIdentityKeys(seed2);
+      const { timestamp, signature } = await generateCmkChallenge(
+        payload,
+        identityKeys1.signKey.privateKey
+      );
 
       await expect(
         verifyCmkChallenge(
           payload,
           signature,
-          Buffer.from(keyPair2.publicKey).toString('base64'),
+          Buffer.from(identityKeys2.signKey.publicKey).toString('base64'),
           timestamp,
           30000 // 30 seconds max age
         )
@@ -116,14 +139,15 @@ describe('cmkChallenge', () => {
 
     it('should handle edge case of zero timestamp', async () => {
       const payload = { userId: 'test-user' };
-      const keyPair = await IdentityKeyManager.generateIdentityKeyPair(randomBytes(32));
-      const { signature } = await generateCmkChallenge(payload, keyPair.privateKey);
+      const seed = IdentityKeyManager.generateIdentitySeed();
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(seed);
+      const { signature } = await generateCmkChallenge(payload, identityKeys.signKey.privateKey);
 
       await expect(
         verifyCmkChallenge(
           payload,
           signature,
-          Buffer.from(keyPair.publicKey).toString('base64'),
+          Buffer.from(identityKeys.signKey.publicKey).toString('base64'),
           0, // Zero timestamp
           30000 // 30 seconds max age
         )
