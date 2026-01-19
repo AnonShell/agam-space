@@ -15,7 +15,7 @@ export default function Document() {
           <script
             defer
             src='https://tmp.agamspace.app/fetch.js'
-            data-website-id='90e2e940-4fa9-44f9-a286-2ab32b86a01c'
+            data-website-id='5d8332dc-ffc6-400f-9076-9cc5346bc7b1'
           />
         )}
         <script
