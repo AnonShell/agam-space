@@ -73,6 +73,8 @@ exploited, your keys can be compromised.
   code execution
 - **Subresource Integrity (SRI)** - Verifies all static assets haven't been
   tampered with
+- **Web Assets Integrity Verification** - Independently verify that your
+  instance serves the genuine code
 - **Input Validation & Sanitization** - Prevents malicious code injection
 - **OWASP Guidelines** - Following security best practices
 - **Dependency Management** - Regular updates and vulnerability scanning

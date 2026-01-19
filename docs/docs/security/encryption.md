@@ -87,7 +87,12 @@ flowchart TD
   end
 
   subgraph Identity["Identity & Authentication"]
-    IDK["Ed25519 Identity Key<br/>(derived from CMK)<br/>used for signing"]
+    IS["Identity Seed<br/>(random 32 bytes)<br/>encrypted with CMK"]
+    IDK_ED["Ed25519 Keypair<br/>(derived from seed)<br/>for signing operations"]
+    IDK_X["X25519 Keypair<br/>(derived from seed)<br/>for encryption/sharing"]
+
+    IS --> IDK_ED
+    IS --> IDK_X
   end
 
   subgraph Hierarchy["Key Hierarchy"]
@@ -101,8 +106,8 @@ flowchart TD
   KEK -->|wraps / unwraps| CMK
   RK -->|wraps / unwraps| CMK
 
+  CMK -->|wraps| IS
   CMK -->|wraps| FK
-  CMK -->|derives| IDK
 ```
 
 ### Master Password
@@ -167,11 +172,42 @@ CMK → XChaCha20-Poly1305 → Encrypted Recovery Key
 offline (password manager or printed). Losing both master password and recovery
 key means permanent data loss.
 
-### Identity Key
+### Identity Keys
 
-Ed25519 keypair derived from CMK for cryptographic signatures.
+User identity is represented by two derived keypairs for different purposes:
+
+**Identity Seed:**
+
+- Random 32 bytes (256 bits) generated during setup
+- Encrypted with CMK for storage
+- Never sent to server
 
 **Derivation:**
+
+From the identity seed, two independent keypairs are derived using HKDF:
+
+1. **Ed25519 Keypair (signKey)** - for signing critical operations
+   - HKDF(seed, "ed25519-key-context") → Ed25519 seed
+   - Private key: 64 bytes
+   - Public key: 32 bytes
+
+2. **X25519 Keypair (encKey)** - for encryption and future sharing features
+   - HKDF(seed, "x25519-key-context") → X25519 seed
+   - Private key: 32 bytes
+   - Public key: 32 bytes
+
+**Usage:**
+
+- Sign challenge during password reset to prove ownership
+- Sign critical operations
+- X25519 key for encrypting shared data (future)
+
+**Benefits:**
+
+- Random seed independent from CMK
+- Both keys derived deterministically from same seed
+- CMK rotation doesn't affect identity
+- Can safely rotate CMK without changing identity
 
 ```
 CMK → BLAKE3 ("agam-space-identity-key-v1") → Ed25519 seed → Keypair

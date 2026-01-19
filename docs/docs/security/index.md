@@ -33,6 +33,8 @@ But like all web apps, you must trust it to deliver correct JavaScript.
   devices, or sessionStorage
 - **[Recovery](./recovery.md)** - Recovery key as backup if you forget master
   password
+- **[Web Assets Integrity Verification](./web-assets-integrity-verification.md)** -
+  Verify that your instance serves the genuine code
 
 ## Auditing
 

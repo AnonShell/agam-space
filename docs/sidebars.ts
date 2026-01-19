@@ -58,6 +58,7 @@ const sidebars: SidebarsConfig = {
         'security/browser-security',
         'security/cmk-unlock',
         'security/recovery',
+        'security/web-assets-integrity-verification',
       ],
     },
     'architecture',

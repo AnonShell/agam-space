@@ -92,9 +92,18 @@ guarantees, see [Security](./security/).
 ```
 Master Password (user input, never sent to server)
     │
-    ▼ Argon2id KDF (runs in browser)
-Cryptographic Master Key (CMK)
-    │ (stored on server encrypted with password-derived key)
+    ├─► Argon2id KDF (runs in browser)
+    │
+    ▼ Password-Derived Key (used to encrypt CMK)
+    |
+Cryptographic Master Key (CMK - random 32 bytes)
+    │ (wrapped with password-derived key, stored on server encrypted)
+    │
+    ├─► Identity Seed (random 32 bytes, encrypted with CMK)
+    │   │
+    │   ├─► Ed25519 Keypair (signKey - for signing operations)
+    │   │
+    │   └─► X25519 Keypair (encKey - for encryption/sharing)
     │
     ├─► Folder Key (per folder, encrypted with CMK or parent key)
     │       │
