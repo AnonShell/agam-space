@@ -34,20 +34,53 @@ describe('KeyManager', () => {
   });
 
   describe('Identity key pair management', () => {
-    it('should store and retrieve identity key pair', () => {
+    it('should store and retrieve identity sign key pair', () => {
       const keyPair: IdentityKeyPair = {
         publicKey: new Uint8Array([1, 2, 3]),
         privateKey: new Uint8Array([4, 5, 6, 7, 8]),
       };
 
-      keyManager.setIdentityKeyPair(keyPair);
-      const retrieved = keyManager.getIdentityKeyPair();
+      keyManager.setIdentitySignKeyPair(keyPair);
+      const retrieved = keyManager.getIdentitySignKeyPair();
 
       expect(retrieved).toEqual(keyPair);
     });
 
-    it('should return null when identity key pair is not set', () => {
-      expect(keyManager.getIdentityKeyPair()).toBeNull();
+    it('should return null when identity sign key pair is not set', () => {
+      expect(keyManager.getIdentitySignKeyPair()).toBeNull();
+    });
+
+    it('should store and retrieve identity enc key pair', () => {
+      const keyPair: IdentityKeyPair = {
+        publicKey: new Uint8Array([10, 20, 30]),
+        privateKey: new Uint8Array([40, 50, 60]),
+      };
+
+      keyManager.setIdentityEncKeyPair(keyPair);
+      const retrieved = keyManager.getIdentityEncKeyPair();
+
+      expect(retrieved).toEqual(keyPair);
+    });
+
+    it('should return null when identity enc key pair is not set', () => {
+      expect(keyManager.getIdentityEncKeyPair()).toBeNull();
+    });
+
+    it('should store both sign and enc key pairs independently', () => {
+      const signKeyPair: IdentityKeyPair = {
+        publicKey: new Uint8Array([1, 2, 3]),
+        privateKey: new Uint8Array([4, 5, 6]),
+      };
+      const encKeyPair: IdentityKeyPair = {
+        publicKey: new Uint8Array([10, 20, 30]),
+        privateKey: new Uint8Array([40, 50, 60]),
+      };
+
+      keyManager.setIdentitySignKeyPair(signKeyPair);
+      keyManager.setIdentityEncKeyPair(encKeyPair);
+
+      expect(keyManager.getIdentitySignKeyPair()).toEqual(signKeyPair);
+      expect(keyManager.getIdentityEncKeyPair()).toEqual(encKeyPair);
     });
   });
 

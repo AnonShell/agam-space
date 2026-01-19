@@ -20,12 +20,13 @@ function redirectWithQuery(router: ReturnType<typeof useRouter>, path: string, r
   router.replace(`${path}?redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
-async function restoreCMKForAutoUnlockIfAvailable() {
+async function restoreCMKForAutoUnlockIfAvailable(identitySeed?: Uint8Array) {
   const restoredCmk = await SessionUnlockManager.restoreCMKForAutoUnlock();
-  if (restoredCmk) {
-    const identityKeyPair = await IdentityKeyManager.generateIdentityKeyPair(restoredCmk);
+  if (restoredCmk && identitySeed) {
+    const identityKeyPair = await IdentityKeyManager.generateIdentityKeys(identitySeed);
     ClientRegistry.getKeyManager().setCMK(restoredCmk);
-    ClientRegistry.getKeyManager().setIdentityKeyPair(identityKeyPair);
+    ClientRegistry.getKeyManager().setIdentitySignKeyPair(identityKeyPair.signKey);
+    ClientRegistry.getKeyManager().setIdentityEncKeyPair(identityKeyPair.encKey);
   }
 }
 

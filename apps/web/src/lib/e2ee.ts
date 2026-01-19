@@ -22,6 +22,8 @@ export async function setupCmkWithPassword(password: string) {
     encCmkWithRecovery: result.encCmkWithRecovery,
     encRecoveryWithCmk: result.encRecoveryWithCmk,
     identityPublicKey: result.identityPublicKey,
+    identityEncPubKey: result.identityEncPubKey,
+    encIdentitySeed: result.encIdentitySeed,
   };
 
   const userKeys = await setupE2eeKeysApi(payload);

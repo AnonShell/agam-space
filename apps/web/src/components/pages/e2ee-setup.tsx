@@ -20,6 +20,7 @@ export default function E2eeSetupPage() {
   const [copied, setCopied] = useState(false);
 
   const initialKeysRef = useRef(useE2eeKeys.getState().e2eeKeys);
+  const fetchErrorRef = useRef(useE2eeKeys.getState().fetchError);
 
   const copyTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -68,6 +69,29 @@ export default function E2eeSetupPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Show error UI if fetch failed
+  if (fetchErrorRef.current) {
+    return (
+      <div className='min-h-screen flex items-center justify-center px-4'>
+        <div className='w-full max-w-md space-y-6'>
+          <div className='text-center space-y-3'>
+            <div className='text-red-600 text-5xl mb-2'>⚠</div>
+            <h1 className='text-2xl font-semibold'>Unable to Load Encryption Settings</h1>
+            <p className='text-muted-foreground'>{fetchErrorRef.current}</p>
+          </div>
+          <div className='flex flex-col gap-3'>
+            <Button onClick={() => window.location.reload()} size='lg' className='w-full'>
+              Refresh Page
+            </Button>
+            <Button variant='outline' onClick={() => router.replace('/login')} className='w-full'>
+              Back to Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (initialKeysRef.current?.encCmkWithPassword) {

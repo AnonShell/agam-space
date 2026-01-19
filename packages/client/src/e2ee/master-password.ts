@@ -1,13 +1,16 @@
 import { CmkManager } from '../cmk-manager';
-import { IdentityKeyManager, toBase64 } from '@agam-space/core';
+import { IdentityKeyManager } from '@agam-space/core';
 import { ResetCmkPasswordRequest, UserKeys, UserKeysSetup } from '@agam-space/shared-types';
 import { decryptCmkWithRecovery } from './recovery-key';
 import { generateCmkChallenge } from '@agam-space/core';
 import { resetCmkPasswordApi } from '../api';
 
+// Accept both UserKeysSetup (required fields) and UserKeys (nullable fields from store)
+type UserKeysInput = UserKeysSetup | UserKeys;
+
 export async function validateMasterPassword(
   masterPassword: string,
-  userKeys: UserKeysSetup
+  userKeys: UserKeysInput
 ): Promise<boolean> {
   try {
     const cmk = await decryptCmkWithPassword(
@@ -20,12 +23,6 @@ export async function validateMasterPassword(
       return false;
     }
 
-    const identifyKeyPair = await IdentityKeyManager.generateIdentityKeyPair(cmk);
-
-    if (toBase64(identifyKeyPair.publicKey) !== userKeys.identityPublicKey) {
-      console.log('Identity public key mismatch');
-      return false;
-    }
     return true;
   } catch (e) {
     console.error('Master password validation failed:', e);
@@ -50,7 +47,7 @@ export async function decryptCmkWithPassword(
 export async function resetMasterPassword(
   recoveryKey: string,
   newPassword: string,
-  userKeys: UserKeysSetup
+  userKeys: UserKeysInput
 ): Promise<{
   success: boolean;
   userKeys?: UserKeys | null;
@@ -74,7 +71,16 @@ export async function resetMasterPassword(
       userKeys.kdfMetadata.salt
     );
 
-    const privateKey = (await IdentityKeyManager.generateIdentityKeyPair(cmk)).privateKey;
+    if (!userKeys.encIdentitySeed) {
+      return {
+        success: false,
+        error: 'User account not fully migrated. Please try again later.',
+      };
+    }
+
+    const identitySeed = await cmkManager.decryptIdentitySeedWithCmk(userKeys.encIdentitySeed, cmk);
+    const identityKeys = await IdentityKeyManager.generateIdentityKeys(identitySeed);
+    const privateKey = identityKeys.signKey.privateKey;
 
     const signaturePayload = {
       encCmkWithPassword,

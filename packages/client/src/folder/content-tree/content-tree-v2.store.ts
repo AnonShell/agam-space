@@ -182,4 +182,11 @@ export class ContentTreeV2Store {
 
     return path;
   }
+
+  clear(): void {
+    this.itemsById.clear();
+    this.childrenByFolder.clear();
+    this.views.clear();
+    this.folderCache.clear();
+  }
 }

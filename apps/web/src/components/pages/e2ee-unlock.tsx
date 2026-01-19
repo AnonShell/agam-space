@@ -10,11 +10,9 @@ import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { TrustedDevicesService } from '@/services/trusted-devices.service';
 import { SessionUnlockManager } from '@/services/session-unlock-manager';
 import { useAuth } from '@/store/auth';
+import { MigrationRunner } from '@/lib/migrations';
 import type { DeviceInfo } from '@agam-space/shared-types';
-
-function getIdentityKeyPairFromCmk(cmk: Uint8Array) {
-  return IdentityKeyManager.generateIdentityKeyPair(cmk);
-}
+import { logger } from '@/lib/logger';
 
 export default function E2eeUnlockPage() {
   const [password, setPassword] = useState('');
@@ -128,19 +126,46 @@ export default function E2eeUnlockPage() {
       return new Error('User not found');
     }
 
-    const identifyKeyPair = await getIdentityKeyPairFromCmk(cmk);
-
-    if (toBase64(identifyKeyPair.publicKey) !== e2eeKeys!.identityPublicKey) {
-      console.log('Identity public key mismatch');
-      return new Error('Identity public key mismatch');
-    }
-
     ClientRegistry.getKeyManager().setCMK(cmk);
-    ClientRegistry.getKeyManager().setIdentityKeyPair(identifyKeyPair);
+
+    // If user has new seed-based identity, decrypt and derive keys
+    if (e2eeKeys?.encIdentitySeed) {
+      const cmkManager = new CmkManager();
+      const identitySeed = await cmkManager.decryptIdentitySeedWithCmk(
+        e2eeKeys.encIdentitySeed,
+        cmk
+      );
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(identitySeed);
+
+      if (toBase64(identityKeys.signKey.publicKey) !== e2eeKeys.identityPublicKey) {
+        logger.error('[E2EE Unlock]', 'Identity public key mismatch');
+        return new Error('Identity public key mismatch');
+      }
+
+      ClientRegistry.getKeyManager().setIdentitySignKeyPair(identityKeys.signKey);
+      ClientRegistry.getKeyManager().setIdentityEncKeyPair(identityKeys.encKey);
+    } else {
+      const legacyIdentityKeyPair = await IdentityKeyManager.generateIdentityKeyPairWithCmk(cmk);
+
+      // Verify identity public key matches stored value
+      if (toBase64(legacyIdentityKeyPair.publicKey) !== e2eeKeys!.identityPublicKey) {
+        console.log('Identity public key mismatch');
+        return new Error('Identity public key mismatch');
+      }
+
+      ClientRegistry.getKeyManager().setIdentitySignKeyPair(legacyIdentityKeyPair);
+    }
 
     await SessionUnlockManager.saveCMKForAutoUnlock(cmk);
 
-    router.replace(redirectTo);
+    // Check if migrations are needed
+    const needsMigrations = await MigrationRunner.hasMigrations();
+
+    if (needsMigrations) {
+      router.replace(`/migrations?redirectTo=${encodeURIComponent(redirectTo)}`);
+    } else {
+      router.replace(redirectTo);
+    }
   };
 
   return (

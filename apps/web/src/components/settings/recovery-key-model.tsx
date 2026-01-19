@@ -24,6 +24,7 @@ export function RecoveryKeyModal({ open, onClose }: Props) {
 
   const handlePasswordSubmit = async () => {
     setLoading(true);
+    setError(null);
 
     const keys = e2eeKeys || (await fetchE2eeKeys());
     if (!keys) {
@@ -33,6 +34,13 @@ export function RecoveryKeyModal({ open, onClose }: Props) {
     }
 
     setE2eeKeys(keys);
+
+    // Validate required fields are present
+    if (!keys.encIdentitySeed || !keys.identityEncPubKey) {
+      setError('User account not fully migrated. Please try again later.');
+      setLoading(false);
+      return;
+    }
 
     const result = await retrieveRecoveryKey(password, keys);
     setLoading(false);

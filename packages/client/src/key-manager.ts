@@ -3,7 +3,8 @@ import { IdentityKeyPair } from '@agam-space/core';
 
 export class KeyManager {
   private cmk: Uint8Array | null = null;
-  private identifyKeyPair: IdentityKeyPair | null = null;
+  private identitySignKeyPair: IdentityKeyPair | null = null;
+  private identityEncKeyPair: IdentityKeyPair | null = null;
   private readonly fileKeyStore = new MemoryKeyStore<string, Uint8Array>(500, 10 * 60 * 1000);
   private readonly folderStore = new MemoryKeyStore<string, Uint8Array>(500, 10 * 60 * 1000);
 
@@ -15,12 +16,20 @@ export class KeyManager {
     return this.cmk;
   }
 
-  setIdentityKeyPair(keyPair: IdentityKeyPair) {
-    this.identifyKeyPair = keyPair;
+  setIdentitySignKeyPair(keyPair: IdentityKeyPair) {
+    this.identitySignKeyPair = keyPair;
   }
 
-  getIdentityKeyPair(): IdentityKeyPair | null {
-    return this.identifyKeyPair;
+  getIdentitySignKeyPair(): IdentityKeyPair | null {
+    return this.identitySignKeyPair;
+  }
+
+  setIdentityEncKeyPair(keyPair: IdentityKeyPair) {
+    this.identityEncKeyPair = keyPair;
+  }
+
+  getIdentityEncKeyPair(): IdentityKeyPair | null {
+    return this.identityEncKeyPair;
   }
 
   setFileKey(fileId: string, key: Uint8Array) {

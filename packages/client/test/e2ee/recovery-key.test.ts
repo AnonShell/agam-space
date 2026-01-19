@@ -21,6 +21,8 @@ describe('recovery-key', () => {
       encCmkWithRecovery: result.encCmkWithRecovery,
       encRecoveryWithCmk: result.encRecoveryWithCmk,
       identityPublicKey: result.identityPublicKey,
+      identityEncPubKey: result.identityEncPubKey,
+      encIdentitySeed: result.encIdentitySeed,
       encryptionVersion: 'v1',
       kdfMetadata: {
         version: 'v1',

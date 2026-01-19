@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/store/auth';
+import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { AccountService } from '@/services/account.service';
 import { toast } from 'sonner';
+import { Copy, Check } from 'lucide-react';
 
 export function AccountSettingsSection() {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -15,7 +17,9 @@ export function AccountSettingsSection() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedFingerprint, setCopiedFingerprint] = useState(false);
   const user = useAuth(s => s.user);
+  const e2eeKeys = useE2eeKeys(s => s.e2eeKeys);
 
   const isSSO = !!user?.oidcSubject;
 
@@ -42,6 +46,19 @@ export function AccountSettingsSection() {
       toast.error(error instanceof Error ? error.message : 'Failed to change password');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCopyFingerprint = async () => {
+    if (!e2eeKeys?.identityFingerprint) return;
+
+    try {
+      await navigator.clipboard.writeText(e2eeKeys.identityFingerprint);
+      setCopiedFingerprint(true);
+      setTimeout(() => setCopiedFingerprint(false), 2000);
+      toast.success('Fingerprint copied to clipboard');
+    } catch {
+      toast.error('Failed to copy fingerprint');
     }
   };
 
@@ -95,6 +112,41 @@ export function AccountSettingsSection() {
           </div>
         </CardContent>
       </Card>
+
+      {e2eeKeys?.identityFingerprint && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Identity Fingerprint</CardTitle>
+            <CardDescription>
+              A unique identifier that represents your account identity.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-lg p-4 border border-blue-200 dark:border-blue-800'>
+              <div className='space-y-3'>
+                <p className='text-sm text-muted-foreground'>Your identity fingerprint:</p>
+                <div className='flex items-center gap-3'>
+                  <code className='text-lg font-mono font-semibold text-blue-600 dark:text-blue-300 flex-1 break-all'>
+                    {e2eeKeys.identityFingerprint}
+                  </code>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    onClick={handleCopyFingerprint}
+                    className='flex-shrink-0'
+                  >
+                    {copiedFingerprint ? (
+                      <Check className='h-4 w-4' />
+                    ) : (
+                      <Copy className='h-4 w-4' />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {!isSSO && (
         <Card>

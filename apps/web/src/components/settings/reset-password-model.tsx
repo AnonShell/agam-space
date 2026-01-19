@@ -60,7 +60,16 @@ export function ResetPasswordModal({ open, onClose }: Props) {
       return setError('Password must be at least 8 characters');
     }
 
-    const result = await resetMasterPassword(recoveryKey, newPassword, e2eeKeys!);
+    if (!e2eeKeys) {
+      return setError('User keys not available');
+    }
+
+    // Validate required fields for migration
+    if (!e2eeKeys.encIdentitySeed || !e2eeKeys.identityEncPubKey) {
+      return setError('User account not fully migrated. Please try again later.');
+    }
+
+    const result = await resetMasterPassword(recoveryKey, newPassword, e2eeKeys);
 
     if (!result.success) {
       return setError(result.error || 'Failed to reset master password');

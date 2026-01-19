@@ -21,6 +21,8 @@ describe('master-password', () => {
       encCmkWithRecovery: result.encCmkWithRecovery,
       encRecoveryWithCmk: result.encRecoveryWithCmk,
       identityPublicKey: result.identityPublicKey,
+      identityEncPubKey: result.identityEncPubKey,
+      encIdentitySeed: result.encIdentitySeed,
       encryptionVersion: 'v1',
       kdfMetadata: {
         version: 'v1',
@@ -55,13 +57,21 @@ describe('master-password', () => {
       const isValid = await validateMasterPassword(TEST_PASSWORD, userKeys);
       expect(isValid).toBe(true);
 
+      // Verify we can decrypt the identity seed and derive the correct keys
+      const cmkManager = new CmkManager();
       const cmk = await decryptCmkWithPassword(
         userKeys.encCmkWithPassword,
         TEST_PASSWORD,
         userKeys.kdfMetadata.salt
       );
-      const identityKeyPair = await IdentityKeyManager.generateIdentityKeyPair(cmk!);
-      expect(toBase64(identityKeyPair.publicKey)).toBe(userKeys.identityPublicKey);
+      const identitySeed = await cmkManager.decryptIdentitySeedWithCmk(
+        userKeys.encIdentitySeed,
+        cmk!
+      );
+      const identityKeys = await IdentityKeyManager.generateIdentityKeys(identitySeed);
+
+      expect(toBase64(identityKeys.signKey.publicKey)).toBe(userKeys.identityPublicKey);
+      expect(toBase64(identityKeys.encKey.publicKey)).toBe(userKeys.identityEncPubKey);
     });
 
     it('should reject if identity public key mismatches', async () => {
@@ -131,6 +141,8 @@ describe('master-password', () => {
         encCmkWithRecovery: result.encCmkWithRecovery,
         encRecoveryWithCmk: result.encRecoveryWithCmk,
         identityPublicKey: result.identityPublicKey,
+        identityEncPubKey: result.identityEncPubKey,
+        encIdentitySeed: result.encIdentitySeed,
         encryptionVersion: 'v1',
         kdfMetadata: {
           version: 'v1',

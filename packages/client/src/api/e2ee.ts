@@ -3,6 +3,7 @@ import {
   UserKeys,
   UserKeysSchema,
   UserKeysSetup,
+  MigrateIdentitySeedRequest,
 } from '@agam-space/shared-types';
 import { ApiClientError } from './api-client';
 import { ClientRegistry } from '../init/client.registry';
@@ -32,4 +33,18 @@ export async function resetCmkPasswordApi(request: ResetCmkPasswordRequest): Pro
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
   });
+}
+
+export async function migrateIdentitySeedApi(
+  request: MigrateIdentitySeedRequest
+): Promise<UserKeys> {
+  return ClientRegistry.getApiClient().fetchAndParse(
+    `/v1/e2ee/keys/migrate-identity-seed`,
+    UserKeysSchema,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    }
+  );
 }

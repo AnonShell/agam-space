@@ -13,6 +13,10 @@ export interface AgamDB {
     key: string;
     value: Uint8Array | string | number | object;
   };
+  [STORE_NAMES.MIGRATIONS]: {
+    key: string;
+    value: { name: string; completedAt: number };
+  };
 }
 
 let dbPromise: Promise<IDBPDatabase<AgamDB>> | null = null;

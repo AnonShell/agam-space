@@ -165,4 +165,8 @@ export class ContentTreeManager {
 
     return this.store.getAncestorPath(folderId);
   }
+
+  clear(): void {
+    this.store.clear();
+  }
 }

@@ -16,10 +16,12 @@ export interface BootstrapResult {
   encCmkWithPassword: string;
   encCmkWithRecovery: string;
   encRecoveryWithCmk: string;
-  identityPublicKey: string; // base64
+  identityPublicKey: string;
+  identityEncPubKey: string;
+  encIdentitySeed: string;
   kdfOptions: {
     type: string;
-    salt: string; // Base64 encoded salt used for key derivation
+    salt: string;
     params: Argon2idOptions;
   };
 }
@@ -48,14 +50,16 @@ export class CmkManager {
 
     const recoveryKey = randomBytes(32);
     const masterKey = randomBytes(32);
+    const identitySeed = IdentityKeyManager.generateIdentitySeed();
+    const identityKeys = await IdentityKeyManager.generateIdentityKeys(identitySeed);
 
-    const identityKeypair = await IdentityKeyManager.generateIdentityKeyPair(masterKey);
-
-    const [encCmkWithPassword, encCmkWithRecovery, encRecoveryWithCmk] = await Promise.all([
-      this.encryptCmkWithPassword(masterKey, password, salt),
-      this.encryptCmkWithRecovery(masterKey, recoveryKey),
-      this.encryptRecoveryWithCmk(recoveryKey, masterKey),
-    ]);
+    const [encCmkWithPassword, encCmkWithRecovery, encRecoveryWithCmk, encIdentitySeed] =
+      await Promise.all([
+        this.encryptCmkWithPassword(masterKey, password, salt),
+        this.encryptCmkWithRecovery(masterKey, recoveryKey),
+        this.encryptRecoveryWithCmk(recoveryKey, masterKey),
+        this.encryptIdentitySeedWithCmk(identitySeed, masterKey),
+      ]);
 
     return {
       masterKey,
@@ -63,7 +67,9 @@ export class CmkManager {
       encCmkWithPassword,
       encCmkWithRecovery,
       encRecoveryWithCmk,
-      identityPublicKey: toBase64(identityKeypair.publicKey),
+      identityPublicKey: toBase64(identityKeys.signKey.publicKey),
+      identityEncPubKey: toBase64(identityKeys.encKey.publicKey),
+      encIdentitySeed,
       kdfOptions,
     };
   }
@@ -87,6 +93,11 @@ export class CmkManager {
 
   async decryptRecoveryWithCmk(encRecovery: string, cmk: Uint8Array): Promise<Uint8Array> {
     const envelope = EncryptedEnvelopeCodec.deserialize(encRecovery);
+    return this.encryptionStrategy.decrypt(envelope, cmk);
+  }
+
+  async decryptIdentitySeedWithCmk(encIdentitySeed: string, cmk: Uint8Array): Promise<Uint8Array> {
+    const envelope = EncryptedEnvelopeCodec.deserialize(encIdentitySeed);
     return this.encryptionStrategy.decrypt(envelope, cmk);
   }
 
@@ -127,6 +138,11 @@ export class CmkManager {
       typeof recoveryKey === 'string' ? decodeBase58(recoveryKey) : recoveryKey;
     const envelope = await this.encryptionStrategy.encrypt(cmk, recoveryKeyBuffer);
     return EncryptedEnvelopeCodec.serialize(envelope);
+  }
+
+  async encryptIdentitySeedWithCmk(identitySeed: Uint8Array, cmk: Uint8Array): Promise<string> {
+    const encSeedEnvelope = await this.encryptionStrategy.encrypt(identitySeed, cmk);
+    return EncryptedEnvelopeCodec.serialize(encSeedEnvelope);
   }
 
   getBufferFromBase64(data: string | Uint8Array): Buffer {

@@ -1,8 +1,14 @@
 import { useAuth } from '@/store/auth';
 import { usePreferencesStore } from '@/store/preferences.store';
+import { useBootstrapStore } from '@/store/bootstrap.store';
+import { useExplorerRefreshStore } from '@/store/explorer-refresh-store';
+import { useTrustedDevicesStore } from '@/store/trusted-devices.store';
+import { useDeviceCredentialsStore } from '@/store/device-credentials.store';
+import { useUserQuotaStore } from '@/store/user-quota.store';
 import {
   ApiClientError,
   ClientRegistry,
+  ContentTreeManager,
   fetchCurrentUserApi,
   fetchE2eeKeys,
   loginWithPassword,
@@ -28,6 +34,10 @@ export const SessionService = {
 
       if (ApiClientError.isApiClientError(error) && (error as ApiClientError).isUnauthorized()) {
         await SessionService.logout();
+      } else {
+        useE2eeKeys
+          .getState()
+          .setFetchError((error as Error).message || 'Failed to fetch encryption keys');
       }
     }
   },
@@ -67,8 +77,8 @@ export const SessionService = {
 export async function resetAllState() {
   useAuth.getState().clear();
   useE2eeKeys.getState().clear();
-
   ClientRegistry.getKeyManager().clearAll();
 
   SessionUnlockManager.clearAutoUnlockData().catch(() => {});
+  ClientRegistry.getContentTreeManager().clear();
 }

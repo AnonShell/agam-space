@@ -18,12 +18,17 @@ describe('CmkManager', () => {
     expect(typeof result.recoveryKey).toBe('string'); // base58 encoded
     expect(result.recoveryKey.length).toBeGreaterThan(0);
 
-    expect(typeof result.identityPublicKey).toBe('string'); // base64 encoded
+    expect(typeof result.identityPublicKey).toBe('string'); // base64 encoded (Ed25519)
     expect(result.identityPublicKey.length).toBeGreaterThan(0);
+
+    expect(typeof result.identityEncPubKey).toBe('string'); // base64 encoded (X25519)
+    expect(result.identityEncPubKey.length).toBeGreaterThan(0);
 
     expect(typeof result.encCmkWithPassword).toBe('string');
     expect(typeof result.encCmkWithRecovery).toBe('string');
     expect(typeof result.encRecoveryWithCmk).toBe('string');
+    expect(typeof result.encIdentitySeed).toBe('string');
+
     expect(result.kdfOptions.salt).toMatch(/^[A-Za-z0-9+/=]+$/); // Base64 encoded salt
     expect(result.kdfOptions.params).toMatchObject({
       opslimit: 3,
@@ -34,7 +39,10 @@ describe('CmkManager', () => {
     verifyEncryptedContent(result.encCmkWithPassword);
     verifyEncryptedContent(result.encCmkWithRecovery);
     verifyEncryptedContent(result.encRecoveryWithCmk);
-    // verifyEncryptedContent(result.encIdentityPrivateKey);
+    verifyEncryptedContent(result.encIdentitySeed);
+
+    // Verify identity keys are different
+    expect(result.identityPublicKey).not.toEqual(result.identityEncPubKey);
   });
 
   // it('should throw error for invalid envelope format', async () => {
