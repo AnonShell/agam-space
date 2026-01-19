@@ -5,9 +5,13 @@ title: Web Assets Integrity Verification
 
 # Web Assets Integrity Verification
 
-:::info **Want to verify now?** Open
+:::info
+
+**Want to verify now?** Open
 [web-verifier.agamspace.app](https://web-verifier.agamspace.app) and check your
-instance. :::
+instance.
+
+:::
 
 ## Why verify?
 
