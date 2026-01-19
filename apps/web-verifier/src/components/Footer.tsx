@@ -22,7 +22,7 @@ export default function Footer() {
               GitHub
             </a>
             <a
-              href='https://github.com/agam-space/agam-space/blob/main/docs/security/integrity-verification.md'
+              href='https://docs.agamspace.app/security/web-assets-integrity-verification'
               target='_blank'
               rel='noopener noreferrer'
               className='flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary-light transition-colors rounded-lg hover:bg-white/40 dark:hover:bg-slate-700/40'
