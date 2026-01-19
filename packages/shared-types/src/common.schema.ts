@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 export const BASE64_REGEX = /^[A-Za-z0-9+/-_]*={0,2}$/;
 
-// generate id schema for ULID
 export const UlidSchema = z
   .string()
   .length(26)
