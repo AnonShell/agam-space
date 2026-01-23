@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useIsLoggedIn, useAuth } from '@/store/auth';
+import { useAuth, useIsLoggedIn } from '@/store/auth';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { resetAllState } from '@/services/session.service';
 import { useBootstrapStore } from '@/store/bootstrap.store';
@@ -26,9 +26,7 @@ async function restoreCMKForAutoUnlockIfAvailable(e2eeKeys: any) {
 
   ClientRegistry.getKeyManager().setCMK(restoredCmk);
 
-  // Restore identity keys
   if (e2eeKeys?.encIdentitySeed) {
-    // New seed-based identity
     const cmkManager = new CmkManager();
     const identitySeed = await cmkManager.decryptIdentitySeedWithCmk(
       e2eeKeys.encIdentitySeed,
@@ -38,7 +36,6 @@ async function restoreCMKForAutoUnlockIfAvailable(e2eeKeys: any) {
     ClientRegistry.getKeyManager().setIdentitySignKeyPair(identityKeyPair.signKey);
     ClientRegistry.getKeyManager().setIdentityEncKeyPair(identityKeyPair.encKey);
   } else if (e2eeKeys) {
-    // Legacy CMK-based identity
     const legacyIdentityKeyPair =
       await IdentityKeyManager.generateIdentityKeyPairWithCmk(restoredCmk);
     ClientRegistry.getKeyManager().setIdentitySignKeyPair(legacyIdentityKeyPair);
