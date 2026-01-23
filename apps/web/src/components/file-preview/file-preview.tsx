@@ -6,6 +6,7 @@ import {
   FileEntry,
   getPreviewCache,
   setPreviewCache,
+  MAX_PREVIEW_SIZE_BYTES,
 } from '@agam-space/client';
 import { FilePreviewCoordinator } from '@/components/file-preview/file-preview-coordinator';
 import { PreviewLoading } from '@/components/file-preview/preview-loading';
@@ -15,8 +16,6 @@ type Props = {
   fileEntry: FileEntry;
   onClose?: () => void;
 };
-
-const MAX_PREVIEW_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 
 export function FilePreview({ fileEntry, onClose }: Props) {
   const [fileData, setFileData] = useState<Uint8Array | null>(null);

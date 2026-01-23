@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { bootstrapApp } from '@/lib/init/bootstrap-app';
 
-export function useAppBootstrap() {
+export function useAppBootstrap(isPublicRoute: boolean = false) {
   const [appBootstrapped, setAppBootstrapped] = useState(false);
 
   useEffect(() => {
-    bootstrapApp().finally(() => setAppBootstrapped(true));
-  }, []);
+    bootstrapApp(isPublicRoute).finally(() => setAppBootstrapped(true));
+  }, [isPublicRoute]);
 
   return appBootstrapped;
 }

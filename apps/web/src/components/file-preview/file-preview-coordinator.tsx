@@ -1,11 +1,17 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { FileEntry } from '@agam-space/client';
 import { detectLanguage, isImage, isPdf, isText } from '@/utils/mime-helper';
 import { ImagePreview } from '@/components/file-preview/image-preview';
 import { UnsupportedPreview } from '@/components/file-preview/unsupported-file-preview';
-import { PdfViewer } from '@/components/file-preview/pdf-viewer';
 import { TextFileEditor } from './text-editor';
+
+// Dynamic import to avoid build-time issues with react-pdf and DOMMatrix
+const PdfViewer = dynamic(() => import('./pdf-viewer').then(mod => ({ default: mod.PdfViewer })), {
+  ssr: false,
+  loading: () => <div className='flex items-center justify-center h-full'>Loading PDF...</div>,
+});
 
 type Props = {
   fileEntry: FileEntry;

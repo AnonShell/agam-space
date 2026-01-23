@@ -15,6 +15,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { SessionService } from '@/services/session.service';
 import Link from 'next/link';
+import { matchPrefix, SIDEBAR_ROUTES } from '@/pages/_app';
 
 interface Props {
   children: ReactNode;
@@ -120,9 +121,7 @@ export function AppShell({ children, showSidebar }: Props) {
       <div className='flex flex-1'>
         {showSidebar && (
           <aside className='hidden sm:block w-60 border-r p-4 bg-muted/10 overflow-y-auto max-h-[calc(100vh-3.5rem)]'>
-            {(pathname.startsWith('/explorer') || pathname.startsWith('/trash')) && (
-              <ExplorerSidebarBase />
-            )}
+            {matchPrefix(pathname, SIDEBAR_ROUTES) && <ExplorerSidebarBase />}
           </aside>
         )}
         <main className='flex-1 overflow-y-auto'>{children}</main>

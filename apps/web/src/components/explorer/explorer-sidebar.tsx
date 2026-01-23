@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Folder, Trash2 } from 'lucide-react';
+import { Folder, Share2, Trash2 } from 'lucide-react';
 import { StorageQuotaCard } from '@/components/explorer/storage-quota';
 import { ServerInfo } from '@/components/explorer/server-info';
 
@@ -41,6 +41,20 @@ export function ExplorerSidebarBase({ onNavigate }: ExplorerSidebarBaseProps) {
         >
           <Trash2 className='w-4 h-4' />
           <span>Trash</span>
+        </Link>
+
+        <Link
+          href='/public-shares'
+          onClick={onNavigate}
+          className={cn(
+            'flex items-center gap-2 px-3 py-2 rounded-md transition-colors',
+            pathname.startsWith('/public-shares')
+              ? 'bg-muted font-medium'
+              : 'hover:bg-muted text-muted-foreground'
+          )}
+        >
+          <Share2 className='w-4 h-4' />
+          <span>Public Shares</span>
         </Link>
       </nav>
       <div className='mt-auto space-y-3'>

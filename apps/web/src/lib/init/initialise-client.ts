@@ -17,9 +17,11 @@ import { toast } from 'sonner';
 
 let initialized = false;
 
-export async function initializeClient() {
+export async function initializeClient(isPublic: boolean = false) {
   if (initialized) return;
   initialized = true;
+
+  console.log(`[init] Initializing client (public: ${isPublic})...`);
 
   if (!ClientRegistry.hasApiClient()) {
     ClientRegistry.setApiClient(new ApiClient());
@@ -29,46 +31,50 @@ export async function initializeClient() {
     ClientRegistry.setKeyManager(new KeyManager());
   }
 
-  if (!ClientRegistry.hasContentTreeManager()) {
-    ClientRegistry.setContentTreeManager(new ContentTreeManager());
-  }
-
   if (!ClientRegistry.hasDownloadManager()) {
     ClientRegistry.setDownloadManager(
       new DownloadManager({ concurrency: 2 }, downloadManagerCallbacks)
     );
   }
 
-  let serverConfig;
-  try {
-    serverConfig = await ServerConfigService.getConfig();
-  } catch (error) {
-    console.error('❌ Error fetching server config:', error);
+  // authenticated-only services
+  if (!isPublic) {
+    if (!ClientRegistry.hasContentTreeManager()) {
+      ClientRegistry.setContentTreeManager(new ContentTreeManager());
+    }
+
+    let serverConfig;
+    try {
+      serverConfig = await ServerConfigService.getConfig();
+    } catch (error) {
+      console.error('❌ Error fetching server config:', error);
+    }
+
+    if (!ClientRegistry.hasUploadManager()) {
+      console.log('📤 Initializing UploadManager with serverConfig:', {
+        chunkSize: serverConfig?.upload?.chunkSize,
+        maxFileSize: serverConfig?.upload?.maxFileSize,
+        maxConcurrency: serverConfig?.upload?.maxConcurrency,
+        fullConfig: serverConfig,
+      });
+
+      ClientRegistry.setUploadManager(
+        new UploadManager(
+          {
+            concurrency: serverConfig?.upload?.maxConcurrency || 2,
+            chunkSize: serverConfig?.upload?.chunkSize || 8_000_000, // 8 MB (decimal)
+            maxFileSize: serverConfig?.upload?.maxFileSize || 1_000_000_000,
+          },
+          uploadManagerCallbacks
+        )
+      );
+    }
+
+    getClientRegistry();
+    initCrossTabCommunication();
   }
 
-  if (!ClientRegistry.hasUploadManager()) {
-    console.log('📤 Initializing UploadManager with serverConfig:', {
-      chunkSize: serverConfig?.upload?.chunkSize,
-      maxFileSize: serverConfig?.upload?.maxFileSize,
-      maxConcurrency: serverConfig?.upload?.maxConcurrency,
-      fullConfig: serverConfig,
-    });
-
-    ClientRegistry.setUploadManager(
-      new UploadManager(
-        {
-          concurrency: serverConfig?.upload?.maxConcurrency || 2,
-          chunkSize: serverConfig?.upload?.chunkSize || 8_000_000, // 8 MB (decimal)
-          maxFileSize: serverConfig?.upload?.maxFileSize || 1_000_000_000,
-        },
-        uploadManagerCallbacks
-      )
-    );
-  }
-
-  getClientRegistry();
-
-  initCrossTabCommunication();
+  console.log(`[init] Client registry ready (public: ${isPublic})`);
 }
 
 const uploadManagerCallbacks: UploadManagerCallbacks = {

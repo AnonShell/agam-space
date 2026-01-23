@@ -10,6 +10,7 @@ import { usePreferencesStore } from '@/store/preferences.store';
 import { SessionUnlockManager } from '@/services/session-unlock-manager';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { PublicSharesSection } from '@/components/pages/settings/public-shares';
 
 const sections = ['Account', 'Encryption', 'Trusted Devices'];
 
@@ -45,7 +46,6 @@ export default function SettingsPage({ initialTab }: SettingsPageProps) {
     }
   };
 
-  // Initialize active section based on initialTab prop
   useEffect(() => {
     if (initialTab && urlToTabMap[initialTab as keyof typeof urlToTabMap]) {
       setActiveSection(urlToTabMap[initialTab as keyof typeof urlToTabMap]);
@@ -55,7 +55,11 @@ export default function SettingsPage({ initialTab }: SettingsPageProps) {
   const handleSectionChange = (section: string) => {
     setActiveSection(section);
     const urlTab = tabToUrlMap[section as keyof typeof tabToUrlMap];
-    router.push(`/settings/${urlTab}`, undefined, { shallow: true });
+    if (urlTab) {
+      router.push(`/settings/${urlTab}`, undefined, { shallow: true }).catch(() => {
+        // Ignore routing errors - state is already updated
+      });
+    }
   };
 
   //TODO need sidebar menu for small screens

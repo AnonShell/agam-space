@@ -3,9 +3,7 @@ import { FileEntry } from '../content-tree.store';
 import { decryptFileChunks, getDecryptedFileKeyById } from './file-decrypt';
 import { writeFileStreamToBlob } from './write-file-to-blob';
 import { writeFileStreamToFs } from './download/write-file-to-fs';
-
-const SIZE_THRESHOLD = 50 * 1024 * 1024; // 50MB
-const MAX_BLOB_FALLBACK = 200 * 1024 * 1024;
+import { SIZE_THRESHOLD } from '../utils/constants';
 
 export async function downloadFile(
   fileEntry: FileEntry,

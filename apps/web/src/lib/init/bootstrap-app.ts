@@ -5,16 +5,22 @@ import { applyThemeFromLocalStorage } from '@/lib/theme';
 
 let bootstrapped = false;
 
-export async function bootstrapApp() {
+export async function bootstrapApp(isPublic: boolean = false) {
   if (bootstrapped) return;
   bootstrapped = true;
 
-  console.log('[init] Bootstrapping app...');
+  console.log(`[init] Bootstrapping ${isPublic ? 'public' : 'authenticated'} app...`);
 
-  await initializeClient();
+  await initializeClient(isPublic);
 
   applyThemeFromLocalStorage();
 
+  if (!isPublic) {
+    await bootstrapAuthenticatedApp();
+  }
+}
+
+async function bootstrapAuthenticatedApp() {
   await ServerConfigService.getConfig(false);
 
   if (document.cookie.includes('agam_is_auth=true')) {

@@ -10,3 +10,4 @@ export * from './user-quota';
 export * from './trusted-devices';
 export * from './session';
 export * from './admin';
+export * from './public-share-api';

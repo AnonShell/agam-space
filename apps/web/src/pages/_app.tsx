@@ -22,20 +22,22 @@ const geistMono = Geist_Mono({
 });
 
 const PUBLIC_ROUTES = ['/login', '/signup'];
-const SIDEBAR_ROUTES = ['/explorer', '/trash'];
-const ROUTES_REQUIRING_UNLOCK = ['/explorer', '/trash'];
+const PUBLIC_ROUTE_PREFIXES = ['/public/share'];
+export const SIDEBAR_ROUTES = ['/explorer', '/trash', '/public-shares'];
+const ROUTES_REQUIRING_UNLOCK = ['/explorer', '/trash', '/public-shares'];
 
-function matchPrefix(pathname: string, patterns: string[]) {
+export function matchPrefix(pathname: string, patterns: string[]) {
   return patterns.some(p => pathname.startsWith(p));
 }
 
 export default function App({ Component, pageProps }: AppProps) {
   const { pathname } = useRouter();
 
-  // Initialize app bootstrap
-  const appBootstrapped = useAppBootstrap();
+  // Check if route is public BEFORE initializing anything
+  const isPublic = PUBLIC_ROUTES.includes(pathname) || matchPrefix(pathname, PUBLIC_ROUTE_PREFIXES);
 
-  const isPublic = PUBLIC_ROUTES.includes(pathname);
+  const appBootstrapped = useAppBootstrap(isPublic);
+
   const showAppShell = !isPublic;
   const showSidebar = matchPrefix(pathname, SIDEBAR_ROUTES);
   const needsUnlock = matchPrefix(pathname, ROUTES_REQUIRING_UNLOCK);

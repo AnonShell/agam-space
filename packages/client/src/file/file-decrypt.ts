@@ -7,6 +7,15 @@ import { EncryptionRegistry } from '../encryption/encryption-strategy';
 import { fetchFileByIdApi } from '../api';
 import { ClientRegistry } from '../init/client.registry';
 
+export async function getFileDecrypted(fileId: string) {
+  const file = await fetchFileByIdApi(fileId);
+  if (!file) {
+    throw new Error(`File with ID ${fileId} not found`);
+  }
+
+  return decryptFile(file);
+}
+
 export async function decryptFile(file: File): Promise<FileEntry> {
   const fileKey = await getDecryptedFileKey(file);
   const metadata = await decryptFileMetadata(file.metadataEncrypted, fileKey);

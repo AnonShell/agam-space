@@ -102,7 +102,7 @@ export async function fetchFolderContents(folderId: string): Promise<{
 
 export async function decryptFolder(folder: Folder): Promise<FolderEntry> {
   const folderKey = await getDecryptedFolderKey(folder.id);
-  const metadata = await decryptMetadata(folder.metadataEncrypted, folderKey);
+  const metadata = await decryptFolderMetadata(folder.metadataEncrypted, folderKey);
   return {
     id: folder.id,
     name: metadata.name,
@@ -138,7 +138,7 @@ export async function getFolderInfo(folderId: string): Promise<FolderEntry> {
   }
 
   const folderKey = await getDecryptedFolderKey(folder.id);
-  const metadata = await decryptMetadata(folder.metadataEncrypted, folderKey);
+  const metadata = await decryptFolderMetadata(folder.metadataEncrypted, folderKey);
 
   return {
     id: folder.id,
@@ -198,35 +198,11 @@ async function decryptFolderKey(
   return EncryptionRegistry.get().decrypt(envelope, fkEncryptionKey);
 }
 
-async function decryptMetadata(
+export async function decryptFolderMetadata(
   metadataEncrypted: string,
   folderKey: Uint8Array
 ): Promise<FolderMetadata> {
   const envelope = EncryptedEnvelopeCodec.deserialize(metadataEncrypted);
   const metadataBytes = await EncryptionRegistry.get().decrypt(envelope, folderKey);
   return JSON.parse(fromUtf8Bytes(metadataBytes)) as FolderMetadata;
-}
-
-export async function moveContentsToFolder(
-  entries: ContentEntry[],
-  targetFolderId: string
-): Promise<void> {
-  //
-  //   const sourceNode = await loadFolderContentNode(sourceFolderId);
-  //   const targetNode = await loadFolderContentNode(targetFolderId);
-  //
-  //   // Move folders
-  //   for (const folder of sourceNode.node.folders) {
-  //     folder.parentId = targetFolderId;
-  //     contentTreeStore.updateFolder(folder.id, folder);
-  //   }
-  //
-  //   // Move files
-  //   for (const file of sourceNode.node.files) {
-  //     file.parentFolderId = targetFolderId;
-  //     contentTreeStore.updateFile(file.id, file);
-  //   }
-  //
-  //   // Clear the source node
-  //   contentTreeStore.clearNode(sourceFolderId);
 }

@@ -13,9 +13,12 @@ export * from './content-tree.store';
 export * from './folder/folder-operations';
 export * from './folder/content-tree/content-tree.manager';
 export * from './folder/content-tree/content-tree-v2.store';
+export * from './folder/content-tree/public-share-content-manager';
 
 export * from './api';
 export * from './key-manager';
+export * from './public-share-service';
+export * from './public-share-crypto';
 
 export * from './upload/abstract-file-reader';
 export * from './upload/types';
@@ -23,6 +26,10 @@ export * from './upload/upload-manager';
 export * from './upload/upload-worker-pool';
 
 export * from './e2ee';
+
+// Utils
+export * from './utils/file-helpers';
+export * from './utils/constants';
 
 // client registry
 export * from './init/client.registry';

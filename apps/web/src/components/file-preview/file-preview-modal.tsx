@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ClientRegistry, FileEntry } from '@agam-space/client';
+import { ClientRegistry, FileEntry, formatFileSize } from '@agam-space/client';
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { ArrowDownToLine, Info, X } from 'lucide-react';
@@ -17,7 +17,6 @@ type Props = {
 export function FilePreviewModal({ file, onClose }: Props) {
   const [showFileInfo, setShowFileInfo] = useState(false);
 
-  // Reset info panel when preview is closed
   useEffect(() => {
     if (!file) {
       setShowFileInfo(false);
@@ -120,7 +119,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
                   <div>
                     <label className='text-xs text-white/60 uppercase tracking-wide'>Size</label>
                     <p className='text-sm text-white/90 mt-1'>
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                      {formatFileSize(file.size)}
                       <span className='text-white/60 text-xs ml-2'>
                         ({file.size.toLocaleString()} bytes)
                       </span>

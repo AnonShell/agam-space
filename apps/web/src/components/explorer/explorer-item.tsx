@@ -21,6 +21,7 @@ import {
   Trash2,
   RotateCcw,
   X,
+  Share2,
 } from 'lucide-react';
 import { ClientRegistry, ContentEntry, FileEntry } from '@agam-space/client';
 import { getFileIconV2 } from '@/lib/file-mime-icon';
@@ -29,6 +30,7 @@ import { toast } from 'sonner';
 import { useDownloadStore } from '@/store/download-store';
 import { useState } from 'react';
 import { RenameDialog } from '@/components/explorer/rename-dialog';
+import { CreatePublicShareDialog } from '@/components/explorer/create-public-share-dialog';
 
 type ExplorerItemProps = {
   entry: ContentEntry;
@@ -75,6 +77,7 @@ export function ExplorerItem({
   const contextMenuTriggerRef = useRef<HTMLDivElement>(null);
 
   const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   const triggerContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -242,6 +245,10 @@ export function ExplorerItem({
                 <Pencil className='w-4 h-4 mr-2' />
                 Rename
               </ContextMenuItem>
+              <ContextMenuItem onClick={() => setShowShareDialog(true)}>
+                <Share2 className='w-4 h-4 mr-2' />
+                Public Share
+              </ContextMenuItem>
               <ContextMenuItem onClick={() => onMove(entry)}>
                 <FolderInput className='w-4 h-4 mr-2' />
                 Move
@@ -271,6 +278,13 @@ export function ExplorerItem({
         onClose={() => setShowRenameDialog(false)}
         onRename={onRename}
         checkNameExists={checkIfNameExists ?? (() => true)}
+      />
+      <CreatePublicShareDialog
+        open={showShareDialog}
+        onClose={() => setShowShareDialog(false)}
+        itemId={entry.id}
+        itemName={entry.name}
+        itemType={entry.isFolder ? 'folder' : 'file'}
       />
     </>
   );
