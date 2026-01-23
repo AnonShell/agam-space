@@ -4,7 +4,7 @@ import { useIsLoggedIn, useAuth } from '@/store/auth';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { resetAllState } from '@/services/session.service';
 import { useBootstrapStore } from '@/store/bootstrap.store';
-import { ClientRegistry } from '@agam-space/client';
+import { ClientRegistry, CmkManager } from '@agam-space/client';
 import { SessionUnlockManager } from '@/services/session-unlock-manager';
 import { IdentityKeyManager } from '@agam-space/core';
 
@@ -20,13 +20,28 @@ function redirectWithQuery(router: ReturnType<typeof useRouter>, path: string, r
   router.replace(`${path}?redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
-async function restoreCMKForAutoUnlockIfAvailable(identitySeed?: Uint8Array) {
+async function restoreCMKForAutoUnlockIfAvailable(e2eeKeys: any) {
   const restoredCmk = await SessionUnlockManager.restoreCMKForAutoUnlock();
-  if (restoredCmk && identitySeed) {
+  if (!restoredCmk) return;
+
+  ClientRegistry.getKeyManager().setCMK(restoredCmk);
+
+  // Restore identity keys
+  if (e2eeKeys?.encIdentitySeed) {
+    // New seed-based identity
+    const cmkManager = new CmkManager();
+    const identitySeed = await cmkManager.decryptIdentitySeedWithCmk(
+      e2eeKeys.encIdentitySeed,
+      restoredCmk
+    );
     const identityKeyPair = await IdentityKeyManager.generateIdentityKeys(identitySeed);
-    ClientRegistry.getKeyManager().setCMK(restoredCmk);
     ClientRegistry.getKeyManager().setIdentitySignKeyPair(identityKeyPair.signKey);
     ClientRegistry.getKeyManager().setIdentityEncKeyPair(identityKeyPair.encKey);
+  } else if (e2eeKeys) {
+    // Legacy CMK-based identity
+    const legacyIdentityKeyPair =
+      await IdentityKeyManager.generateIdentityKeyPairWithCmk(restoredCmk);
+    ClientRegistry.getKeyManager().setIdentitySignKeyPair(legacyIdentityKeyPair);
   }
 }
 
@@ -86,7 +101,7 @@ export function useAccessBootstrap(
 
     async function checkUnlockStatus() {
       if (!ClientRegistry.getKeyManager().getCMK() && user?.id) {
-        await restoreCMKForAutoUnlockIfAvailable();
+        await restoreCMKForAutoUnlockIfAvailable(e2eeKeys);
       }
 
       if (!ClientRegistry.getKeyManager().getCMK() && pathname !== '/e2ee/unlock') {
