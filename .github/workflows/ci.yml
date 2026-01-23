@@ -31,7 +31,7 @@ on:
       - 'jest.preset.js'
 
 env:
-  PNPM_VERSION: '10.28.0'
+  PNPM_VERSION: '10.28.1'
   NODE_VERSION: '22'
 
 jobs:
