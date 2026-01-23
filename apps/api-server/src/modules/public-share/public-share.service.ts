@@ -211,7 +211,9 @@ export class PublicShareService {
   /**
    * Validate that an item (file or folder) belongs to a share
    * For file shares: the itemId must match exactly
-   * For folder shares: the itemId must be the root or a descendant of the root
+   * For folder shares:
+   *   - If itemId is a folder: must be the root or a descendant of the root
+   *   - If itemId is a file: its parent folder must be the root or a descendant of the root
    */
   private async validateItemBelongsToShare(
     share: PublicShareEntity,
@@ -222,16 +224,43 @@ export class PublicShareService {
         throw new NotFoundException('Item not found in this share');
       }
     } else {
-      if (itemId !== share.itemId) {
-        const isDescendant = await this.foldersService.isDescendantOf(
+      // For folder shares, validate that the item is within the shared folder
+      if (itemId === share.itemId) {
+        return; // Item is the root, so it belongs
+      }
+
+      // Check if itemId is a folder that is a descendant of the shared folder
+      const isDescendantFolder = await this.foldersService.isDescendantOf(
+        share.ownerId,
+        itemId,
+        share.itemId
+      );
+
+      if (isDescendantFolder) {
+        return; // Folder is a descendant, so it belongs
+      }
+
+      // ItemId might be a file, check if its parent folder is within the share
+      try {
+        const file = await this.filesService.getFileEntity(share.ownerId, itemId);
+        if (!file.parentId) {
+          throw new NotFoundException('Item not found in this share');
+        }
+
+        const isParentDescendant = await this.foldersService.isDescendantOf(
           share.ownerId,
-          itemId,
+          file.parentId,
           share.itemId
         );
 
-        if (!isDescendant) {
+        if (!isParentDescendant) {
           throw new NotFoundException('Item not found in this share');
         }
+      } catch (err) {
+        if (err instanceof NotFoundException) {
+          throw err;
+        }
+        throw new NotFoundException('Item not found in this share');
       }
     }
   }

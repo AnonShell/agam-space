@@ -17,6 +17,10 @@ const DYNAMIC_ROUTE_MAPPINGS = [
     urlPattern: /^\/settings\/.+/,
     htmlPath: 'settings/[tab]/index.html',
   },
+  {
+    urlPattern: /^\/public\/share/,
+    htmlPath: 'public/share/[shareId]/index.html',
+  },
 ];
 
 /**
