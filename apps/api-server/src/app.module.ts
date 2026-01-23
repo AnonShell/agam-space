@@ -15,6 +15,7 @@ import { SsoModule } from '@/modules/sso/sso.module';
 import { UserQuotaModule } from '@/modules/quota/quota.module';
 import { TrustedDevicesModule } from '@/modules/trusted-devices/trusted-devices.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { PublicShareModule } from './modules/public-share/public-share.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     TrashModule,
     UserQuotaModule,
     TrustedDevicesModule,
+    PublicShareModule,
   ],
   providers: [
     {

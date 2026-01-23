@@ -12,6 +12,7 @@ import { FileChunksController } from '@/modules/files/file-chunks.controller';
 import { FoldersModule } from '@/modules/folders/folders.module';
 import { UserQuotaModule } from '@/modules/quota/quota.module';
 import { PendingFilesCleanupJob } from '@/modules/files/jobs/pending-files-cleanup.job';
+import { PublicShareModule } from '@/modules/public-share/public-share.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PendingFilesCleanupJob } from '@/modules/files/jobs/pending-files-clean
     AuthModule,
     FoldersModule,
     forwardRef(() => UserQuotaModule),
+    forwardRef(() => PublicShareModule),
   ],
   controllers: [FilesController, FileChunksController],
   providers: [FilesService, FileChunkService, PendingFilesCleanupJob],

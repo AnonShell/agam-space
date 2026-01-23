@@ -27,3 +27,7 @@ export * from './trash/trash.schema';
 // quota types
 export * from './quota/quota.schema';
 export * from './quota/quota-admin.schema';
+
+// public share types
+export * from './public-share/public-share.schema';
+export * from './public-share/public-share-content.schema';

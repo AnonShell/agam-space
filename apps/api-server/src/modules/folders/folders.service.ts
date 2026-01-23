@@ -22,6 +22,7 @@ import {
   RestoreItem,
 } from '@agam-space/shared-types';
 import { FilesService } from '@/modules/files/files.service';
+import { PublicShareService } from '@/modules/public-share/public-share.service';
 
 @Injectable()
 export class FoldersService {
@@ -30,7 +31,9 @@ export class FoldersService {
   constructor(
     @Inject(DATABASE_CONNECTION) private readonly db: ReturnType<typeof drizzle>,
     @Inject(forwardRef(() => FilesService))
-    private readonly filesService: FilesService
+    private readonly filesService: FilesService,
+    @Inject(forwardRef(() => PublicShareService))
+    private readonly publicShareService: PublicShareService
   ) {}
 
   async getFoldersUnderParent(
@@ -58,11 +61,23 @@ export class FoldersService {
     return result;
   }
 
-  async getFolder(userId: string, folderId: string): Promise<FolderDto> {
+  async getFolder(
+    userId: string,
+    folderId: string,
+    filters: {
+      status?: FolderStatus;
+    } = {}
+  ): Promise<FolderDto> {
+    const conditions = [eq(folders.id, folderId), eq(folders.userId, userId)];
+
+    if (filters.status) {
+      conditions.push(eq(folders.status, filters.status));
+    }
+
     const [folder] = await this.db
       .select()
       .from(folders)
-      .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+      .where(and(...conditions))
       .limit(1);
 
     if (!folder) {
@@ -70,6 +85,16 @@ export class FoldersService {
     }
 
     return FolderSchema.parse(folder);
+  }
+
+  async existsFolder(userId: string, folderId: string): Promise<boolean> {
+    const result = await this.db
+      .select({ id: folders.id })
+      .from(folders)
+      .where(and(eq(folders.id, folderId), eq(folders.userId, userId)))
+      .limit(1);
+
+    return result.length > 0;
   }
 
   async createFolder(userId: string, data: CreateFolderDto, tx?: any): Promise<FolderDto> {
@@ -239,7 +264,14 @@ export class FoldersService {
       .returning({ id: folders.id });
 
     // IMMEDIATELY mark all descendants as inactive_parent in background
-    this.asyncMarkAllFolderDescendantsAsInactiveParent(updatedIds.map(item => item.id));
+    const trashedFolderIds = updatedIds.map(item => item.id);
+    if (trashedFolderIds.length > 0) {
+      this.asyncMarkAllFolderDescendantsAsInactiveParent(folderIds);
+
+      this.publicShareService.deleteSharesForItems(trashedFolderIds).catch(err => {
+        this.logger.error(`Failed to delete public shares for trashed folders`, err);
+      });
+    }
 
     // compare the result with the input folderIds for failed IDs
     const updatedIdsSet = new Set(updatedIds.map(item => item.id));
@@ -269,6 +301,7 @@ export class FoldersService {
     await Promise.all([
       this.filesService.markFilesAsInactiveParent(fileIds),
       this.markFoldersAsStatus(folderIds, FolderStatus.INACTIVE_PARENT, [FolderStatus.ACTIVE]),
+      this.publicShareService.deleteSharesForItems([...folderIds, ...fileIds]).catch(err => {}),
     ]);
   }
 
@@ -288,6 +321,10 @@ export class FoldersService {
     if (!force) {
       // IMMEDIATELY mark all descendants as inactive_parent in background
       this.asyncMarkAllFolderDescendantsAsInactiveParent([folderId]);
+
+      this.publicShareService.deleteSharesForItems([folderId]).catch(err => {
+        this.logger.error(`Failed to delete public shares for trashed folder ${folderId}`, err);
+      });
     }
 
     this.logger.log(
@@ -561,6 +598,48 @@ export class FoldersService {
     }
 
     return { folderIds, fileIds };
+  }
+
+  /**
+   * Check if childFolderId is a descendant of ancestorFolderId
+   * Walks up the parent chain from child to see if it reaches ancestor
+   */
+  async isDescendantOf(
+    userId: string,
+    childFolderId: string,
+    ancestorFolderId: string,
+    maxDepth: number = 100
+  ): Promise<boolean> {
+    if (childFolderId === ancestorFolderId) {
+      return true;
+    }
+
+    let currentId: string | null = childFolderId;
+    let depth = 0;
+
+    while (currentId && depth < maxDepth) {
+      const [folder] = await this.db
+        .select({ parentId: folders.parentId })
+        .from(folders)
+        .where(and(eq(folders.id, currentId), eq(folders.userId, userId)))
+        .limit(1);
+
+      if (!folder) {
+        return false;
+      }
+
+      if (folder.parentId === ancestorFolderId) {
+        return true;
+      }
+
+      if (!folder.parentId) {
+        return false;
+      }
+
+      currentId = folder.parentId;
+      depth++;
+    }
+    return false;
   }
 }
 

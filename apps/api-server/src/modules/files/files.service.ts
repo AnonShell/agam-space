@@ -27,6 +27,7 @@ import { FileDto, isValidFolderAndNotRoot } from '@/modules/folders/dto/folder-c
 import { QuotaService } from '@/modules/quota/quota.service';
 import { DrizzleTransaction } from '@/database/database.providers';
 import { Blake3Hasher } from '@napi-rs/blake-hash';
+import { PublicShareService } from '@/modules/public-share/public-share.service';
 
 @Injectable()
 export class FilesService {
@@ -38,6 +39,8 @@ export class FilesService {
     private readonly fileChunkService: FileChunkService,
     @Inject(forwardRef(() => FoldersService))
     private readonly foldersService: FoldersService,
+    @Inject(forwardRef(() => PublicShareService))
+    private readonly publicShareService: PublicShareService,
     private readonly appConfigService: AppConfigService,
 
     @Inject(forwardRef(() => QuotaService))
@@ -182,11 +185,36 @@ export class FilesService {
     return FileSchema.parse(file);
   }
 
-  async getFileEntity(userId: string, fileId: string): Promise<FileEntity> {
+  async existsFile(userId: string, fileId: string): Promise<boolean> {
+    const result = await this.db
+      .select({ id: files.id })
+      .from(files)
+      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
+      .limit(1);
+
+    return result.length > 0;
+  }
+
+  async getFileEntity(
+    userId: string,
+    fileId: string,
+    filters: {
+      status?: FileStatus;
+      statuses?: FileStatus[];
+    } = {}
+  ): Promise<FileEntity> {
+    const conditions = [eq(files.id, fileId), eq(files.userId, userId)];
+
+    if (filters.statuses && filters.statuses.length > 0) {
+      conditions.push(inArray(files.status, filters.statuses));
+    } else if (filters.status) {
+      conditions.push(eq(files.status, filters.status));
+    }
+
     const [file] = await this.db
       .select()
       .from(files)
-      .where(and(eq(files.id, fileId), eq(files.userId, userId)))
+      .where(and(...conditions))
       .limit(1);
 
     if (!file) {
@@ -340,6 +368,14 @@ export class FilesService {
       )
       .returning({ id: files.id });
 
+    // Delete public shares for trashed files
+    const trashedFileIds = updatedIds.map(file => file.id);
+    if (trashedFileIds.length > 0) {
+      this.publicShareService.deleteSharesForItems(trashedFileIds).catch(err => {
+        this.logger.error(`Failed to delete public shares for trashed files`, err);
+      });
+    }
+
     const updatedIdsSet = new Set(updatedIds.map(file => file.id));
     return fileIds
       .filter(id => !updatedIdsSet.has(id))
@@ -372,6 +408,10 @@ export class FilesService {
     if (!updatedFile) {
       throw new Error('Failed to update file status to trashed');
     }
+
+    this.publicShareService.deleteSharesForItems([fileId]).catch(err => {
+      this.logger.error(`Failed to delete public shares for trashed file ${fileId}`, err);
+    });
 
     this.logger.log(`File ${fileId} marked as trashed by user ${userId}`);
   }

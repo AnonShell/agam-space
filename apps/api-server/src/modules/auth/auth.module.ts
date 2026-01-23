@@ -34,6 +34,6 @@ import { AdminUserController } from '@/modules/auth/controllers/user.admin.contr
     AdminUserController,
   ],
   providers: [AuthService, UserService, SessionService, PasswordService, AuthGuard],
-  exports: [AuthService, UserService, SessionService, AuthGuard],
+  exports: [AuthService, UserService, SessionService, PasswordService, AuthGuard],
 })
 export class AuthModule {}

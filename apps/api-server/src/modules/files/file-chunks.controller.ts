@@ -19,6 +19,7 @@ import { AuthRequired, CurrentUser } from '../auth/auth.decorator';
 import { FilesService } from './files.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { cleanupRequestStream } from '@/common/helpers/stream.utils';
+import { sendChunkStream } from '@/common/helpers/response.utils';
 
 @ApiTags('File Chunks')
 @Controller('files/:fileId/chunks')
@@ -73,24 +74,13 @@ export class FileChunksController {
       throw new NotFoundException('File is not available for download');
     }
 
-    response.header('accept-ranges', 'bytes');
-    response.header('cache-control', 'no-cache');
-    response.header('content-encoding', 'identity');
-    response.header('content-type', 'application/octet-stream');
-
     const { stream, chunk } = await this.fileChunksService.readChunkStream(
       userId,
       fileId,
       chunkIndex
     );
 
-    stream.on('error', err => {
-      console.error('Chunk stream error:', err);
-    });
-
-    response.header('content-length', chunk.approxSize);
-    response.header('x-checksum', chunk.checksum);
-    return response.send(stream);
+    return sendChunkStream(response, stream, chunk);
   }
 
   @Get('/:chunkIndex/exists')

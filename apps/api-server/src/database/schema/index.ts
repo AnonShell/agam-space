@@ -1,6 +1,7 @@
 // Export all database schemas
 export * from './files';
 export * from './folders';
+export * from './public-shares';
 export * from './trusted-devices';
 export * from './user-keys';
 export * from './user-quota';
