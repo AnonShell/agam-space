@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
         'features/encryption',
         'features/account',
         'features/file-management',
+        'features/public-sharing',
         'features/admin',
         'features/deployment',
         'features/roadmap',
