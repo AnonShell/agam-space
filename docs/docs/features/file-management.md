@@ -71,6 +71,29 @@ Deleted files and folders move to trash instead of being permanently deleted.
 
 Items in trash still count toward your storage quota until permanently deleted.
 
+## Public Sharing
+
+Share files or folders with anyone via a link. Recipients don't need an account.
+
+**How it works:**
+
+1. Right-click any file or folder
+2. Select "Share"
+3. Set password (optional) and expiry (default 2 days)
+4. Copy the share URL
+5. Send URL to recipients
+
+The URL contains an encryption key. Recipients need the full URL to decrypt
+content.
+
+**Managing shares:**
+
+- View all shares in Settings → Public Shares
+- Revoke shares anytime to invalidate the URL
+- Expired shares automatically deleted
+
+See [Public Sharing](./public-sharing.md) for details.
+
 ## Storage quotas
 
 Each user has a storage quota that limits how much data they can upload.

@@ -15,6 +15,8 @@ options.
   regular user roles
 - **[File Management](./features/file-management)** - Upload, organize, preview,
   and manage files
+- **[Public Sharing](./features/public-sharing)** - Share files and folders with
+  anyone via a link
 - **[Admin Panel](./features/admin)** - User and quota management
 - **[Deployment](./features/deployment)** - Self-hosted with Docker
 - **[Roadmap](./features/roadmap)** - Possible features under consideration

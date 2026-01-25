@@ -27,6 +27,8 @@ But like all web apps, you must trust it to deliver correct JavaScript.
 - **[Authentication](./authentication.md)** - Login, passwords, and sessions
 - **[Encryption](./encryption.md)** - Algorithms, key hierarchy, and how files
   are encrypted
+- **[Public Sharing](./public-sharing.md)** - How public links stay encrypted
+  and secure
 - **[Browser Security](./browser-security.md)** - CSP and SRI protections
   against code injection
 - **[Unlocking Master Key](./cmk-unlock.md)** - Master password, trusted

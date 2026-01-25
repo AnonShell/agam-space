@@ -247,6 +247,58 @@ Each file gets a random 256-bit key, encrypted with its folder key.
 - No key reuse across files
 - Each chunk gets a fresh random nonce (XChaCha20 uses 192-bit).
 
+### Public Share Encryption
+
+When you create a public share, the system generates split keys to encrypt the
+file or folder key for external recipients.
+
+**Key generation:**
+
+1. Client generates `clientKey` (32 bytes random)
+2. Client generates `serverShareKey` (32 bytes random)
+3. Client generates `salt` (16 bytes random)
+
+**Key derivation:**
+
+```
+wrapKey = Argon2id(clientKey + serverShareKey + password?, salt)
+```
+
+**Password is optional.** If provided, it adds an extra encryption layer.
+
+**Key wrapping:**
+
+```
+wrappedItemKey = XChaCha20-Poly1305.encrypt(fileKey_or_folderKey, wrapKey)
+```
+
+**Distribution:**
+
+- **Server stores:** `serverShareKey`, `wrappedItemKey`, `salt`, `passwordHash?`
+- **URL contains:** `clientKey` (in #fragment, never sent to server)
+- **User stores:** Nothing (one-time display)
+
+**Decryption (by recipient):**
+
+1. Recipient opens URL with `clientKey` in fragment
+2. If password-protected, enters password
+3. Server returns `serverShareKey`, `wrappedItemKey`, `salt`
+4. Browser derives:
+   `wrapKey = Argon2id(clientKey + serverShareKey + password?, salt)`
+5. Browser unwraps:
+   `itemKey = XChaCha20-Poly1305.decrypt(wrappedItemKey, wrapKey)`
+6. Browser uses `itemKey` to decrypt file/folder content
+
+**Security properties:**
+
+- Server alone cannot decrypt (missing `clientKey`)
+- URL alone cannot decrypt (missing `serverShareKey`)
+- Both required to derive `wrapKey`
+- Password adds additional layer (must know password to derive correct
+  `wrapKey`)
+
+See [Public Sharing Security](./public-sharing.md) for full details.
+
 ## Encryption Process
 
 ### File Upload
