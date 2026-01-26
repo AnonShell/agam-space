@@ -16,6 +16,7 @@ import { UserQuotaModule } from '@/modules/quota/quota.module';
 import { TrustedDevicesModule } from '@/modules/trusted-devices/trusted-devices.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PublicShareModule } from './modules/public-share/public-share.module';
+import { InviteCodesModule } from './modules/invite-codes/invite-codes.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { PublicShareModule } from './modules/public-share/public-share.module';
     UserQuotaModule,
     TrustedDevicesModule,
     PublicShareModule,
+    InviteCodesModule,
   ],
   providers: [
     {

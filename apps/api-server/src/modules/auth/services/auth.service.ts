@@ -21,11 +21,13 @@ import { CreateSessionData, SessionService } from './session.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import type { UserSession } from '@/database';
 import { UserInfo } from '@/modules/sso/openid/openid.types';
+import { InviteCodesService } from '@/modules/invite-codes/invite-codes.service';
 
 export interface SignupRequest {
   username: string;
   password: string;
   email?: string;
+  inviteCode?: string;
 }
 
 export interface LoginRequest {
@@ -54,15 +56,14 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly sessionService: SessionService,
     private readonly passwordService: PasswordService,
-    private readonly configService: AppConfigService
+    private readonly configService: AppConfigService,
+    private readonly inviteCodesService: InviteCodesService
   ) {}
 
   async signup(request: SignupRequest): Promise<User> {
-    if (!this.configService.getConfig().account.allowNewSignup) {
-      throw new BadRequestException('New user registration is currently disabled');
-    }
-
-    const { username, password, email } = request;
+    const allowNewSignup = this.configService.getConfig().account.allowNewSignup;
+    const { username, password, inviteCode } = request;
+    let { email } = request;
 
     if (!username || !password) {
       throw new BadRequestException('Username and password are required');
@@ -72,6 +73,24 @@ export class AuthService {
       throw new BadRequestException('Password must be at least 8 characters');
     }
 
+    let inviteValid = false;
+
+    if (inviteCode) {
+      const validation = await this.inviteCodesService.validateInviteCode(inviteCode);
+      if (!validation.valid) {
+        throw new BadRequestException(validation.reason || 'Invalid invite code');
+      }
+
+      inviteValid = true;
+      if (validation.assignedEmail) {
+        email = validation.assignedEmail;
+      }
+    }
+
+    if (!allowNewSignup && !inviteValid) {
+      throw new BadRequestException('Signup is not available. Please use a valid invite code.');
+    }
+
     const userData: CreateUserData = {
       username,
       password,
@@ -79,6 +98,10 @@ export class AuthService {
     };
 
     const user = await this.userService.createUser(userData);
+
+    if (inviteCode) {
+      await this.inviteCodesService.useInviteCode(inviteCode);
+    }
 
     this.logger.log(`User signed up: ${user.username} (${user.id})`);
     return user;

@@ -25,6 +25,7 @@ export const NewUserSignupRequestSchema = UserSchema.pick({
 }).extend({
   email: UserSchema.shape.email.nullish(),
   password: UserPasswordSchema,
+  inviteCode: z.string().min(1).max(20).optional(),
 });
 
 export type NewSignupUserRequest = z.infer<typeof NewUserSignupRequestSchema>;

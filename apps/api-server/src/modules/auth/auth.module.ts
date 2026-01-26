@@ -13,10 +13,8 @@ import { MeController } from '@/modules/auth/controllers/me.controller';
 import { UserQuotaModule } from '@/modules/quota/quota.module';
 import { UserController } from '@/modules/auth/controllers/user.controller';
 import { AdminUserController } from '@/modules/auth/controllers/user.admin.controller';
+import { InviteCodesModule } from '@/modules/invite-codes/invite-codes.module';
 
-/**
- * Authentication module providing complete user authentication system
- */
 @Module({
   imports: [
     CacheModule.register({
@@ -25,6 +23,7 @@ import { AdminUserController } from '@/modules/auth/controllers/user.admin.contr
     }),
     SsoModule,
     forwardRef(() => UserQuotaModule),
+    InviteCodesModule,
   ],
   controllers: [
     AuthController,

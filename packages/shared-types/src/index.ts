@@ -31,3 +31,6 @@ export * from './quota/quota-admin.schema';
 // public share types
 export * from './public-share/public-share.schema';
 export * from './public-share/public-share-content.schema';
+
+// invite types
+export * from './invite/invite.schema';

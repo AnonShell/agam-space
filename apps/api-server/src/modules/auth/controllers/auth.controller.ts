@@ -43,7 +43,7 @@ export class AuthController {
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
-  @Throttle({ default: { ttl: 3600_000, limit: 10 } })
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({
     summary: 'User signup',
     description: 'Create a new user account. Login separately to get session token.',
@@ -65,6 +65,7 @@ export class AuthController {
       username: signupDto.username,
       password: signupDto.password,
       email: signupDto.email,
+      inviteCode: signupDto.inviteCode,
     });
 
     this.logger.log(`Signup successful for user: ${user.username}`);
@@ -188,7 +189,6 @@ export class AuthController {
       return res.status(302).header('location', '/').send();
     }
 
-    // Default fallback
     this.logger.warn(`Unknown client type in SSO state: ${state.client}`);
     return res.status(400).send('Unknown client type');
   }
