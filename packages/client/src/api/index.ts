@@ -11,3 +11,4 @@ export * from './trusted-devices';
 export * from './session';
 export * from './admin';
 export * from './public-share-api';
+export * from './invite-codes';

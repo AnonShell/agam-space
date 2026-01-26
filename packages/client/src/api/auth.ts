@@ -36,12 +36,22 @@ export async function logoutApi() {
   await ClientRegistry.getApiClient().fetchRaw('/v1/auth/logout', { method: 'POST' });
 }
 
-export async function signupApi(username: string, email: string, password: string) {
+export async function signupApi(
+  username: string,
+  email: string,
+  password: string,
+  inviteCode?: string
+) {
   try {
-    const res = await ClientRegistry.getApiClient().fetchAndParse(`/v1/auth/signup`, UserSchema, {
+    await ClientRegistry.getApiClient().fetchAndParse(`/v1/auth/signup`, UserSchema, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email: email || undefined, password }),
+      body: JSON.stringify({
+        username,
+        email: email || undefined,
+        password,
+        inviteCode: inviteCode || undefined,
+      }),
     });
   } catch (e) {
     if (e instanceof ApiClientError) {

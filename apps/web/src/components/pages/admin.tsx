@@ -1,25 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AdminUserList } from '@/components/pages/admin/admin-users';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { AdminInviteCodes } from '@/components/pages/admin/admin-invite-codes';
 
 const sections = [
   { label: 'Users', href: '/admin/users' },
+  { label: 'Invite Codes', href: '/admin/invites' },
   // { label: 'System', href: '/admin/system' },
 ];
 
 export default function AdminPage() {
-  let pathname = usePathname();
+  const pathname = usePathname();
+  const router = useRouter();
 
-  if (!pathname || pathname === '/admin/') {
-    pathname = '/admin/users';
-  }
+  // Redirect to /admin/users if on base /admin path
+  useEffect(() => {
+    if (!pathname || pathname === '/admin/') {
+      router.replace('/admin/users');
+    }
+  }, [pathname, router]);
 
-  const [activeSection, setActiveSection] = useState(
-    sections.find(s => pathname.startsWith(s.href))
-  );
+  // Derive active section from current pathname
+  const activeSection = sections.find(s => pathname.startsWith(s.href)) || sections[0];
 
   return (
     <div className='flex h-full'>
@@ -31,7 +36,7 @@ export default function AdminPage() {
             variant={activeSection?.href === section.href ? 'default' : 'ghost'}
             className='w-full justify-start'
             onClick={() => {
-              setActiveSection(section);
+              router.push(section.href);
             }}
           >
             {section.label}
@@ -42,6 +47,7 @@ export default function AdminPage() {
       {/* Main content */}
       <div className='flex-1 p-6'>
         {activeSection?.label === 'Users' && <AdminUserList />}
+        {activeSection?.label === 'Invite Codes' && <AdminInviteCodes />}
 
         {/* {activeSection?.label === 'System' && (
           <div>
