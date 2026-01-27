@@ -29,7 +29,6 @@ export default function SignupPage() {
   const ssoSignupEnabled = config?.sso?.enabled === true && config?.sso?.autoCreateUser === true;
   const signupEnabled = config?.account?.allowNewSignup === true;
 
-  // Validate invite code on mount
   useEffect(() => {
     if (inviteCode) {
       setValidatingInvite(true);
@@ -248,7 +247,7 @@ export default function SignupPage() {
                 required
               />
               {fieldErrors.password && (
-                <p className='text-sm text-red-500'>{fieldErrors.password}</p>
+                <p className='text-sm text-destructive'>{fieldErrors.password}</p>
               )}
             </div>
             {inviteCode && inviteValid && (
@@ -268,7 +267,7 @@ export default function SignupPage() {
               {isSubmitting ? 'Creating Account...' : 'Sign Up'}
             </Button>
 
-            {error && <p className='text-sm text-red-500 text-center'>{error}</p>}
+            {error && <p className='text-sm text-destructive text-center'>{error}</p>}
           </form>
         )}
         {!success && ssoSignupEnabled && (

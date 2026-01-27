@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { useServerConfigStore } from '@/store/server-config.store';
 import Link from 'next/link';
 import { SessionService } from '@/services/session.service';
 import { parseError } from '@/lib/error-utils';
+import { hasSessionCookie } from '@/hooks/useAccessBootstrap';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +18,12 @@ export default function LoginPage() {
   const config = useServerConfigStore(s => s.config);
   const ssoEnabled = config?.sso?.enabled === true;
   const signupEnabled = config?.account?.allowNewSignup === true;
+
+  useEffect(() => {
+    if (hasSessionCookie()) {
+      router.replace('/explorer');
+    }
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

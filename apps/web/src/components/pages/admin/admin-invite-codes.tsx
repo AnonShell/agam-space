@@ -257,7 +257,7 @@ export function AdminInviteCodes() {
                             <DropdownMenuItem
                               onClick={() =>
                                 copyToClipboard(
-                                  `${window.location.origin}/auth/signup?inviteCode=${invite.id}`
+                                  `${window.location.origin}/signup?inviteCode=${invite.id}`
                                 )
                               }
                             >

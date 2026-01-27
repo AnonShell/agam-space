@@ -1,12 +1,10 @@
 # --- 1. Builder Stage: Build source files ---
-FROM node:22-bullseye-slim AS builder
+FROM node:22.22-alpine3.23 AS builder
 
 WORKDIR /app
 
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends python3 make g++ && \
-  npm install -g npm@11.7.0 pnpm && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache python3 make g++ && \
+  npm install -g npm@11.7.0 pnpm
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY --parents apps/*/package.json ./
@@ -36,14 +34,12 @@ RUN find . -name '*.tsbuildinfo' -delete && \
 
 
 # --- 2. Deps Stage: Create clean deployable output ---
-FROM node:22-bullseye-slim AS deps
+FROM node:22.22-alpine3.23 AS deps
 
 WORKDIR /app
 
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends python3 make g++ && \
-  npm install -g npm@11.7.0 pnpm && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache python3 make g++ && \
+  npm install -g npm@11.7.0 pnpm
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api-server/package.json ./apps/api-server/
@@ -53,9 +49,7 @@ COPY packages/client/package.json ./packages/client/
 
 # Install production dependencies
 RUN pnpm install --prod --filter=api-server... && \
-  apt-get purge -y python3 make g++ && \
-  apt-get autoremove -y && \
-  apt-get clean && \
+  apk del python3 make g++ && \
   rm -rf /root/.npm /root/.pnpm-store /root/.cache /tmp/*
 
 # Copy build output from builder
@@ -117,7 +111,7 @@ CMD ["node", "dist/main.js"]
 
 
 # --- 4. Runner Stage: Minimal production image (DEFAULT) ---
-FROM node:22-alpine AS runner
+FROM node:22.22-alpine3.23 AS runner
 
 RUN apk add --no-cache tini && \
     rm -rf /usr/local/lib/node_modules/npm \
