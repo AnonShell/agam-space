@@ -235,10 +235,7 @@ export function AdminUserList() {
                                 <MoreHorizontal className='h-4 w-4' />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                              align='end'
-                              className='w-44 bg-background border shadow-md'
-                            >
+                            <DropdownMenuContent align='end' className='w-44'>
                               {user.status === 'active' ? (
                                 <DropdownMenuItem
                                   onClick={() => changeUserStatus(user.id, UserStatus.DISABLED)}
@@ -298,7 +295,7 @@ export function AdminUserList() {
                   <SelectTrigger className='w-24'>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent position='popper' sideOffset={4} className='bg-background'>
+                  <SelectContent position='popper' sideOffset={4}>
                     <SelectItem value='MB'>MB</SelectItem>
                     <SelectItem value='GB'>GB</SelectItem>
                   </SelectContent>

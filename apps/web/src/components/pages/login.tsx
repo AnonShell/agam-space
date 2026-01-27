@@ -68,7 +68,7 @@ export default function LoginPage() {
             Continue
           </Button>
 
-          {error && <p className='text-sm text-red-500 text-center'>{error}</p>}
+          {error && <p className='text-sm text-destructive text-center'>{error}</p>}
         </form>
         {ssoEnabled && (
           <>

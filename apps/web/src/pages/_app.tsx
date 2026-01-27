@@ -10,6 +10,7 @@ import { useAccessBootstrap } from '@/hooks/useAccessBootstrap';
 import { useEffect, useState } from 'react';
 import { useAppBootstrap } from '@/lib/init/use-bootstrap-app';
 import { GlobalEventListeners } from '@/components/global-event-listeners';
+import { PageLoader } from '@/components/page-loader';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -54,7 +55,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [status]);
 
   if (showAppShell && (!appBootstrapped || status !== 'ready')) {
-    return null;
+    return <PageLoader />;
   }
 
   return (

@@ -40,20 +40,18 @@ export function FilePreviewModal({ file, onClose }: Props) {
           <div className='flex items-center gap-3'>
             <DialogClose asChild>
               <button
-                className='rounded-full p-2 text-white/80 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
+                className='rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                 aria-label='Close'
               >
                 <X className='w-5 h-5' />
               </button>
             </DialogClose>
-            <h2 className='text-base font-semibold truncate text-white drop-shadow-sm'>
-              {file.name}
-            </h2>
+            <h2 className='text-base font-semibold truncate text-foreground'>{file.name}</h2>
           </div>
           <div className='flex items-center gap-2'>
             <button
               onClick={() => setShowFileInfo(!showFileInfo)}
-              className='rounded-full p-2 text-white/80 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
+              className='rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring'
               aria-label='Toggle file info'
             >
               <Info className='w-5 h-5' />
@@ -75,7 +73,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
                   toast.error('Download failed');
                 }
               }}
-              className='rounded-full p-2 text-white/80 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
+              className='rounded-full p-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring'
               aria-label='Download file'
             >
               <ArrowDownToLine className='w-5 h-5' />
@@ -99,28 +97,34 @@ export function FilePreviewModal({ file, onClose }: Props) {
               showFileInfo ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            <div className='h-full m-4 bg-black/70 backdrop-blur-sm border border-white/10 rounded-lg overflow-hidden'>
+            <div className='h-full m-4 bg-card/95 backdrop-blur-sm border border-border rounded-lg overflow-hidden'>
               <div className='p-6 pb-8 space-y-6'>
-                <h3 className='text-lg font-semibold text-white border-b border-white/10 pb-3'>
+                <h3 className='text-lg font-semibold text-card-foreground border-b border-border pb-3'>
                   File Details
                 </h3>
 
                 <div className='space-y-4'>
                   <div>
-                    <label className='text-xs text-white/60 uppercase tracking-wide'>Name</label>
-                    <p className='text-sm text-white/90 mt-1 break-words'>{file.name}</p>
+                    <label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                      Name
+                    </label>
+                    <p className='text-sm text-foreground mt-1 break-words'>{file.name}</p>
                   </div>
 
                   <div>
-                    <label className='text-xs text-white/60 uppercase tracking-wide'>Type</label>
-                    <p className='text-sm text-white/90 mt-1'>{file.mime || 'Unknown'}</p>
+                    <label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                      Type
+                    </label>
+                    <p className='text-sm text-foreground mt-1'>{file.mime || 'Unknown'}</p>
                   </div>
 
                   <div>
-                    <label className='text-xs text-white/60 uppercase tracking-wide'>Size</label>
-                    <p className='text-sm text-white/90 mt-1'>
+                    <label className='text-xs text-muted-foreground uppercase tracking-wide'>
+                      Size
+                    </label>
+                    <p className='text-sm text-foreground mt-1'>
                       {formatFileSize(file.size)}
-                      <span className='text-white/60 text-xs ml-2'>
+                      <span className='text-muted-foreground text-xs ml-2'>
                         ({file.size.toLocaleString()} bytes)
                       </span>
                     </p>
@@ -128,10 +132,10 @@ export function FilePreviewModal({ file, onClose }: Props) {
 
                   {file.createdAt && (
                     <div>
-                      <label className='text-xs text-white/60 uppercase tracking-wide'>
+                      <label className='text-xs text-muted-foreground uppercase tracking-wide'>
                         Created
                       </label>
-                      <p className='text-sm text-white/90 mt-1'>
+                      <p className='text-sm text-foreground mt-1'>
                         {new Date(file.createdAt).toLocaleString()}
                       </p>
                     </div>
@@ -139,10 +143,10 @@ export function FilePreviewModal({ file, onClose }: Props) {
 
                   {file.updatedAt && (
                     <div>
-                      <label className='text-xs text-white/60 uppercase tracking-wide'>
+                      <label className='text-xs text-muted-foreground uppercase tracking-wide'>
                         Modified
                       </label>
-                      <p className='text-sm text-white/90 mt-1'>
+                      <p className='text-sm text-foreground mt-1'>
                         {new Date(file.updatedAt).toLocaleString()}
                       </p>
                     </div>

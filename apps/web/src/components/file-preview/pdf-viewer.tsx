@@ -60,27 +60,27 @@ export function PdfViewer({ data }: Props) {
       </div>
 
       {/* Floating controls at bottom center */}
-      <div className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2.5 bg-black/70 backdrop-blur-sm rounded-full shadow-lg border border-white/10'>
-        <div className='text-sm text-white/90 font-medium'>
+      <div className='absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2.5 bg-card/95 backdrop-blur-sm rounded-full shadow-lg border border-border'>
+        <div className='text-sm text-card-foreground font-medium'>
           {visiblePage} / {numPages}
         </div>
-        <div className='h-4 w-px bg-white/20' />
+        <div className='h-4 w-px bg-border' />
         <div className='flex items-center gap-2'>
           <button
             onClick={() => setScale(Math.max(0.5, scale - 0.25))}
             disabled={scale <= 0.5}
-            className='p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            className='p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             aria-label='Zoom out'
           >
             <ZoomOut className='w-4 h-4' />
           </button>
-          <span className='text-xs text-white/70 min-w-[45px] text-center'>
+          <span className='text-xs text-muted-foreground min-w-[45px] text-center'>
             {Math.round(scale * 100)}%
           </span>
           <button
             onClick={() => setScale(Math.min(2, scale + 0.25))}
             disabled={scale >= 2}
-            className='p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            className='p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             aria-label='Zoom in'
           >
             <ZoomIn className='w-4 h-4' />

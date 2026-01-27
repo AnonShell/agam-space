@@ -214,7 +214,7 @@ export function ExplorerItem({
           </div>
         </ContextMenuTrigger>
 
-        <ContextMenuContent className='w-48 bg-white dark:bg-zinc-900 text-black dark:text-white border shadow-md rounded-md z-50'>
+        <ContextMenuContent className='w-48'>
           {isTrashView ? (
             <>
               <ContextMenuItem onClick={onRestore}>

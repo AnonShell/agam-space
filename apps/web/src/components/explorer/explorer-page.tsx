@@ -426,11 +426,7 @@ export function ExplorerPage({ folderId }: { folderId: string }) {
                       </Button>
                     </DropdownMenuTrigger>
 
-                    <DropdownMenuContent
-                      align='end'
-                      sideOffset={6}
-                      className='z-50 w-48 rounded-md border bg-white dark:bg-zinc-900 text-black dark:text-white shadow-md'
-                    >
+                    <DropdownMenuContent align='end' sideOffset={6} className='z-50 w-48'>
                       {/* Sort By Section */}
                       <div className='px-2 py-1.5 text-xs font-semibold text-muted-foreground'>
                         Sort by

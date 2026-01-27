@@ -189,7 +189,7 @@ export function CreatePublicShareDialog({
                     <SelectTrigger className='w-[130px]'>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent position='popper' sideOffset={4} className='bg-background'>
+                    <SelectContent position='popper' sideOffset={4}>
                       <SelectItem value='minutes'>Minutes</SelectItem>
                       <SelectItem value='hours'>Hours</SelectItem>
                       <SelectItem value='days'>Days</SelectItem>
@@ -201,11 +201,11 @@ export function CreatePublicShareDialog({
           </div>
         ) : (
           <div className='space-y-3'>
-            <div className='p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900 rounded-lg'>
-              <p className='text-sm text-yellow-800 dark:text-yellow-200 font-medium'>
+            <div className='p-3 bg-destructive/10 border border-destructive/30 rounded-lg'>
+              <p className='text-sm text-destructive font-medium'>
                 ⚠️ Important: Save this link now!
               </p>
-              <p className='text-xs text-yellow-700 dark:text-yellow-300 mt-1'>
+              <p className='text-xs text-destructive/80 mt-1'>
                 This link contains a client-side encryption key and will only be shown once. You
                 won&apos;t be able to retrieve it later.
               </p>

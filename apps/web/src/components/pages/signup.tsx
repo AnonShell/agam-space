@@ -193,7 +193,7 @@ export default function SignupPage() {
 
         {success ? (
           <div className='text-center space-y-4'>
-            <div className='text-green-600 text-3xl'>✓</div>
+            <div className='text-primary text-3xl'>✓</div>
             <div className='space-y-2'>
               <h2 className='text-xl font-semibold'>Account Created!</h2>
               <p className='text-sm text-muted-foreground'>

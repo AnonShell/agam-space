@@ -253,10 +253,7 @@ export function AdminInviteCodes() {
                               <MoreHorizontal className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align='end'
-                            className='w-44 bg-background border shadow-md'
-                          >
+                          <DropdownMenuContent align='end' className='w-44'>
                             <DropdownMenuItem
                               onClick={() =>
                                 copyToClipboard(
@@ -355,7 +352,7 @@ export function AdminInviteCodes() {
                     <SelectTrigger className='w-[130px]'>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent position='popper' sideOffset={4} className='bg-background'>
+                    <SelectContent position='popper' sideOffset={4}>
                       <SelectItem value='hours'>Hours</SelectItem>
                       <SelectItem value='days'>Days</SelectItem>
                     </SelectContent>

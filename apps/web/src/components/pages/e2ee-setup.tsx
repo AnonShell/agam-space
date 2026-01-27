@@ -176,7 +176,7 @@ export default function E2eeSetupPage() {
               </Button>
 
               {error && (
-                <div className='text-sm text-red-500 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded p-3 text-center'>
+                <div className='text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded p-3 text-center'>
                   {error}
                 </div>
               )}

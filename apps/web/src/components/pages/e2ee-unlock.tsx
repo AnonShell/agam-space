@@ -196,7 +196,7 @@ export default function E2eeUnlockPage() {
           <Button type='submit' disabled={loading || !password} className='w-full mb-2'>
             Unlock with Master Password
           </Button>
-          {error && <p className='text-red-500 text-sm'>{error}</p>}
+          {error && <p className='text-destructive text-sm'>{error}</p>}
         </form>
       </div>
     </div>
