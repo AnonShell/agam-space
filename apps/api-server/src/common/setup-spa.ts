@@ -142,13 +142,23 @@ export function setupStaticAssets(app: NestFastifyApplication, config: AppConfig
           const dynamicHtmlPath = join(publicDir, route.htmlPath);
           if (existsSync(dynamicHtmlPath)) {
             const dynamicHtml = readFileSync(dynamicHtmlPath, 'utf-8');
-            reply.type('text/html').send(dynamicHtml);
+            reply
+              .header('Cache-Control', 'no-cache, must-revalidate')
+              .header('Pragma', 'no-cache')
+              .header('Expires', '0')
+              .type('text/html')
+              .send(dynamicHtml);
             return;
           }
         }
       }
 
-      reply.type('text/html').send(indexHtml);
+      reply
+        .header('Cache-Control', 'no-cache, must-revalidate')
+        .header('Pragma', 'no-cache')
+        .header('Expires', '0')
+        .type('text/html')
+        .send(indexHtml);
     });
   });
 
