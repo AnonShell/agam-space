@@ -84,6 +84,21 @@ Users logging in via SSO will automatically have accounts created.
 
 See [SSO Configuration](./sso.md) for detailed setup.
 
+### Option 3: Invite Codes
+
+Create invite codes from the admin panel to control user registration:
+
+1. Navigate to `/admin` → **Invite Codes**
+2. Click **Create Invite Code**
+3. Configure options:
+   - **Email** (optional) - Pre-assign to specific email
+   - **Max Uses** - How many times the code can be used
+   - **Expiration** (optional) - When the code expires
+4. Share the invite URL with new users
+
+When `ALLOW_NEW_SIGNUP` is disabled, users must provide a valid invite code to
+register.
+
 ## Storage Quotas
 
 Default quota: 10GB per user (configurable via `DEFAULT_USER_QUOTA_GB`)

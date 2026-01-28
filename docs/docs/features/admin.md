@@ -13,6 +13,7 @@ View and manage all users on the instance.
 - Enable/disable user accounts
 - Delete users (7-day grace period before deletion)
 - View user quota usage and limits
+- Create and manage invite codes for controlled user registration
 
 **Note:** User data deletion after the 7-day grace period is not yet
 implemented. Currently, disabling accounts prevents access but data remains on
