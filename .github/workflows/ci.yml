@@ -38,6 +38,7 @@ jobs:
   lint-and-format:
     name: Lint & Format
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -64,6 +65,7 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [lint-and-format]
     steps:
       - uses: actions/checkout@v4
@@ -88,6 +90,7 @@ jobs:
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [lint-and-format]
     steps:
       - uses: actions/checkout@v4
@@ -112,6 +115,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [lint-and-format]
     steps:
       - uses: actions/checkout@v4
@@ -139,6 +143,7 @@ jobs:
   docker-build-test:
     name: Docker Build Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [test, integration-test, build]
     steps:
       - uses: actions/checkout@v4
