@@ -75,7 +75,7 @@ COPY --from=builder /app/apps/web/out ./deploy/public
 
 
 # --- 3. Hardened Runner Stage: Security-hardened production image ---
-FROM dhi.io/node:22-alpine3.23 AS runner-hardened
+FROM dhi.io/node:22.22 AS runner-hardened
 
 ARG BUILD_ID
 ARG BUILD_COMMIT
