@@ -1,10 +1,12 @@
 # --- 1. Builder Stage: Build source files ---
-FROM node:22.22-alpine3.23 AS builder
+FROM node:22.22-bullseye-slim AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache python3 make g++ && \
-  npm install -g npm@11.7.0 pnpm
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends python3 make g++ && \
+  npm install -g npm@11.7.0 pnpm && \
+  rm -rf /var/lib/apt/lists/*
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY --parents apps/*/package.json ./
@@ -34,12 +36,14 @@ RUN find . -name '*.tsbuildinfo' -delete && \
 
 
 # --- 2. Deps Stage: Create clean deployable output ---
-FROM node:22.22-alpine3.23 AS deps
+FROM node:22.22-bullseye-slim AS deps
 
 WORKDIR /app
 
-RUN apk add --no-cache python3 make g++ && \
-  npm install -g npm@11.7.0 pnpm
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends python3 make g++ && \
+  npm install -g npm@11.7.0 pnpm && \
+  rm -rf /var/lib/apt/lists/*
 
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api-server/package.json ./apps/api-server/
@@ -49,7 +53,9 @@ COPY packages/client/package.json ./packages/client/
 
 # Install production dependencies
 RUN pnpm install --prod --filter=api-server... && \
-  apk del python3 make g++ && \
+  apt-get purge -y python3 make g++ && \
+  apt-get autoremove -y && \
+  apt-get clean && \
   rm -rf /root/.npm /root/.pnpm-store /root/.cache /tmp/*
 
 # Copy build output from builder
@@ -61,18 +67,8 @@ RUN pnpm deploy deploy/ --prod --filter=api-server --legacy
 
 # Remove unnecessary files from node_modules to reduce image size
 RUN cd deploy && \
-    # Remove documentation and metadata \
-    find node_modules -type f -name '*.md' -delete && \
-    find node_modules -type f -name 'LICENSE*' -delete && \
-    find node_modules -type f -name 'CHANGELOG*' -delete && \
-    find node_modules -type f -name 'README*' -delete && \
-    # Remove test directories \
-    find node_modules -type d -name '__tests__' -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name 'docs' -exec rm -rf {} + 2>/dev/null || true && \
-    find node_modules -type d -name 'examples' -exec rm -rf {} + 2>/dev/null || true
-
+    find node_modules -type f \( -name '*.md' -o -name 'LICENSE*' -o -name 'CHANGELOG*' -o -name 'README*' \) -delete && \
+    find node_modules -type d \( -name '__tests__' -o -name 'test' -o -name 'tests' -o -name 'docs' -o -name 'examples' \) -exec rm -rf {} + 2>/dev/null || true
 
 COPY ./apps/api-server/migrations/ ./deploy/dist/migrations/
 COPY --from=builder /app/apps/web/out ./deploy/public
@@ -111,10 +107,13 @@ CMD ["node", "dist/main.js"]
 
 
 # --- 4. Runner Stage: Minimal production image (DEFAULT) ---
-FROM node:22.22-alpine3.23 AS runner
+FROM node:22.22-bullseye-slim AS runner
 
-RUN apk add --no-cache tini && \
-    rm -rf /usr/local/lib/node_modules/npm \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends tini && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* \
+           /usr/local/lib/node_modules/npm \
            /usr/local/lib/node_modules/corepack \
            /usr/local/bin/npm \
            /usr/local/bin/npx \
@@ -135,9 +134,6 @@ WORKDIR /app
 
 COPY --from=deps --chmod=555 /app/deploy/ /app/
 
-# /app is read-only
-RUN chmod -R a=rX /app
-
 # Run as non-root user (UID 65532 = "nobody" user, exists everywhere)
 # Users can override with: docker run --user $(id -u):$(id -g)
 USER 65532:65532
@@ -150,5 +146,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD ["node", "-e", "fetch('http://127.0.0.1:3331/api/v1/server/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
 # Use tini as PID 1 for proper signal handling and zombie reaping
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "dist/main.js"]
