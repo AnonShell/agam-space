@@ -9,7 +9,7 @@
 
 ![Agam Space Dashboard](./docs/static/img/hero.png)
 
-**True zero-knowledge encryption for self-hosted file storage.**
+**Zero-knowledge encryption for self-hosted file storage.**
 
 All files and metadata encrypted in your browser before upload. Your master
 password never leaves your device. The server stores only encrypted blobs and
@@ -36,14 +36,22 @@ Once stable, this warning will be removed.
 
 ---
 
-## What it does
+## Features
 
-- Upload and organize files with end-to-end encryption
-- Files encrypted in browser before upload (XChaCha20-Poly1305)
-- Folder names and metadata also encrypted
-- Biometric unlock on trusted devices (Touch ID, Face ID, Windows Hello)
-- Web interface (desktop and mobile browsers)
-- Self-hosted with Docker
+- Zero-knowledge end-to-end encryption (XChaCha20-Poly1305, Argon2id)
+- Passkey unlock with biometric authentication (Touch ID, Face ID, Windows
+  Hello)
+- Multi-user support with Owner, Admin, and regular user roles
+- File upload with chunked encryption and parallel processing
+- File previews (PDF, images, text)
+- Public sharing with password protection and expiration
+- Folder organization with nested folders
+- 30-day trash bin with restore
+- Per-user storage quotas
+- Admin panel for user and quota management
+- SSO support (Authelia, Authentik, Keycloak, PocketID)
+
+**See [Features](https://docs.agamspace.app/features) for complete list.**
 
 ## Documentation
 
@@ -73,18 +81,6 @@ protects against physical theft - not server compromise or admin access.
 Agam Space solves this with proper zero-knowledge encryption - where
 cryptography guarantees privacy, not trust. The server admin literally cannot
 access your files, even if they wanted to.
-
-## Features
-
-- Zero-knowledge end-to-end encryption (XChaCha20-Poly1305)
-- WebAuthn biometric unlock (Touch ID, Face ID, Windows Hello)
-- File upload and management
-- File previews (PDF, images, text)
-- SSO support (Authelia, Authentik, Keycloak, PocketID)
-- Per-user storage quotas
-- 30-day trash bin
-
-**See [Features](https://docs.agamspace.app/features) for complete list.**
 
 ## Screenshots
 
