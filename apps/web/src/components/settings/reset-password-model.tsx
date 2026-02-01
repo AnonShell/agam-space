@@ -1,20 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { fetchE2eeKeys, resetMasterPassword, validateRecoveryKey } from '@agam-space/client';
+import { useState } from 'react';
 
-import { toast } from 'sonner';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
+import { toast } from 'sonner';
 
 type Props = {
   open: boolean;
@@ -64,7 +64,6 @@ export function ResetPasswordModal({ open, onClose }: Props) {
       return setError('User keys not available');
     }
 
-    // Validate required fields for migration
     if (!e2eeKeys.encIdentitySeed || !e2eeKeys.identityEncPubKey) {
       return setError('User account not fully migrated. Please try again later.');
     }
@@ -77,7 +76,7 @@ export function ResetPasswordModal({ open, onClose }: Props) {
 
     setE2eeKeys(result.userKeys!);
 
-    onClose(); // close modal for now
+    onClose();
     toast.success('Password reset successfully.');
   };
 

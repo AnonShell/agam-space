@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth, useIsLoggedIn } from '@/store/auth';
-import { useE2eeKeys } from '@/store/e2ee-keys.store';
-import { resetAllState } from '@/services/session.service';
-import { useBootstrapStore } from '@/store/bootstrap.store';
-import { ClientRegistry, CmkManager } from '@agam-space/client';
 import { SessionUnlockManager } from '@/services/session-unlock-manager';
-import { IdentityKeyManager } from '@agam-space/core';
+import { resetAllState } from '@/services/session.service';
+import { useAuth, useIsLoggedIn } from '@/store/auth';
+import { useBootstrapStore } from '@/store/bootstrap.store';
+import { useE2eeKeys } from '@/store/e2ee-keys.store';
+import { ClientRegistry } from '@agam-space/client';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type BootstrapMode = 'public' | 'loggedIn' | 'unlocked';
 type BootstrapStatus = 'loading' | 'redirecting' | 'ready';
@@ -20,25 +19,17 @@ function redirectWithQuery(router: ReturnType<typeof useRouter>, path: string, r
   router.replace(`${path}?redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
-async function restoreCMKForAutoUnlockIfAvailable(e2eeKeys: any) {
+async function restoreCMKForAutoUnlockIfAvailable(
+  e2eeKeys: { encIdentitySeed?: string | null } | null
+) {
   const restoredCmk = await SessionUnlockManager.restoreCMKForAutoUnlock();
   if (!restoredCmk) return;
 
-  ClientRegistry.getKeyManager().setCMK(restoredCmk);
-
-  if (e2eeKeys?.encIdentitySeed) {
-    const cmkManager = new CmkManager();
-    const identitySeed = await cmkManager.decryptIdentitySeedWithCmk(
-      e2eeKeys.encIdentitySeed,
-      restoredCmk
-    );
-    const identityKeyPair = await IdentityKeyManager.generateIdentityKeys(identitySeed);
-    ClientRegistry.getKeyManager().setIdentitySignKeyPair(identityKeyPair.signKey);
-    ClientRegistry.getKeyManager().setIdentityEncKeyPair(identityKeyPair.encKey);
-  } else if (e2eeKeys) {
-    const legacyIdentityKeyPair =
-      await IdentityKeyManager.generateIdentityKeyPairWithCmk(restoredCmk);
-    ClientRegistry.getKeyManager().setIdentitySignKeyPair(legacyIdentityKeyPair);
+  if (e2eeKeys) {
+    await ClientRegistry.getCryptoKeyOperationsService().initKeys({
+      cmk: restoredCmk,
+      encIdentitySeed: e2eeKeys.encIdentitySeed ?? undefined,
+    });
   }
 }
 
@@ -97,11 +88,13 @@ export function useAccessBootstrap(
     }
 
     async function checkUnlockStatus() {
-      if (!ClientRegistry.getKeyManager().getCMK() && user?.id) {
+      const cryptoService = ClientRegistry.getCryptoKeyOperationsService();
+
+      if (!cryptoService.isInitialized() && user?.id) {
         await restoreCMKForAutoUnlockIfAvailable(e2eeKeys);
       }
 
-      if (!ClientRegistry.getKeyManager().getCMK() && pathname !== '/e2ee/unlock') {
+      if (!cryptoService.isInitialized() && pathname !== '/e2ee/unlock') {
         redirectWithQuery(router, '/e2ee/unlock', pathname);
         setStatus('redirecting');
         return;

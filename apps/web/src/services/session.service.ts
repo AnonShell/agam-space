@@ -1,4 +1,5 @@
 import { useAuth } from '@/store/auth';
+import { useE2eeKeys } from '@/store/e2ee-keys.store';
 import { usePreferencesStore } from '@/store/preferences.store';
 import {
   ApiClientError,
@@ -8,10 +9,9 @@ import {
   loginWithPassword,
   logoutApi,
 } from '@agam-space/client';
-import { useE2eeKeys } from '@/store/e2ee-keys.store';
+import { LogoutSync } from './cross-tab/logout-sync';
 import { SessionUnlockManager } from './session-unlock-manager';
 import { TrustedDevicesService } from './trusted-devices.service';
-import { LogoutSync } from './cross-tab/logout-sync';
 
 export const SessionService = {
   async bootstrap() {
@@ -73,6 +73,8 @@ export const SessionService = {
 export async function resetAllState() {
   useAuth.getState().clear();
   useE2eeKeys.getState().clear();
+
+  ClientRegistry.getCryptoKeyOperationsService().clearAll();
   ClientRegistry.getKeyManager().clearAll();
 
   SessionUnlockManager.clearAutoUnlockData().catch(() => {});

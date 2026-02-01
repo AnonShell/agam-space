@@ -1,7 +1,8 @@
-import { Migration, ShouldRunResult } from './migration.interface';
 import { useE2eeKeys } from '@/store/e2ee-keys.store';
-import { IdentityKeyManager, toBase64, generateCmkChallenge } from '@agam-space/core';
 import { ClientRegistry, CmkManager, migrateIdentitySeedApi } from '@agam-space/client';
+import { generateCmkChallenge, IdentityKeyManager, toBase64 } from '@agam-space/core';
+import { Migration, ShouldRunResult } from './migration.interface';
+import { logger } from '@/lib/logger';
 
 export class IdentitySeedMigration implements Migration {
   getName(): string {
@@ -31,20 +32,15 @@ export class IdentitySeedMigration implements Migration {
 
     const identitySeed = IdentityKeyManager.generateIdentitySeed();
 
-    const cmk = ClientRegistry.getKeyManager().getCMK();
-    if (!cmk) {
-      throw new Error('CMK not available for seed encryption');
-    }
+    const cryptoService = ClientRegistry.getCryptoKeyOperationsService();
 
-    const cmkManager = new CmkManager();
-    const encIdentitySeed = await cmkManager.encryptIdentitySeedWithCmk(identitySeed, cmk);
+    const encIdentitySeed = await ClientRegistry.getCryptoKeyOperationsService().encryptAndEncodeWithCmk(
+      identitySeed
+    );
+
+    logger.debug('[IdentitySeedMigration]', 'Encrypted new identity seed with CMK');
 
     const identityKeys = await IdentityKeyManager.generateIdentityKeys(identitySeed);
-
-    const oldIdentityKeyPair = ClientRegistry.getKeyManager().getIdentitySignKeyPair();
-    if (!oldIdentityKeyPair) {
-      throw new Error('Old identity key not available for signing challenge');
-    }
 
     const challengePayload = {
       encIdentitySeed,
@@ -52,7 +48,12 @@ export class IdentitySeedMigration implements Migration {
       identityEncPubKey: toBase64(identityKeys.encKey.publicKey),
     };
 
-    const challengeData = await generateCmkChallenge(challengePayload, oldIdentityKeyPair.privateKey);
+    // Sign challenge with OLD identity key (in worker or main thread) via crypto service
+    const challengeData = await generateCmkChallenge(
+      challengePayload,
+      new Uint8Array(), // Not used when signFunction is provided
+      (message) => cryptoService.signWithIdentity(message)
+    );
     console.log('[IdentitySeedMigration] Created challenge signed with old identity key');
 
     await migrateIdentitySeedApi({
@@ -62,8 +63,15 @@ export class IdentitySeedMigration implements Migration {
       challengeData,
     });
 
-    ClientRegistry.getKeyManager().setIdentitySignKeyPair(identityKeys.signKey);
-    ClientRegistry.getKeyManager().setIdentityEncKeyPair(identityKeys.encKey);
+    const cmk = await cryptoService.getCMK();
+    if (!cmk) {
+      throw new Error('CMK not available after migration');
+    }
+
+    await cryptoService.initKeys({
+      cmk,
+      encIdentitySeed,
+    });
 
     const updatedE2eeKeys = {
       ...e2eeKeys,

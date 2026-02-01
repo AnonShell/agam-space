@@ -1,4 +1,4 @@
-import sodium from 'libsodium-wrappers-sumo';
+import { getSodium } from '@agam-space/core';
 
 export enum Argon2idVersion {
   v1 = 'v1',
@@ -38,7 +38,7 @@ export async function deriveKeyFromSecret(
   params: Argon2idOptions;
   key: Uint8Array;
 }> {
-  await sodium.ready;
+  const sodium = await getSodium();
 
   const preset = ARGON2ID_PRESETS[version];
 

@@ -1,4 +1,4 @@
-import { EncryptedEnvelope, EncryptedEnvelopeCodec } from '@agam-space/core';
+import { EncryptedEnvelope } from '@agam-space/core';
 import { XChaChaV1Strategy } from '../crypto/xchacha';
 
 export interface EncryptionStrategy {

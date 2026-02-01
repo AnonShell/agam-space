@@ -145,6 +145,16 @@ export class CmkManager {
     return EncryptedEnvelopeCodec.serialize(encSeedEnvelope);
   }
 
+  async encryptAndEncode(data: Uint8Array, key: Uint8Array): Promise<string> {
+    const envelope = await this.encryptionStrategy.encrypt(data, key);
+    return EncryptedEnvelopeCodec.serialize(envelope);
+  }
+
+  async decodeAndDecrypt(data: string, key: Uint8Array): Promise<Uint8Array> {
+    const envelope = EncryptedEnvelopeCodec.deserialize(data);
+    return this.encryptionStrategy.decrypt(envelope, key);
+  }
+
   getBufferFromBase64(data: string | Uint8Array): Buffer {
     if (data instanceof Uint8Array) {
       return Buffer.from(data);

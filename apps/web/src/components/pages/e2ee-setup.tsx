@@ -71,7 +71,6 @@ export default function E2eeSetupPage() {
     }
   }
 
-  // Show error UI if fetch failed
   if (fetchErrorRef.current) {
     return (
       <div className='min-h-screen flex items-center justify-center px-4'>

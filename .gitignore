@@ -101,3 +101,4 @@ apps/api-server/docker-compose.yaml
 
 /.cursor
 /apps/api-server/public/
+/.github/instructions/

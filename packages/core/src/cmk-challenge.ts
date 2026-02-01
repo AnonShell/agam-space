@@ -1,6 +1,6 @@
 import { IdentityKeyManager } from './identity-key';
-import { blake3HashWithEncoding } from './utils/hasher';
 import { fromBase64, toBase64, toUtf8Bytes } from './utils/encoding';
+import { blake3HashWithEncoding } from './utils/hasher';
 
 function generateChallengeString(data: string, timestamp: number): string {
   return `${data}:${timestamp}`;
@@ -8,7 +8,8 @@ function generateChallengeString(data: string, timestamp: number): string {
 
 export async function generateCmkChallenge(
   payload: object,
-  key: Uint8Array
+  key: Uint8Array,
+  signFunction?: (message: Uint8Array) => Promise<Uint8Array>
 ): Promise<{
   timestamp: number;
   signature: string;
@@ -18,7 +19,10 @@ export async function generateCmkChallenge(
   const payloadHash = blake3HashWithEncoding(JSON.stringify(payload), 'base64');
 
   const challenge = toUtf8Bytes(generateChallengeString(payloadHash, timestamp));
-  const signature = await IdentityKeyManager.sign(challenge, key);
+
+  const signature = signFunction
+    ? await signFunction(challenge)
+    : await IdentityKeyManager.sign(challenge, key);
 
   return {
     timestamp,

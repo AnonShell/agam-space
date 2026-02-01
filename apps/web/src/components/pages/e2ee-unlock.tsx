@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ClientRegistry, CmkManager } from '@agam-space/client';
-import { IdentityKeyManager, toBase64 } from '@agam-space/core';
-import { useE2eeKeys } from '@/store/e2ee-keys.store';
-import { TrustedDevicesService } from '@/services/trusted-devices.service';
-import { SessionUnlockManager } from '@/services/session-unlock-manager';
-import { useAuth } from '@/store/auth';
-import { MigrationRunner } from '@/lib/migrations';
-import type { DeviceInfo } from '@agam-space/shared-types';
+import { Input } from '@/components/ui/input';
 import { logger } from '@/lib/logger';
+import { MigrationRunner } from '@/lib/migrations';
+import { SessionUnlockManager } from '@/services/session-unlock-manager';
+import { TrustedDevicesService } from '@/services/trusted-devices.service';
+import { useAuth } from '@/store/auth';
+import { useE2eeKeys } from '@/store/e2ee-keys.store';
+import { ClientRegistry, CmkManager } from '@agam-space/client';
+import { toBase64 } from '@agam-space/core';
+import type { DeviceInfo } from '@agam-space/shared-types';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function E2eeUnlockPage() {
   const [password, setPassword] = useState('');
@@ -126,39 +126,24 @@ export default function E2eeUnlockPage() {
       return new Error('User not found');
     }
 
-    ClientRegistry.getKeyManager().setCMK(cmk);
+    if (!e2eeKeys) {
+      return new Error('E2EE keys not found');
+    }
 
-    // If user has new seed-based identity, decrypt and derive keys
-    if (e2eeKeys?.encIdentitySeed) {
-      const cmkManager = new CmkManager();
-      const identitySeed = await cmkManager.decryptIdentitySeedWithCmk(
-        e2eeKeys.encIdentitySeed,
-        cmk
-      );
-      const identityKeys = await IdentityKeyManager.generateIdentityKeys(identitySeed);
+    await ClientRegistry.getCryptoKeyOperationsService().initKeys({
+      cmk,
+      encIdentitySeed: e2eeKeys.encIdentitySeed || undefined,
+    });
 
-      if (toBase64(identityKeys.signKey.publicKey) !== e2eeKeys.identityPublicKey) {
-        logger.error('[E2EE Unlock]', 'Identity public key mismatch');
-        return new Error('Identity public key mismatch');
-      }
+    const signPubKey = await ClientRegistry.getCryptoKeyOperationsService().getIdentitySignPubKey();
 
-      ClientRegistry.getKeyManager().setIdentitySignKeyPair(identityKeys.signKey);
-      ClientRegistry.getKeyManager().setIdentityEncKeyPair(identityKeys.encKey);
-    } else {
-      const legacyIdentityKeyPair = await IdentityKeyManager.generateIdentityKeyPairWithCmk(cmk);
-
-      // Verify identity public key matches stored value
-      if (toBase64(legacyIdentityKeyPair.publicKey) !== e2eeKeys!.identityPublicKey) {
-        console.log('Identity public key mismatch');
-        return new Error('Identity public key mismatch');
-      }
-
-      ClientRegistry.getKeyManager().setIdentitySignKeyPair(legacyIdentityKeyPair);
+    if (!signPubKey || toBase64(signPubKey) !== e2eeKeys.identityPublicKey) {
+      logger.error('[E2EE Unlock]', 'Identity public key mismatch');
+      return new Error('Identity public key mismatch');
     }
 
     await SessionUnlockManager.saveCMKForAutoUnlock(cmk);
 
-    // Check if migrations are needed
     const needsMigrations = await MigrationRunner.hasMigrations();
 
     if (needsMigrations) {

@@ -1,9 +1,10 @@
-import { defineClientRegistry } from './client-registry-definitions';
 import { ApiClient } from '../api';
-import { KeyManager } from '../key-manager';
-import { UploadManager } from '../upload/upload-manager';
+import { ICryptoKeyOperationsService } from '../key/crypto-key-operations-service';
 import { DownloadManager } from '../file';
 import { ContentTreeManager } from '../folder/content-tree/content-tree.manager';
+import { KeyManager } from '../key-manager';
+import { UploadManager } from '../upload/upload-manager';
+import { defineClientRegistry } from './client-registry-definitions';
 
 export const ClientRegistry = defineClientRegistry<{
   apiClient: ApiClient;
@@ -11,7 +12,15 @@ export const ClientRegistry = defineClientRegistry<{
   uploadManager: UploadManager;
   downloadManager: DownloadManager;
   contentTreeManager: ContentTreeManager;
-}>(['apiClient', 'keyManager', 'uploadManager', 'downloadManager', 'contentTreeManager']);
+  cryptoKeyOperationsService: ICryptoKeyOperationsService;
+}>([
+  'apiClient',
+  'keyManager',
+  'uploadManager',
+  'downloadManager',
+  'contentTreeManager',
+  'cryptoKeyOperationsService',
+]);
 
 export function getClientRegistry() {
   return {

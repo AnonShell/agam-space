@@ -1,7 +1,12 @@
+import { initCrossTabCommunication } from '@/services/cross-tab';
+import { ServerConfigService } from '@/services/server-config.service';
+import { useDownloadStore } from '@/store/download-store';
+import { useUploadStore } from '@/store/upload-store';
 import {
   ApiClient,
   ClientRegistry,
   ContentTreeManager,
+  CryptoKeyOperationsService,
   DownloadManager,
   DownloadManagerCallbacks,
   getClientRegistry,
@@ -9,19 +14,27 @@ import {
   UploadManager,
   UploadManagerCallbacks,
 } from '@agam-space/client';
-import { useDownloadStore } from '@/store/download-store';
-import { useUploadStore } from '@/store/upload-store';
-import { initCrossTabCommunication } from '@/services/cross-tab';
-import { ServerConfigService } from '@/services/server-config.service';
 import { toast } from 'sonner';
+import { CryptoKeyOperationsWorkerClient } from '@/lib/crypto/crypto-key-operations-worker-client';
+import { logger } from '@/lib/logger';
 
 let initialized = false;
+
+function isWebWorkerAvailable(): boolean {
+  const envEnabled = process.env.NEXT_PUBLIC_USE_CRYPTO_KEYS_WORKER !== 'false';
+  return (
+    envEnabled &&
+    typeof window !== 'undefined' &&
+    'Worker' in window &&
+    typeof import.meta?.url !== 'undefined'
+  );
+}
 
 export async function initializeClient(isPublic: boolean = false) {
   if (initialized) return;
   initialized = true;
 
-  console.log(`[init] Initializing client (public: ${isPublic})...`);
+  logger.debug('[initializeClient]', `Initializing client (public: ${isPublic})...`);
 
   if (!ClientRegistry.hasApiClient()) {
     ClientRegistry.setApiClient(new ApiClient());
@@ -29,6 +42,14 @@ export async function initializeClient(isPublic: boolean = false) {
 
   if (!ClientRegistry.hasKeyManager()) {
     ClientRegistry.setKeyManager(new KeyManager());
+  }
+
+  if (!ClientRegistry.hasCryptoKeyOperationsService()) {
+    ClientRegistry.setCryptoKeyOperationsService(
+      isWebWorkerAvailable()
+        ? new CryptoKeyOperationsWorkerClient()
+        : new CryptoKeyOperationsService()
+    );
   }
 
   if (!ClientRegistry.hasDownloadManager()) {
@@ -51,13 +72,6 @@ export async function initializeClient(isPublic: boolean = false) {
     }
 
     if (!ClientRegistry.hasUploadManager()) {
-      console.log('📤 Initializing UploadManager with serverConfig:', {
-        chunkSize: serverConfig?.upload?.chunkSize,
-        maxFileSize: serverConfig?.upload?.maxFileSize,
-        maxConcurrency: serverConfig?.upload?.maxConcurrency,
-        fullConfig: serverConfig,
-      });
-
       ClientRegistry.setUploadManager(
         new UploadManager(
           {
@@ -74,7 +88,7 @@ export async function initializeClient(isPublic: boolean = false) {
     initCrossTabCommunication();
   }
 
-  console.log(`[init] Client registry ready (public: ${isPublic})`);
+  logger.debug('[initializeClient]', `Client registry ready (public: ${isPublic})`);
 }
 
 const uploadManagerCallbacks: UploadManagerCallbacks = {

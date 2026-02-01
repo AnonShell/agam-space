@@ -1,5 +1,4 @@
 import {
-  ContentEntry,
   ContentTreeEntry,
   contentTreeStore,
   FileEntry,
@@ -114,23 +113,6 @@ export async function decryptFolder(folder: Folder): Promise<FolderEntry> {
   };
 }
 
-// async function decryptFile(file: File): Promise<FileEntry> {
-//
-//   const fileKey = await getDecryptedFileKey(file);
-//   const metadata = await new FileManager().decryptMetadata(file.metadataEncrypted, fileKey);
-//   console.log(`decryptFile: fileKey=${fileKey}, metadata=${JSON.stringify(metadata)}`);
-//   return {
-//     id: file.id,
-//     name: metadata.name,
-//     mime: metadata.mimeType || 'application/octet-stream',
-//     parentId: file.parentFolderId || 'root',
-//     size: file.approxSize,
-//     isFolder: false,
-//     createdAt: new Date(file.createdAt),
-//     updatedAt: new Date(file.updatedAt),
-//   };
-// }
-
 export async function getFolderInfo(folderId: string): Promise<FolderEntry> {
   const folder = await fetchFolderById(folderId);
   if (!folder) {
@@ -167,7 +149,7 @@ export async function getDecryptedFolderKey(
 ): Promise<Uint8Array> {
   //Root-level folder uses CMK
   if (!folderId || folderId === 'root') {
-    const cmk = ClientRegistry.getKeyManager().getCMK();
+    const cmk = await ClientRegistry.getCryptoKeyOperationsService().getCMK();
     if (!cmk) throw new Error('CMK not loaded');
     return cmk;
   }

@@ -1,6 +1,5 @@
-import sodium from 'libsodium-wrappers-sumo';
+import { EncryptedEnvelope, getSodium } from '@agam-space/core';
 import { EncryptionStrategy } from '../encryption/encryption-strategy';
-import { EncryptedEnvelope } from '@agam-space/core';
 
 export class XChaChaV1Strategy implements EncryptionStrategy {
   public readonly options = {
@@ -9,6 +8,7 @@ export class XChaChaV1Strategy implements EncryptionStrategy {
   };
 
   async encrypt(plaintext: Uint8Array, key: Uint8Array): Promise<EncryptedEnvelope> {
+    const sodium = await getSodium();
     const nonce = sodium.randombytes_buf(this.options.nonceLength);
     const ciphertext = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
       plaintext,
@@ -32,6 +32,7 @@ export class XChaChaV1Strategy implements EncryptionStrategy {
       );
     }
 
+    const sodium = await getSodium();
     return sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
       null,
       envelope.c,
