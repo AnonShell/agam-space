@@ -1,7 +1,7 @@
 {
   "name": "agam-space-docs",
   "private": true,
-  "packageManager": "pnpm@10.28.2",
+  "packageManager": "pnpm@10.30.3",
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start --port 3002",

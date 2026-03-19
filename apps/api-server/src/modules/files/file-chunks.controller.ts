@@ -20,6 +20,8 @@ import { FilesService } from './files.service';
 import { AuthenticatedUser } from '@/modules/auth/dto/auth.dto';
 import { cleanupRequestStream } from '@/common/helpers/stream.utils';
 import { sendChunkStream } from '@/common/helpers/response.utils';
+import { ZodValidationPipe } from 'nestjs-zod';
+import { ChunkIndexSchema } from '@agam-space/shared-types';
 
 @ApiTags('File Chunks')
 @Controller('files/:fileId/chunks')
@@ -35,7 +37,7 @@ export class FileChunksController {
   @HttpCode(HttpStatus.CREATED)
   async uploadChunk(
     @Param('fileId') fileId: string,
-    @Param('chunkIndex') chunkIndex: number,
+    @Param('chunkIndex', new ZodValidationPipe(ChunkIndexSchema)) chunkIndex: number,
     @CurrentUser() user: AuthenticatedUser,
     @Req() req: FastifyRequest
   ) {
@@ -59,7 +61,7 @@ export class FileChunksController {
   @ApiResponse({ status: 200, description: 'Raw encrypted chunk' })
   async downloadFileChunk(
     @Param('fileId') fileId: string,
-    @Param('chunkIndex') chunkIndex: number,
+    @Param('chunkIndex', new ZodValidationPipe(ChunkIndexSchema)) chunkIndex: number,
     @CurrentUser() user: AuthenticatedUser,
     @Res() response: FastifyReply
   ): Promise<any> {
@@ -88,7 +90,7 @@ export class FileChunksController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async checkChunkExists(
     @Param('fileId') fileId: string,
-    @Param('chunkIndex') chunkIndex: number,
+    @Param('chunkIndex', new ZodValidationPipe(ChunkIndexSchema)) chunkIndex: number,
     @CurrentUser() user: AuthenticatedUser
   ): Promise<void> {
     const userId = user.id;

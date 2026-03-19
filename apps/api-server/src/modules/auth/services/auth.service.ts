@@ -232,7 +232,7 @@ export class AuthService {
 
     const user = await this.userService.findUserById(session.userId);
     if (!user || user.status !== UserStatus.ACTIVE) {
-      await this.sessionService.deleteSession(sessionToken);
+      await this.sessionService.deleteSessionById(session.id, session.tokenHash);
       return null;
     }
 
@@ -257,7 +257,7 @@ export class AuthService {
       return false;
     }
 
-    const success = await this.sessionService.deleteSession(session.id);
+    const success = await this.sessionService.deleteSessionById(session.id, session.tokenHash);
     if (success) {
       this.logger.log(`Session logged out: ${session.id.slice(0, 8)}...`);
     }

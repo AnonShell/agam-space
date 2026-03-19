@@ -79,6 +79,12 @@ export const BatchCheckExistsResponseSchema = z.object({
   results: z.array(BatchCheckExistsResultSchema),
 });
 
+export const ChunkIndexSchema = z.coerce
+  .number()
+  .int('Chunk index must be an integer')
+  .min(0, 'Chunk index must be at least 0')
+  .max(1_000_000, 'Chunk index must be at most 1000000');
+
 export type RawFileMetadata = z.infer<typeof RawFileMetadataSchema>;
 export type UserFileMetadata = z.infer<typeof UserFileMetadataSchema>;
 

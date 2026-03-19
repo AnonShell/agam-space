@@ -19,10 +19,11 @@ import {
   PublicShareKeysDto,
 } from './dto/public-share.dto';
 import { PublicShareContentResponseDto } from './dto/public-share-content.dto';
-import { PublicShareExternalDetailsSchema } from '@agam-space/shared-types';
+import { ChunkIndexSchema, PublicShareExternalDetailsSchema } from '@agam-space/shared-types';
 import { PublicShareAccessRequired, ValidatedShareId } from './public-share-access.decorator';
 import type { FastifyReply } from 'fastify';
 import { sendChunkStream } from '@/common/helpers/response.utils';
+import { ZodValidationPipe } from 'nestjs-zod';
 
 /**
  * Public access controller - no authentication required
@@ -90,7 +91,7 @@ export class PublicShareAccessController {
   async getFileChunk(
     @ValidatedShareId() shareId: string,
     @Param('fileId') fileId: string,
-    @Param('chunkIndex') chunkIndex: number,
+    @Param('chunkIndex', new ZodValidationPipe(ChunkIndexSchema)) chunkIndex: number,
     @Res() response: FastifyReply
   ): Promise<void> {
     const { stream, chunk } = await this.publicShareService.getFileChunk(

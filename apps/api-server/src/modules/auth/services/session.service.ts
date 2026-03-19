@@ -195,14 +195,14 @@ export class SessionService {
       .where(eq(userSessions.id, sessionId));
   }
 
-  async deleteSession(sessionId: string): Promise<boolean> {
-    await this.cacheManager.del(this.getCacheKey(sessionId));
-    await this.cacheManager.del(this.getEncNonceCacheKey(sessionId));
-
+  async deleteSessionById(sessionId: string, tokenHash: string): Promise<boolean> {
     const result = await this.db
       .delete(userSessions)
       .where(eq(userSessions.id, sessionId))
       .returning({ id: userSessions.id });
+
+    await this.cacheManager.del(this.getCacheKey(tokenHash));
+    await this.cacheManager.del(this.getEncNonceCacheKey(sessionId));
 
     if (result.length > 0) {
       this.logger.log(`Session deleted: ${sessionId}...`);
@@ -214,12 +214,12 @@ export class SessionService {
 
   async deleteAllUserSessions(userId: string): Promise<number> {
     const userSessionsList = await this.db
-      .select({ id: userSessions.id })
+      .select({ id: userSessions.id, tokenHash: userSessions.tokenHash })
       .from(userSessions)
       .where(eq(userSessions.userId, userId));
 
     for (const session of userSessionsList) {
-      await this.cacheManager.del(this.getCacheKey(session.id));
+      await this.cacheManager.del(this.getCacheKey(session.tokenHash));
       await this.cacheManager.del(this.getEncNonceCacheKey(session.id));
     }
 
