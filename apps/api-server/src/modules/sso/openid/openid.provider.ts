@@ -4,23 +4,36 @@ import {
   OidcConfig,
   OidcMetadata,
   OidcMetadataSchema,
+  TokenSetSchema,
   TokenSet,
   UserInfo,
   UserInfoSchema,
 } from '@/modules/sso/openid/openid.types';
+import { httpRequestJson } from '@/common/helpers/http-request';
 
 export class OidcProvider {
   private metadata: OidcMetadata;
+  private readonly FETCH_TIMEOUT_MS = 5000;
 
   constructor(private readonly config: OidcConfig) {}
 
+  private normalizeIssuer(issuer: string): string {
+    return issuer.replace(/\/+$/, '');
+  }
+
   async init(): Promise<void> {
-    const res = await fetch(`${this.config.issuer}/.well-known/openid-configuration`);
-    const raw = await res.json();
+    const raw = await httpRequestJson(`${this.config.issuer}/.well-known/openid-configuration`, {
+      timeoutMs: this.FETCH_TIMEOUT_MS,
+      errorContext: 'OIDC metadata',
+    });
 
     const parsed = OidcMetadataSchema.safeParse(raw);
     if (!parsed.success) {
       throw new Error(`Invalid OIDC metadata: ${parsed.error.message}`);
+    }
+
+    if (this.normalizeIssuer(parsed.data.issuer) !== this.normalizeIssuer(this.config.issuer)) {
+      throw new Error('OIDC metadata issuer does not match configured issuer');
     }
 
     this.metadata = parsed.data;
@@ -45,7 +58,9 @@ export class OidcProvider {
   }
 
   async exchangeCode(code: string, verifier: string): Promise<TokenSet> {
-    const res = await fetch(this.metadata.token_endpoint, {
+    const json = await httpRequestJson(this.metadata.token_endpoint, {
+      timeoutMs: this.FETCH_TIMEOUT_MS,
+      errorContext: 'OIDC token',
       method: 'POST',
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
@@ -60,20 +75,22 @@ export class OidcProvider {
         code_verifier: verifier,
       }),
     });
+    const parsed = TokenSetSchema.safeParse(json);
+    if (!parsed.success) {
+      throw new Error(`Invalid OIDC token response: ${parsed.error.message}`);
+    }
 
-    const json = await res.json();
-    if (!json.access_token) throw new Error('Token exchange failed');
-    return json;
+    return parsed.data;
   }
 
   async getUserInfo(accessToken: string): Promise<UserInfo> {
-    const res = await fetch(this.metadata.userinfo_endpoint, {
+    const userRaw = await httpRequestJson(this.metadata.userinfo_endpoint, {
+      timeoutMs: this.FETCH_TIMEOUT_MS,
+      errorContext: 'OIDC userinfo',
       headers: {
         authorization: `Bearer ${accessToken}`,
       },
     });
-
-    const userRaw = await res.json();
     return UserInfoSchema.parse(userRaw);
   }
 }

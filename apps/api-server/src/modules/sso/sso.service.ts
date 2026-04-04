@@ -1,17 +1,32 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { OidcProvider } from '@/modules/sso/openid/openid.provider';
 import { ConfigService } from '@nestjs/config';
 import { UserInfo } from '@/modules/sso/openid/openid.types';
+import { randomBytes } from 'crypto';
+import type { Cache } from 'cache-manager';
+
+interface OidcVerifierContext {
+  verifier: string;
+  clientType: string;
+}
 
 @Injectable()
 export class SsoService implements OnModuleInit {
   private logger = new Logger(SsoService.name);
   private provider: OidcProvider | null = null;
 
-  //Temporary storage for verifiers
-  private verifierStore = new Map<string, string>();
+  private readonly OIDC_STATE_TTL_MS = 5 * 60 * 1000;
+  private readonly OIDC_STATE_CACHE_PREFIX = 'oidc:state:';
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
+  ) {}
+
+  private getOidcStateCacheKey(state: string): string {
+    return `${this.OIDC_STATE_CACHE_PREFIX}${state}`;
+  }
 
   async onModuleInit() {
     const sso = this.config.get('sso');
@@ -46,16 +61,26 @@ export class SsoService implements OnModuleInit {
     return this.provider.getUserInfo(token.access_token);
   }
 
-  generateVerifier(state: string): string {
+  async createVerifierContext(clientType: string): Promise<{ state: string; challenge: string }> {
     if (!this.provider) throw new Error('SSO not enabled');
-    const { verifier } = this.provider.generateCodeVerifier();
-    this.verifierStore.set(state, verifier);
-    return verifier;
+
+    const state = randomBytes(32).toString('base64url');
+    const { verifier, challenge } = this.provider.generateCodeVerifier();
+    const cacheKey = this.getOidcStateCacheKey(state);
+
+    await this.cacheManager.set<OidcVerifierContext>(
+      cacheKey,
+      { verifier, clientType },
+      this.OIDC_STATE_TTL_MS
+    );
+
+    return { state, challenge };
   }
 
-  consumeVerifier(state: string): string | undefined {
-    const verifier = this.verifierStore.get(state);
-    this.verifierStore.delete(state);
-    return verifier;
+  async consumeVerifierContext(state: string): Promise<OidcVerifierContext | null> {
+    const cacheKey = this.getOidcStateCacheKey(state);
+    const context = await this.cacheManager.get<OidcVerifierContext>(cacheKey);
+    await this.cacheManager.del(cacheKey);
+    return context ?? null;
   }
 }

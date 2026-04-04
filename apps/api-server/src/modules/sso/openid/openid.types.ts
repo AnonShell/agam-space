@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const OidcMetadataSchema = z.object({
+  issuer: z.string().url(),
   authorization_endpoint: z.string().url(),
   token_endpoint: z.string().url(),
   userinfo_endpoint: z.string().url(),
@@ -15,11 +16,15 @@ export interface OidcConfig {
   redirectUri: string;
 }
 
-export interface TokenSet {
-  access_token: string;
-  id_token?: string;
-  expires_in?: number;
-}
+export const TokenSetSchema = z
+  .object({
+    access_token: z.string().min(1),
+    id_token: z.string().min(1).optional(),
+    expires_in: z.number().int().positive().optional(),
+  })
+  .passthrough();
+
+export type TokenSet = z.infer<typeof TokenSetSchema>;
 
 export const UserInfoSchema = z
   .object({

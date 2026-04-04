@@ -110,9 +110,7 @@ export class SessionService {
 
     const [session] = await this.db.insert(userSessions).values(newSession).returning();
 
-    this.logger.log(
-      `Session created for user ${data.userId}: ${session.id} (token hash: ${tokenHash.slice(0, 16)}...)`
-    );
+    this.logger.log(`Session created for user ${data.userId}: ${session.id}`);
 
     await this.cacheManager.set(this.getCacheKey(tokenHash), session);
 
@@ -140,7 +138,7 @@ export class SessionService {
       }
     }
 
-    this.logger.debug(`Cache miss for session: ${tokenHash.slice(0, 16)}...`);
+    this.logger.debug(`Cache miss for session: ${tokenHash.slice(0, 5)}...`);
 
     const [session] = await this.db
       .select()

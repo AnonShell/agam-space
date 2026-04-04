@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { Throttle, ThrottlerGuard, SkipThrottle } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import {
   ChangeLoginPasswordRequestDto,
   LoginResponseDto,
@@ -24,7 +25,6 @@ import {
 } from '../dto/auth.dto';
 import { AuthService } from '../services/auth.service';
 import { SsoService } from '@/modules/sso/sso.service';
-import { createHash } from 'crypto';
 import { clearAuthCookies, setAuthCookies } from '@/modules/auth/utils/cookies';
 import { AgamCookies } from '@/modules/auth/auth.models';
 import { AuthRequired, CurrentUser } from '../auth.decorator';
@@ -114,7 +114,7 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @SkipThrottle()
+  @Throttle({ default: { ttl: 900_000, limit: 15 } })
   @ApiOperation({
     summary: 'User logout',
     description: 'Logout from current session and invalidate token',
@@ -136,7 +136,7 @@ export class AuthController {
 
     const success = await this.authService.logout(sessionToken);
     this.logger.log(
-      `Logout ${success ? 'successful' : 'failed'} for session: ${sessionToken.slice(0, 3)}...`
+      `Logout ${success ? 'successful' : 'failed'} for session: ${sessionToken?.slice(0, 3) ?? 'unknown'}...`
     );
 
     clearAuthCookies(res);
@@ -146,22 +146,18 @@ export class AuthController {
   }
 
   @Get('/sso/oidc')
-  @SkipThrottle()
+  @Throttle({ default: { ttl: 900_000, limit: 15 } })
   async startOidc(@Query('client') clientType: string = 'browser', @Res() res: FastifyReply) {
     if (!this.ssoService.isEnabled()) return res.status(404).send();
 
-    const statePayload = { client: clientType };
-    const state = Buffer.from(JSON.stringify(statePayload)).toString('base64url');
-
-    const verifier = this.ssoService.generateVerifier(state);
-    const challenge = createHash('sha256').update(verifier).digest().toString('base64url');
+    const { state, challenge } = await this.ssoService.createVerifierContext(clientType);
 
     const url = this.ssoService.getAuthorizationUrl(challenge, state);
     return res.status(302).header('location', url).send();
   }
 
   @Get('/sso/oidc/callback')
-  @SkipThrottle()
+  @Throttle({ default: { ttl: 900_000, limit: 15 } })
   async callback(@Req() req: FastifyRequest, @Res() res: FastifyReply) {
     if (!this.ssoService.isEnabled()) return res.status(404).send();
 
@@ -170,11 +166,14 @@ export class AuthController {
       state: string;
     };
 
-    const state = JSON.parse(Buffer.from(rawState, 'base64url').toString());
-    const verifier = this.ssoService.consumeVerifier(rawState);
-    if (!verifier) return res.status(400).send('Missing verifier');
+    if (!code || !rawState) {
+      throw new BadRequestException('Missing code or state');
+    }
 
-    const userInfo = await this.ssoService.exchangeCode(code, verifier);
+    const context = await this.ssoService.consumeVerifierContext(rawState);
+    if (!context) return res.status(400).send('Missing verifier');
+
+    const userInfo = await this.ssoService.exchangeCode(code, context.verifier);
 
     const userAgent = req.headers['user-agent'];
     const ipAddress = req.ip;
@@ -184,24 +183,15 @@ export class AuthController {
       ipAddress,
     });
 
-    if (state.client === 'browser') {
+    if (context.clientType === 'browser') {
       setAuthCookies(res, loginResponse.session.token, req.protocol === 'https');
       return res.status(302).header('location', '/').send();
     }
 
-    this.logger.warn(`Unknown client type in SSO state: ${state.client}`);
+    this.logger.warn(`Unknown client type in SSO state: ${context.clientType}`);
     return res.status(400).send('Unknown client type');
   }
 
-  @Post('change-login-password')
-  @HttpCode(HttpStatus.OK)
-  @AuthRequired()
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Change login password',
-    description: 'Change login password for non-SSO users.',
-  })
-  @ApiBody({ type: ChangeLoginPasswordRequestDto })
   @Post('change-login-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @AuthRequired()

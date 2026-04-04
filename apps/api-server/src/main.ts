@@ -22,7 +22,7 @@ async function bootstrap() {
   const fastifyAdapter = new FastifyAdapter({
     logger: process.env.NODE_ENV === 'development',
     bodyLimit: 100 * 1024 * 1024,
-    trustProxy: true,
+    trustProxy: process.env.NODE_ENV === 'production',
   });
 
   fastifyAdapter

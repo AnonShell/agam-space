@@ -66,8 +66,6 @@ export class FileChunksController {
     @Res() response: FastifyReply
   ): Promise<any> {
     const userId = user.id;
-    // TODO: check if the chunk belongs to the user
-
     const file = await this.filesService.getFileEntity(userId, fileId);
     if (!file) {
       throw new BadRequestException('File not found');
@@ -94,7 +92,11 @@ export class FileChunksController {
     @CurrentUser() user: AuthenticatedUser
   ): Promise<void> {
     const userId = user.id;
-    // TODO: check if the chunk belongs to the user
+    const file = await this.filesService.getFileEntity(userId, fileId);
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
     const exists = await this.fileChunksService.chunkExists(fileId, chunkIndex);
     if (!exists) {
       throw new NotFoundException('Chunk not found');
